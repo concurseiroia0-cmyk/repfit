@@ -29,6 +29,7 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
   const allExercises: ShareExercise[] = workout.exercises.map((e) => {
     let w = 0;
     let r = 0;
+    const vol = exerciseVolume(e);
     for (const s of e.sets) {
       w = Math.max(w, s.weight ?? 0);
       r += s.reps ?? 0;
@@ -38,6 +39,7 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
       sets: e.sets.length,
       reps: r,
       weightKg: w > 0 ? w : null,
+      volumeKg: vol > 0 ? vol : null,
     };
   });
   const moreExercises = Math.max(0, allExercises.length - 5);
@@ -87,6 +89,7 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
       volumeKg,
       durationMin: workout.durationMin,
     },
+    averageEffort: workout.avgEffort != null && workout.avgEffort > 0 ? workout.avgEffort : null,
     exercises,
     moreExercises,
     record,

@@ -1,18 +1,31 @@
 import { forwardRef } from 'react';
-import type { ShareCardData, ShareFormat, ShareTemplateId } from './types';
-import { WorkoutCompletedCard } from './templates/WorkoutCompletedCard';
-import { NewRecordCard } from './templates/NewRecordCard';
-import { EvolutionCard } from './templates/EvolutionCard';
+import type {
+  ShareCardData,
+  ShareCustomization,
+  ShareFormat,
+  SharePhoto,
+  ShareTemplateId,
+  ShareTemplateProps,
+} from './types';
+import { GlassWorkoutTemplate } from './templates/GlassWorkoutTemplate';
+import { PerformanceTemplate } from './templates/PerformanceTemplate';
+import { DashboardTemplate } from './templates/DashboardTemplate';
+import { MinimalTemplate } from './templates/MinimalTemplate';
+import { PosterTemplate } from './templates/PosterTemplate';
 
 /** Renderiza o template ativo. Templates são burros: só props → JSX. */
-export function renderShareCard(data: ShareCardData, template: ShareTemplateId, format: ShareFormat) {
-  switch (template) {
-    case 'record':
-      return <NewRecordCard data={data} format={format} />;
-    case 'evolution':
-      return <EvolutionCard data={data} format={format} />;
+export function renderShareCard(props: ShareTemplateProps) {
+  switch (props.template) {
+    case 'performance':
+      return <PerformanceTemplate {...props} />;
+    case 'dashboard':
+      return <DashboardTemplate {...props} />;
+    case 'minimal':
+      return <MinimalTemplate {...props} />;
+    case 'poster':
+      return <PosterTemplate {...props} />;
     default:
-      return <WorkoutCompletedCard data={data} format={format} />;
+      return <GlassWorkoutTemplate {...props} />;
   }
 }
 
@@ -22,6 +35,10 @@ interface ShareCardCanvasProps {
   format: ShareFormat;
   /** Escala da PRÉVIA (o nó exportado fica SEMPRE em escala 1 — sem transform). */
   scale: number;
+  photo: SharePhoto | null;
+  custom: ShareCustomization;
+  overlay: number;
+  logoUrl: string | null;
 }
 
 /**
@@ -30,29 +47,30 @@ interface ShareCardCanvasProps {
  * `transform: scale()` — assim preview === PNG (o transform nunca toca o nó
  * que é exportado). `forwardRef` expõe o nó real para o exportador.
  */
-export const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
-  function ShareCardCanvas({ data, template, format, scale }, ref) {
-    return (
+export const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(function ShareCardCanvas(
+  { data, template, format, scale, photo, custom, overlay, logoUrl },
+  ref
+) {
+  return (
+    <div
+      style={{
+        width: format.width * scale,
+        height: format.height * scale,
+        overflow: 'hidden',
+        borderRadius: 32 * scale,
+      }}
+    >
       <div
+        ref={ref}
         style={{
-          width: format.width * scale,
-          height: format.height * scale,
-          overflow: 'hidden',
-          borderRadius: 32 * scale,
+          width: format.width,
+          height: format.height,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
         }}
       >
-        <div
-          ref={ref}
-          style={{
-            width: format.width,
-            height: format.height,
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-          }}
-        >
-          {renderShareCard(data, template, format)}
-        </div>
+        {renderShareCard({ data, template, format, photo, custom, overlay, logoUrl })}
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
