@@ -26,7 +26,7 @@ import { downloadBlob, shareImage } from './shareImage';
 import { shareFileName } from './formatShareStats';
 import { ShareCardCanvas } from './ShareCardCanvas';
 import { PhotoLayer } from './templates/shared';
-import { clampNum, maxPan, pickPhotoFile, processPhotoFile } from './photo';
+import { clampNum, maxPan, pickPhotoFile, processPhotoFile, workoutPhotoToSharePhoto } from './photo';
 import { resolveBrandLogo } from './brandLogo';
 import { DEFAULT_CUSTOMIZATION, getFormat, SHARE_FORMATS, SHARE_TEMPLATES } from './types';
 import type {
@@ -114,8 +114,22 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
     selectWorkoutShareData(workoutId)
       .then((d) => {
         if (!alive) return;
-        if (!d) setError('Treino não encontrado.');
-        else setData(d);
+        if (!d) {
+          setError('Treino não encontrado.');
+        } else {
+          setData(d);
+          // Se o treino tem foto salva, ela já vira o fundo do card:
+          // carrega (local), mostra a espera com a logo e vai aos templates.
+          if (d.photoId != null) {
+            workoutPhotoToSharePhoto(d.photoId).then((p) => {
+              if (!alive) return;
+              if (p) {
+                setPhoto(p);
+                setStep('wait');
+              }
+            });
+          }
+        }
       })
       .catch(() => {
         if (alive) setError('Não foi possível carregar o treino.');

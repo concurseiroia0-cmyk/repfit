@@ -4,6 +4,7 @@
  * redimensionada (máx. 1920px) e com a orientação EXIF corrigida.
  * O dataURL é descartado quando o modal fecha.
  */
+import { getPhoto } from '../services/photoService';
 import type { SharePhoto } from './types';
 
 /** Abre o seletor nativo (câmera ou galeria) e resolve o arquivo escolhido. */
@@ -30,10 +31,13 @@ export function pickPhotoFile(capture: boolean): Promise<File | null> {
   });
 }
 
-/** Lê o arquivo respeitando a orientação EXIF e reduz para no máx. 1920px. */
-export async function processPhotoFile(file: File): Promise<SharePhoto | null> {
+/**
+ * Lê o arquivo respeitando a orientação EXIF e reduz para no máx. 1920px.
+ * Aceita qualquer Blob (File ou a foto do treino vinda do IndexedDB).
+ */
+export async function processPhotoFile(blob: Blob): Promise<SharePhoto | null> {
   try {
-    const source = await readBitmap(file);
+    const source = await readBitmap(blob);
     const maxDim = 1920;
     const ratio = Math.min(1, maxDim / Math.max(source.width, source.height));
     const width = Math.max(1, Math.round(source.width * ratio));
@@ -50,7 +54,7 @@ export async function processPhotoFile(file: File): Promise<SharePhoto | null> {
   } catch {
     // Fallback: carrega sem redimensionar (formato exótico, por exemplo).
     try {
-      const url = await fileToDataURL(file);
+      const url = await fileToDataURL(blob);
       return { url, scale: 1, panX: 0, panY: 0 };
     } catch {
       return null;
@@ -58,17 +62,32 @@ export async function processPhotoFile(file: File): Promise<SharePhoto | null> {
   }
 }
 
-async function readBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
+/**
+ * Usa a foto salva junto com o treino (IndexedDB) como fundo do card.
+ * Retorna null se não houver foto ou se ela não puder ser processada.
+ */
+export async function workoutPhotoToSharePhoto(photoId: number): Promise<SharePhoto | null> {
+  try {
+    const photo = await getPhoto(photoId);
+    if (!photo) return null;
+    const file = new File([photo.blob], 'treino-foto.jpg', { type: photo.blob.type || 'image/jpeg' });
+    return await processPhotoFile(file);
+  } catch {
+    return null;
+  }
+}
+
+async function readBitmap(blob: Blob): Promise<ImageBitmap | HTMLImageElement> {
   if (typeof createImageBitmap === 'function') {
     try {
       // 'from-image' aplica a rotação EXIF automaticamente.
-      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+      return await createImageBitmap(blob, { imageOrientation: 'from-image' });
     } catch {
       /* cai no fallback */
     }
   }
   return await new Promise<HTMLImageElement>((resolve, reject) => {
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
       URL.revokeObjectURL(url);
@@ -82,12 +101,12 @@ async function readBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
   });
 }
 
-function fileToDataURL(file: File): Promise<string> {
+function fileToDataURL(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(new Error('read-failed'));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(blob);
   });
 }
 

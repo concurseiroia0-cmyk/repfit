@@ -75,6 +75,8 @@ export interface ShareCardData {
   workoutName: string;
   workoutType: string;
   dateLabel: string;
+  /** Foto salva junto com o treino (IndexedDB) — vira o fundo do card. */
+  photoId: number | null;
   username: string;
   /** Avatar (futuro). O app não tem avatar hoje → sempre null (monograma). */
   avatarUrl: string | null;
