@@ -6,9 +6,11 @@ import {
   Download,
   HardDrive,
   Info,
+  Mars,
   Monitor,
   Moon,
   Plus,
+  Ruler,
   Search,
   ShieldCheck,
   Smartphone,
@@ -18,11 +20,15 @@ import {
   Trash2,
   Upload,
   User,
+  UserRound,
+  Venus,
 } from 'lucide-react';
+import type { Sex } from '../types';
 import { db } from '../db/db';
 import { DEFAULT_MUSCLE_GROUPS } from '../utils/constants';
-import { formatBytes } from '../utils/calc';
-import { cn, uid } from '../utils/misc';
+import { formatBytes, parseNum, unitToKg } from '../utils/calc';
+import { ACTIVE_PILL, cn, uid } from '../utils/misc';
+import { StepperInput } from '../components/ui/StepperInput';
 import { ensurePersistentStorage, getPersistStatus, getStorageUsage, type PersistStatus, type StorageUsage } from '../utils/storage';
 import { isIOS, usePwaInstall } from '../hooks/usePwaInstall';
 import { InstallAppButton } from '../components/PwaInstall';
@@ -45,6 +51,10 @@ export function SettingsPage() {
   const catalog = useLiveQuery(() => db.exerciseCatalog.orderBy('name').toArray(), []) ?? [];
 
   const [username, setUsername] = useState(settings.username);
+  const [profileSex, setProfileSex] = useState<Sex | ''>(settings.sex ?? '');
+  const [profileAge, setProfileAge] = useState(settings.age != null ? String(settings.age) : '');
+  const [profileHeight, setProfileHeight] = useState(settings.heightCm != null ? String(settings.heightCm) : '');
+  const [profileWeight, setProfileWeight] = useState(kgToInput(settings.weightKg, settings.unit));
   const [catQuery, setCatQuery] = useState('');
   const [newName, setNewName] = useState('');
   const [newGroup, setNewGroup] = useState<string>(DEFAULT_MUSCLE_GROUPS[0]);
@@ -70,6 +80,13 @@ export function SettingsPage() {
   }, [settings.username]);
 
   useEffect(() => {
+    setProfileSex(settings.sex ?? '');
+    setProfileAge(settings.age != null ? String(settings.age) : '');
+    setProfileHeight(settings.heightCm != null ? String(settings.heightCm) : '');
+    setProfileWeight(kgToInput(settings.weightKg, settings.unit));
+  }, [settings.sex, settings.age, settings.heightCm, settings.weightKg, settings.unit]);
+
+  useEffect(() => {
     void getStorageUsage().then(setStorage);
     void getPersistStatus().then(setPersist);
   }, []);
@@ -89,6 +106,17 @@ export function SettingsPage() {
   async function saveUsername() {
     await saveSettings({ username: username.trim() });
     push('Nome salvo.');
+  }
+
+  async function saveProfile() {
+    const w = parseNum(profileWeight);
+    await saveSettings({
+      sex: profileSex || undefined,
+      age: profileAge.trim() ? parseNum(profileAge) : null,
+      heightCm: profileHeight.trim() ? parseNum(profileHeight) : null,
+      weightKg: w != null && w > 0 ? Math.round(unitToKg(w, settings.unit) * 10) / 10 : null,
+    });
+    push('Perfil atualizado!', 'success');
   }
 
   function addCatalogItem() {
@@ -194,6 +222,14 @@ export function SettingsPage() {
 
   const filteredCatalog = catalog.filter((c) => c.name.toLowerCase().includes(catQuery.trim().toLowerCase()));
 
+  const SEX_OPTIONS: { value: Sex; label: string; icon: React.ReactNode }[] = [
+    { value: 'masculino', label: 'Masculino', icon: <Mars className="h-4 w-4" /> },
+    { value: 'feminino', label: 'Feminino', icon: <Venus className="h-4 w-4" /> },
+    { value: 'outro', label: 'Outro', icon: <UserRound className="h-4 w-4" /> },
+  ];
+
+  const hasProfile = Boolean(settings.sex || settings.age != null || settings.heightCm != null || settings.weightKg != null);
+
   return (
     <div>
       <h1 className="mb-4 text-xl font-extrabold text-slate-900 dark:text-white">Configurações</h1>
@@ -218,6 +254,80 @@ export function SettingsPage() {
             </Field>
             <div className="flex items-end">
               <Button onClick={() => void saveUsername()}>Salvar</Button>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 px-5 pb-5 pt-4 dark:border-white/10">
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <Ruler className="h-3.5 w-3.5" /> Dados do corpo
+              {hasProfile && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">preenchido</span>}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">Sexo</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {SEX_OPTIONS.map((o) => {
+                    const active = profileSex === o.value;
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setProfileSex(active ? '' : o.value)}
+                        className={cn(
+                          'flex items-center justify-center gap-1.5 rounded-full border px-2 py-2 text-xs font-semibold transition-all duration-150',
+                          active && ACTIVE_PILL,
+                          active && 'border-transparent',
+                          !active &&
+                            'border-slate-300 text-slate-600 hover:border-amber-400 hover:text-amber-600 dark:border-white/20 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-400'
+                        )}
+                      >
+                        <span className={cn(active && 'text-black dark:text-black')}>{o.icon}</span>
+                        <span className={cn(active && 'text-black dark:text-black')}>{o.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label="Idade" hint="Opcional">
+                  <StepperInput
+                    value={profileAge}
+                    onChange={setProfileAge}
+                    step={1}
+                    min={10}
+                    max={110}
+                    suffix="anos"
+                    inputMode="numeric"
+                    ariaLabel="Idade"
+                  />
+                </Field>
+                <Field label="Altura" hint="Opcional">
+                  <StepperInput
+                    value={profileHeight}
+                    onChange={setProfileHeight}
+                    step={1}
+                    min={100}
+                    max={250}
+                    suffix="cm"
+                    inputMode="numeric"
+                    ariaLabel="Altura"
+                  />
+                </Field>
+                <Field label="Peso" hint={settings.unit === 'lb' ? 'Em libras (lb)' : 'Em quilogramas (kg)'}>
+                  <StepperInput
+                    value={profileWeight}
+                    onChange={setProfileWeight}
+                    step={settings.unit === 'lb' ? 2.5 : 1}
+                    min={30}
+                    max={400}
+                    suffix={settings.unit}
+                    inputMode="decimal"
+                    ariaLabel="Peso"
+                  />
+                </Field>
+              </div>
+              <Button onClick={() => void saveProfile()}>Salvar perfil</Button>
             </div>
           </div>
         </Card>
@@ -552,4 +662,11 @@ export function SettingsPage() {
       <ShareAppModal open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
+}
+
+/** Converte peso em kg para exibição na unidade escolhida (ex.: 70 -> "70" ou "154.3"). */
+function kgToInput(kg: number | null | undefined, unit: 'kg' | 'lb'): string {
+  if (kg == null) return '';
+  const v = unit === 'lb' ? kg * 2.2046226218 : kg;
+  return v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 }

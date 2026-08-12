@@ -12,6 +12,7 @@ import { EvolutionPage } from './pages/EvolutionPage';
 import { MeasurementsPage } from './pages/MeasurementsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { WelcomePage } from './pages/WelcomePage';
+import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { useSettings } from './services/settingsService';
 import { db } from './db/db';
 
@@ -32,6 +33,11 @@ function WelcomeGate({ children }: { children: ReactNode }) {
   if (!settings.welcomeSeen && workoutCount === 0) {
     return <Navigate to="/boas-vindas" replace />;
   }
+  // Logo após as boas-vindas, quem ainda não preencheu o perfil é
+  // convidado a informar sexo/idade/altura/peso (pode pular).
+  if (!settings.profileDone && workoutCount === 0) {
+    return <Navigate to="/perfil" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -41,6 +47,7 @@ export default function App() {
       <ToastProvider>
         <Routes>
           <Route path="/boas-vindas" element={<WelcomePage />} />
+          <Route path="/perfil" element={<ProfileSetupPage />} />
           <Route
             element={
               <WelcomeGate>

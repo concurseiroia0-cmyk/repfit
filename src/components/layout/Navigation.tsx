@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { ACTIVE_PILL, cn } from '../../utils/misc';
 import { usePwaInstall } from '../../hooks/usePwaInstall';
+import { Logo } from '../Logo';
 import { InstallAppButton } from '../PwaInstall';
 
 export const NAV_ITEMS = [
@@ -25,11 +26,7 @@ export const NAV_ITEMS = [
 function Brand() {
   return (
     <div className="flex items-center gap-2.5">
-      <img
-        src={`${import.meta.env.BASE_URL}icon-192.png`}
-        alt="Logo do RepFit"
-        className="h-10 w-10 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.35)]"
-      />
+      <Logo className="h-10 w-10 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.35)]" />
       <div className="leading-tight">
         <div className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white">RepFit</div>
         <div className="text-[11px] text-slate-500 dark:text-slate-400">seus dados, só seus</div>

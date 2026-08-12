@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { InstallAppButton } from '../components/PwaInstall';
 import { ShareAppModal } from '../components/ShareApp';
 import { usePwaInstall } from '../hooks/usePwaInstall';
+import { Logo } from '../components/Logo';
 
 const FEATURES = [
   { icon: <Zap className="h-4 w-4" />, text: 'Registre treinos, séries, cargas e esforço' },
@@ -44,11 +45,7 @@ export function WelcomePage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md text-center">
-        <img
-          src={`${import.meta.env.BASE_URL}icon-192.png`}
-          alt="Logo do RepFit"
-          className="mx-auto h-20 w-20 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]"
-        />
+        <Logo className="mx-auto h-20 w-20 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]" />
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           Bem-vindo ao <span className="text-amber-500 dark:text-amber-400">RepFit</span> ⚡
         </h1>

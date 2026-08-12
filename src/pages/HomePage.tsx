@@ -29,6 +29,7 @@ import { ConfirmDialog } from '../components/ui/Modal';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { InstallAppButton } from '../components/PwaInstall';
 import { ShareAppModal } from '../components/ShareApp';
+import { HomeCalendar } from '../components/HomeCalendar';
 
 export function HomePage() {
   const workouts = useLiveQuery(() => workoutsLive(), []);
@@ -212,6 +213,11 @@ export function HomePage() {
         <StatCard icon={<Flame className="h-5 w-5" />} label="Sequência atual" value={streak > 0 ? `🔥 ${streak} dias` : '0 dias'} />
         <StatCard icon={<Dumbbell className="h-5 w-5" />} label="Volume da semana" value={weekVolume > 0 ? `${formatNumber(weekVolume)} ${settings.unit}` : '—'} />
         <StatCard icon={<Activity className="h-5 w-5" />} label="Esforço médio recente" value={avgEffort != null ? `${formatNumber(avgEffort)}/6` : '—'} />
+      </div>
+
+      {/* Calendário (design da referência: dias em círculos, treino em dourado) */}
+      <div className="mb-4">
+        <HomeCalendar workouts={workouts} unit={settings.unit} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

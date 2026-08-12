@@ -2,6 +2,7 @@
 
 export type Unit = 'kg' | 'lb';
 export type ThemeMode = 'light' | 'dark' | 'auto';
+export type Sex = 'masculino' | 'feminino' | 'outro';
 
 /** Uma série individual dentro de um exercício. */
 export interface SetEntry {
@@ -76,6 +77,15 @@ export interface Settings {
   welcomeSeen?: boolean;
   /** Tipos de medida (padrão + personalizados). Ausente = lista padrão. */
   measureTypes?: MeasureDef[];
+  /** Perfil do usuário (preenchido no onboarding). */
+  sex?: Sex;
+  age?: number | null;
+  /** Altura em centímetros. */
+  heightCm?: number | null;
+  /** Peso sempre em kg (exibido conforme a unidade do app). */
+  weightKg?: number | null;
+  /** Onboarding de perfil concluído (ou pulado). */
+  profileDone?: boolean;
 }
 
 /** Definição de um tipo de medida corporal (Peso, Braço, Cintura…). */
