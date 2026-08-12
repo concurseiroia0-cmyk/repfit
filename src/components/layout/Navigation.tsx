@@ -26,7 +26,7 @@ function Brand() {
   return (
     <div className="flex items-center gap-2.5">
       <img
-        src="/icon-192.png"
+        src={`${import.meta.env.BASE_URL}icon-192.png`}
         alt="Logo do RepFit"
         className="h-10 w-10 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.35)]"
       />

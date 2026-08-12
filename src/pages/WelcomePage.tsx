@@ -45,7 +45,7 @@ export function WelcomePage() {
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md text-center">
         <img
-          src="/icon-192.png"
+          src={`${import.meta.env.BASE_URL}icon-192.png`}
           alt="Logo do RepFit"
           className="mx-auto h-20 w-20 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]"
         />
