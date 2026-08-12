@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Activity,
@@ -31,7 +31,6 @@ import { ShareWorkoutModal } from '../shareCards/ShareWorkoutModal';
 
 export function WorkoutDetailPage() {
   const { id } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const { push } = useToast();
   const settings = useSettings();
@@ -47,13 +46,6 @@ export function WorkoutDetailPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
-  // Abre o compartilhamento automaticamente logo após salvar um treino novo.
-  useEffect(() => {
-    if (location.state?.share && workout?.id != null) {
-      setShareOpen(true);
-      window.history.replaceState({}, document.title, location.pathname);
-    }
-  }, [location.state, location.pathname, workout?.id]);
   const photoUrl = usePhotoUrl(workout?.photoId ?? null);
 
   async function handleDelete() {

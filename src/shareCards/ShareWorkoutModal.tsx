@@ -19,6 +19,7 @@ import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../components/ui/Toast';
 import { cn } from '../utils/misc';
+import { Logo } from '../components/Logo';
 import { selectWorkoutShareData } from './selectWorkoutShareData';
 import { exportShareCard, exportShareCardFallback } from './exportShareCard';
 import { downloadBlob, shareImage } from './shareImage';
@@ -37,7 +38,7 @@ import type {
   ShareTemplateId,
 } from './types';
 
-type StepId = 'photo' | 'adjust' | 'style';
+type StepId = 'photo' | 'wait' | 'adjust' | 'style';
 
 const STEPS: { id: StepId; label: string }[] = [
   { id: 'photo', label: 'Foto' },
@@ -170,7 +171,9 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
       const p = await processPhotoFile(file);
       if (p) {
         setPhoto(p);
-        goTo('adjust');
+        // Período de espera: logo + animação, depois vai para os templates.
+        setDone(false);
+        setStep('wait');
       } else {
         push('Não foi possível usar essa foto.', 'error');
       }
@@ -233,7 +236,16 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
     }
   }
 
-  const stepIndex = STEPS.findIndex((s) => s.id === step);
+  // Durante a espera (logo + animação) o passo "Foto" continua ativo.
+  const stepIndex = step === 'wait' ? 0 : STEPS.findIndex((s) => s.id === step);
+
+  // Tela de espera: após escolher a foto, mostra a logo com a animação de
+  // pontos quicando e avança sozinho para a escolha de templates.
+  useEffect(() => {
+    if (step !== 'wait') return;
+    const t = window.setTimeout(() => goTo('style'), 2300);
+    return () => window.clearTimeout(t);
+  }, [step]);
 
   return (
     <Modal open={open} onClose={onClose} title="Compartilhar treino" size="lg">
@@ -292,6 +304,19 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
         </div>
 
         {error && <p className="text-sm text-rose-500">{error}</p>}
+
+        {/* ESPERA — logo + animação após subir a foto */}
+        {step === 'wait' && (
+          <div className="flex flex-col items-center justify-center gap-6 rounded-3xl border border-white/10 bg-gradient-to-b from-[#161616] to-[#0D0D0D] px-6 py-16">
+            <Logo className="h-24 w-24 rounded-3xl shadow-[0_8px_24px_rgba(245,197,24,0.2)]" />
+            <div className="flex items-center gap-2.5" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className="repfit-dot" style={{ animationDelay: `${i * 0.16}s` }} />
+              ))}
+            </div>
+            <p className="text-sm font-semibold text-slate-400">Preparando seu card…</p>
+          </div>
+        )}
 
         {/* PASSO 1 — Escolher foto */}
         {step === 'photo' && (

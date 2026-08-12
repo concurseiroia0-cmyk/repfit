@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '../../utils/misc';
 import { parseNum } from '../../utils/calc';
+import { scheduleKeepInputVisible } from '../../utils/mobileInput';
 import { Input } from './Field';
 
 interface StepperInputProps {
@@ -58,19 +59,20 @@ export function StepperInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={(e) => {
-            // No celular, garante que o campo fique visível acima do teclado.
-            try {
-              e.currentTarget.scrollIntoView({ block: 'center' });
-            } catch {
-              /* navegador antigo sem suporte a options */
-            }
+            // Android/iOS: o teclado abre DEPOIS do focus e reduz o viewport —
+            // agenda rolagens para o campo continuar visível acima do teclado.
+            scheduleKeepInputVisible(e.currentTarget);
           }}
           aria-label={ariaLabel}
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
-          // Fonte 16px: impede o zoom automático do iOS ao focar (que "escondia" os números digitados).
-          className={cn('min-h-[44px] border-0 bg-transparent px-1 text-center text-base font-semibold shadow-none focus:ring-0 dark:bg-transparent', inputClassName)}
+          enterKeyHint="done"
+          data-lpignore="true"
+          // Fonte 16px INLINE: impede o zoom automático do iOS e garante o
+          // mesmo tamanho em qualquer navegador (Chrome Android incluso).
+          style={{ fontSize: 16 }}
+          className={cn('min-h-[44px] border-0 bg-transparent px-1 text-center font-semibold shadow-none focus:ring-0 dark:bg-transparent', inputClassName)}
         />
         {suffix && (
           <span className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-xs text-slate-400">{suffix}</span>

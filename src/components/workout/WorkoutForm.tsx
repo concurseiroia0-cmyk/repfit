@@ -4,6 +4,7 @@ import type { ExerciseCatalogItem, Unit, WorkoutExercise, WorkoutFormState } fro
 import { WORKOUT_TYPES } from '../../utils/constants';
 import { formatDayShort, formatDate, todayString, weekdayName } from '../../utils/date';
 import { ACTIVE_PILL, cn, uid } from '../../utils/misc';
+import { scheduleKeepInputVisible } from '../../utils/mobileInput';
 import { Button } from '../ui/Button';
 import { Card, CardHeader } from '../ui/Card';
 import { Field, Input, Textarea } from '../ui/Field';
@@ -182,6 +183,8 @@ export function WorkoutForm({
                 inputMode="numeric"
                 value={form.durationMin}
                 onChange={(e) => update({ durationMin: e.target.value.replace(/[^0-9]/g, '') })}
+                onFocus={(e) => scheduleKeepInputVisible(e.currentTarget)}
+                style={{ fontSize: 16 }}
                 placeholder="Ex.: 60"
               />
             </Field>

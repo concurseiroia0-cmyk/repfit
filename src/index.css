@@ -43,6 +43,34 @@
   }
 }
 
+/* Animação de espera do compartilhamento (pontos quicando, estilo Lottie). */
+.repfit-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #f5c518;
+  opacity: 0.3;
+  animation: repfit-bounce 1.7s ease-in-out infinite;
+}
+@keyframes repfit-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  30% {
+    transform: translateY(7px);
+    opacity: 0.9;
+  }
+  55% {
+    transform: translateY(-9px);
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.55;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
