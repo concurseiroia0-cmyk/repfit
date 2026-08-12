@@ -32,11 +32,19 @@ npm install
 npm run dev       # desenvolvimento (http://localhost:5173)
 npm run build     # build de produção (gera o PWA em dist/)
 npm run preview   # serve o build
+npm test          # testes automatizados (inclui a suíte de MODO OFFLINE)
+npm run typecheck # checagem de tipos
 ```
+
+> Os testes de **modo offline** (`src/services/offline.test.ts`) simulam a queda da
+> rede (fetch/XHR quebrados + `navigator.onLine = false`) e validam que treinos,
+> medidas, catálogo e rascunhos continuam funcionando 100% local, sem nenhuma
+> chamada de rede — além de conferir que o service worker pré-carrega o app
+> inteiro (o teste do SW usa o `dist/sw.js`, então rode `npm run build` antes).
 
 > Os ícones PNG do PWA são gerados pela logo do RepFit (barbell) por um script sem dependências:
 > ```bash
-> node scripts/prepare-logo.mjs   # a partir de .logo-src/logo-original.png
+> node scripts/prepare-logo.mjs   # a partir de scripts/logo-original.png
 > node scripts/gen-icons.mjs      # fallback com o desenho do relâmpago
 > ```
 
