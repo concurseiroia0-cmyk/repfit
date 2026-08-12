@@ -9,21 +9,18 @@ import type {
 } from './types';
 import { GlassWorkoutTemplate } from './templates/GlassWorkoutTemplate';
 import { PerformanceTemplate } from './templates/PerformanceTemplate';
-import { DashboardTemplate } from './templates/DashboardTemplate';
 import { MinimalTemplate } from './templates/MinimalTemplate';
-import { PosterTemplate } from './templates/PosterTemplate';
+import { PosterMinimalVerticalTemplate } from './templates/PosterMinimalVerticalTemplate';
 
 /** Renderiza o template ativo. Templates são burros: só props → JSX. */
 export function renderShareCard(props: ShareTemplateProps) {
   switch (props.template) {
     case 'performance':
       return <PerformanceTemplate {...props} />;
-    case 'dashboard':
-      return <DashboardTemplate {...props} />;
     case 'minimal':
       return <MinimalTemplate {...props} />;
-    case 'poster':
-      return <PosterTemplate {...props} />;
+    case 'posterMinimal':
+      return <PosterMinimalVerticalTemplate {...props} />;
     default:
       return <GlassWorkoutTemplate {...props} />;
   }

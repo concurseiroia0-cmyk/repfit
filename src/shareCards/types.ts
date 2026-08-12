@@ -21,15 +21,14 @@ export function getFormat(id: ShareFormatId): ShareFormat {
   return SHARE_FORMATS.find((f) => f.id === id) ?? SHARE_FORMATS[0];
 }
 
-/** Os 5 estilos visuais (cada um é um componente real, não um PNG). */
-export type ShareTemplateId = 'glass' | 'performance' | 'dashboard' | 'minimal' | 'poster';
+/** Os estilos visuais (cada um é um componente real, não um PNG). */
+export type ShareTemplateId = 'glass' | 'performance' | 'minimal' | 'posterMinimal';
 
 export const SHARE_TEMPLATES: { id: ShareTemplateId; label: string; hint: string }[] = [
   { id: 'glass', label: 'Glass', hint: 'Painel de vidro flutuante sobre a foto.' },
   { id: 'performance', label: 'Performance', hint: 'Métricas grandes e gráfico de volume.' },
-  { id: 'dashboard', label: 'Dashboard', hint: 'HUD esportiva com módulos transparentes.' },
   { id: 'minimal', label: 'Minimal', hint: 'Editorial, limpo, título gigante.' },
-  { id: 'poster', label: 'Poster', hint: 'Pôster com a assinatura do treino.' },
+  { id: 'posterMinimal', label: 'Pôster minimal', hint: 'Pôster vertical: dados centralizados e assinatura do treino.' },
 ];
 
 /** Exercício pronto para renderizar no card. */

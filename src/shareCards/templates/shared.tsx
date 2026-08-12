@@ -114,6 +114,7 @@ export function ShareCardFrame({
   logoUrl,
   children,
   darken,
+  footer,
 }: {
   format: ShareFormat;
   photo: SharePhoto | null;
@@ -122,6 +123,8 @@ export function ShareCardFrame({
   children: ReactNode;
   /** Escurecimento extra específico do template (gradiente, por exemplo). */
   darken?: CSSProperties;
+  /** Rodapé personalizado (ex.: marca centralizada). Padrão: canto inferior direito. */
+  footer?: ReactNode;
 }) {
   return (
     <div
@@ -149,7 +152,7 @@ export function ShareCardFrame({
       )}
       {darken && <div style={{ position: 'absolute', inset: 0, ...darken, pointerEvents: 'none' }} />}
       {children}
-      <BrandFooterAbs logoUrl={logoUrl} format={format} />
+      {footer ?? <BrandFooterAbs logoUrl={logoUrl} format={format} />}
     </div>
   );
 }
