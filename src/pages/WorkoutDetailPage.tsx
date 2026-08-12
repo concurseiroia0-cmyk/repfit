@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Activity,
@@ -10,6 +10,7 @@ import {
   ListChecks,
   Pencil,
   Repeat,
+  Share2,
   Timer,
   Trash2,
 } from 'lucide-react';
@@ -26,9 +27,11 @@ import { ConfirmDialog } from '../components/ui/Modal';
 import { EmptyState, SkeletonCard } from '../components/ui/Feedback';
 import { useToast } from '../components/ui/Toast';
 import { Modal } from '../components/ui/Modal';
+import { ShareWorkoutModal } from '../shareCards/ShareWorkoutModal';
 
 export function WorkoutDetailPage() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { push } = useToast();
   const settings = useSettings();
@@ -42,6 +45,15 @@ export function WorkoutDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  // Abre o compartilhamento automaticamente logo após salvar um treino novo.
+  useEffect(() => {
+    if (location.state?.share && workout?.id != null) {
+      setShareOpen(true);
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+  }, [location.state, location.pathname, workout?.id]);
   const photoUrl = usePhotoUrl(workout?.photoId ?? null);
 
   async function handleDelete() {
@@ -125,6 +137,9 @@ export function WorkoutDetailPage() {
               <Repeat className="h-4 w-4" /> Repetir treino
             </Button>
           </Link>
+          <Button variant="primary" size="sm" onClick={() => setShareOpen(true)}>
+            <Share2 className="h-4 w-4" /> Compartilhar treino
+          </Button>
           <Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10" onClick={() => setConfirmOpen(true)}>
             <Trash2 className="h-4 w-4" /> Excluir
           </Button>
@@ -209,6 +224,10 @@ export function WorkoutDetailPage() {
       <Modal open={fullscreen} onClose={() => setFullscreen(false)} title="Foto do treino" size="lg">
         <img src={photoUrl ?? undefined} alt={`Foto do treino ${workout.name}`} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
       </Modal>
+
+      {workout.id != null && (
+        <ShareWorkoutModal open={shareOpen} onClose={() => setShareOpen(false)} workoutId={workout.id} workoutDate={workout.date} />
+      )}
     </div>
   );
 }

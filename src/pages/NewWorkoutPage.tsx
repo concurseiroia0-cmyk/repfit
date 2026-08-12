@@ -210,7 +210,7 @@ export function NewWorkoutPage() {
       } else {
         push(isEdit ? 'Treino atualizado!' : 'Treino salvo!', 'success');
       }
-      navigate(`/treino/${saved.id}`);
+      navigate(`/treino/${saved.id}`, { state: isEdit ? undefined : { share: true } });
     } catch {
       push('Erro ao salvar o treino. Tente novamente.', 'error');
     } finally {
