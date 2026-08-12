@@ -1,12 +1,25 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 export default defineConfig(({ mode }) => ({
   // Em produção (build e preview) o app é servido de https://<usuario>.github.io/repfit/
   // (GitHub Pages). No dev mantém a raiz (/).
   base: mode === 'production' ? '/repfit/' : '/',
   plugins: [
+    // GitHub Pages não faz fallback SPA: copia o index.html para 404.html para
+    // que rotas diretas (ex.: /repfit/novo) carreguem o app em vez de dar 404.
+    {
+      name: 'generate-404-html',
+      apply: 'build',
+      closeBundle() {
+        const outDir = resolve(__dirname, 'dist');
+        const index = readFileSync(resolve(outDir, 'index.html'), 'utf-8');
+        writeFileSync(resolve(outDir, '404.html'), index);
+      },
+    },
     react(),
     VitePWA({
       registerType: 'autoUpdate',
