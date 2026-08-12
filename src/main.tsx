@@ -9,7 +9,18 @@ import { ensurePersistentStorage } from './utils/storage';
 import './index.css';
 
 // Registra o service worker (PWA/offline).
-registerSW({ immediate: true });
+// Quando o pré-carregamento do app inteiro termina, marca para mostrar
+// o aviso "pronto para funcionar offline" na próxima tela.
+registerSW({
+  immediate: true,
+  onOfflineReady() {
+    try {
+      localStorage.setItem('repfit.offline-ready', '1');
+    } catch {
+      /* sem localStorage — ignora */
+    }
+  },
+});
 
 // Garante o catálogo inicial de sugestões.
 void seedCatalogIfEmpty();

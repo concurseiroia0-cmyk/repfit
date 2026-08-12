@@ -45,6 +45,22 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         navigateFallback: '/repfit/index.html',
         cleanupOutdatedCaches: true,
+        // Acelera a primeira navegação quando há internet.
+        navigationPreload: true,
+        runtimeCaching: [
+          {
+            // Rede de segurança: QUALQUER recurso do próprio app (inclusive
+            // arquivos que venham a existir em versões futuras) fica salvo
+            // em cache após o primeiro acesso — o app funciona 100% offline.
+            urlPattern: ({ url }) => url.origin === self.location.origin,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'repfit-app',
+              expiration: { maxEntries: 96, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
       devOptions: {
         enabled: true,
