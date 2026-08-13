@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { ACTIVE_PILL, cn } from '../../utils/misc';
 import { usePwaInstall } from '../../hooks/usePwaInstall';
+import { useKeyboardOpen } from '../../hooks/useKeyboardOpen';
 import { Logo } from '../Logo';
 import { InstallAppButton } from '../PwaInstall';
 
@@ -73,6 +74,12 @@ export function Sidebar() {
 }
 
 export function BottomNav() {
+  // Esconde a barra enquanto o teclado está aberto no celular: com o teclado
+  // aberto ela sobe para cima do conteúdo (interactive-widget=resizes-content)
+  // e cobre o que está sendo digitado.
+  const keyboardOpen = useKeyboardOpen();
+  if (keyboardOpen) return null;
+
   return (
     <nav
       aria-label="Navegação principal"

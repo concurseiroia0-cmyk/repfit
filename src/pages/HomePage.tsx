@@ -30,7 +30,6 @@ import { usePwaInstall } from '../hooks/usePwaInstall';
 import { InstallAppButton } from '../components/PwaInstall';
 import { ShareAppModal } from '../components/ShareApp';
 import { HomeCalendar } from '../components/HomeCalendar';
-import { OfflineReadyNotice } from '../components/OfflineReadyNotice';
 
 export function HomePage() {
   const workouts = useLiveQuery(() => workoutsLive(), []);
@@ -124,7 +123,6 @@ export function HomePage() {
   if (workouts.length === 0) {
   return (
     <div className="pt-4">
-      <OfflineReadyNotice />
       {!pwa.installed && <InstallBanner canInstall={pwa.canInstall} onShare={() => setShareOpen(true)} />}
         <h1 className="mb-1 text-xl font-extrabold text-slate-900 dark:text-white">
           Olá{settings.username ? `, ${settings.username}` : ''} 👋
@@ -163,7 +161,6 @@ export function HomePage() {
 
   return (
     <div>
-      <OfflineReadyNotice />
       {!pwa.installed && <InstallBanner canInstall={pwa.canInstall} onShare={() => setShareOpen(true)} />}
       {daysSinceBackup != null && daysSinceBackup >= 14 && (
         <div className="mb-4 flex flex-col gap-2 rounded-3xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 sm:flex-row sm:items-center sm:justify-between">
