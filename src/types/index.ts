@@ -38,6 +38,8 @@ export interface Workout {
   durationMin: number | null;
   /** Tempo total de descanso registrado ao preencher este treino (em segundos). */
   restSec: number | null;
+  /** Onde o treino foi feito. Ausente em treinos antigos (antes da modalidade existir). */
+  mode?: 'academia' | 'calistenia';
   totalVolume: number;
   avgEffort: number | null;
   createdAt: number;

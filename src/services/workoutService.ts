@@ -94,6 +94,7 @@ export function workoutFromTemplate(src: Workout, date: string): Workout {
     weekday: parseLocalDate(date).getDay(),
     name: src.name,
     type: src.type,
+    mode: src.mode,
     notes: src.notes,
     exercises: src.exercises.map((e, i) => ({
       ...e,

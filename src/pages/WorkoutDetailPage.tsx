@@ -20,7 +20,7 @@ import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { effortLevel } from '../utils/constants';
 import { formatDate, formatDayShort, weekdayName } from '../utils/date';
 import { exerciseVolume, formatDurationShort, formatNumber, formatWeight, pluralize } from '../utils/calc';
-import { TypeBadge } from '../components/ui/Badge';
+import { ModeBadge, TypeBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/Modal';
@@ -100,6 +100,7 @@ export function WorkoutDetailPage() {
       <Card className="mb-4 p-5">
         <div className="flex flex-wrap items-center gap-2">
           {workout.type && <TypeBadge type={workout.type} />}
+          {workout.mode && <ModeBadge mode={workout.mode} />}
           <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
             {formatDayShort(workout.date)} · {weekdayName(workout.date)}
           </span>

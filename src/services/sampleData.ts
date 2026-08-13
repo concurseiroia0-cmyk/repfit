@@ -8,14 +8,16 @@ import { saveWorkout } from './workoutService';
 interface SamplePlan {
   name: string;
   type: string;
+  /** Onde o treino foi feito — academia ou calistenia. */
+  mode: 'academia' | 'calistenia';
   exercises: string[];
 }
 
 const PLANS: SamplePlan[] = [
-  { name: 'Treino A', type: 'Peito + Tríceps', exercises: ['Supino Reto', 'Supino Inclinado', 'Crucifixo', 'Tríceps Corda'] },
-  { name: 'Treino B', type: 'Costas + Bíceps', exercises: ['Puxada Frontal', 'Remada Curvada', 'Rosca Direta'] },
-  { name: 'Treino C', type: 'Pernas', exercises: ['Agachamento Livre', 'Leg Press', 'Cadeira Extensora', 'Mesa Flexora'] },
-  { name: 'Treino D', type: 'Ombros', exercises: ['Desenvolvimento Militar', 'Elevação Lateral'] },
+  { name: 'Treino A', type: 'Peito + Tríceps', mode: 'academia', exercises: ['Supino Reto', 'Supino Inclinado', 'Crucifixo', 'Tríceps Corda'] },
+  { name: 'Treino B', type: 'Costas + Bíceps', mode: 'academia', exercises: ['Puxada Frontal', 'Remada Curvada', 'Rosca Direta'] },
+  { name: 'Treino C', type: 'Pernas', mode: 'academia', exercises: ['Agachamento Livre', 'Leg Press', 'Cadeira Extensora', 'Mesa Flexora'] },
+  { name: 'Treino D', type: 'Ombros', mode: 'academia', exercises: ['Desenvolvimento Militar', 'Elevação Lateral'] },
 ];
 
 const BASE_WEIGHTS: Record<string, number> = {
@@ -91,6 +93,7 @@ export async function createSampleData(): Promise<number> {
         weekday: day.getDay(),
         name: plan.name,
         type: plan.type,
+        mode: plan.mode,
         exercises,
         notes: 'Treino de exemplo',
         photoId: null,

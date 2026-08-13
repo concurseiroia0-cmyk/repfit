@@ -268,6 +268,16 @@ describe('selectWorkoutShareData (dados do card)', () => {
     expect((await selectWorkoutShareData(withoutPhoto))!.photoId).toBeNull();
   });
 
+  it('repassa a modalidade salva do treino (academia/calistenia)', async () => {
+    const acad = (await db.workouts.add(makeWorkout({ mode: 'academia' }))) as number;
+    const cali = (await db.workouts.add(makeWorkout({ mode: 'calistenia' }))) as number;
+    const none = (await db.workouts.add(makeWorkout({}))) as number;
+
+    expect((await selectWorkoutShareData(acad))!.mode).toBe('academia');
+    expect((await selectWorkoutShareData(cali))!.mode).toBe('calistenia');
+    expect((await selectWorkoutShareData(none))!.mode).toBeNull();
+  });
+
   it('treino inexistente → null', async () => {
     expect(await selectWorkoutShareData(999_999)).toBeNull();
   });

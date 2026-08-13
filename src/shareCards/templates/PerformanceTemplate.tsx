@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { ACCENT, SUB, TEXT, TABULAR } from '../glassStyles';
 import { fmtBig, fmtInt, safe } from '../formatShareStats';
 import type { ShareTemplateProps } from '../types';
-import { GlassPanel, ShareCardFrame } from './shared';
+import { GlassPanel, ModePill, ShareCardFrame } from './shared';
 
 /**
  * TEMPLATE 2 — PERFORMANCE GLASS
@@ -47,8 +47,11 @@ export function PerformanceTemplate(props: ShareTemplateProps) {
       >
         {/* Topo */}
         <div>
-          <div style={{ fontSize: compact ? 16 : 20, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT }}>
-            Performance do treino
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: compact ? 16 : 20, fontWeight: 900, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT }}>
+              Performance do treino
+            </div>
+            <ModePill mode={data.mode} compact={compact} />
           </div>
           <h1
             style={{

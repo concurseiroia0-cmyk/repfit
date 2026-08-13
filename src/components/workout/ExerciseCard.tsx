@@ -198,6 +198,8 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
                   ariaLabel={`Carga da série ${si + 1}`}
                   className="w-[38%]"
                   inputClassName="pr-9"
+                  // decimal → teclado numérico com vírgula/ponto no Chrome Mobile.
+                  inputMode="decimal"
                 />
                 <span className="shrink-0 text-slate-400">×</span>
                 <StepperInput

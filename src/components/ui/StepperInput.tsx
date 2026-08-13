@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '../../utils/misc';
 import { parseNum } from '../../utils/calc';
-import { scheduleKeepInputVisible } from '../../utils/mobileInput';
+import { forceInputRepaint, scheduleKeepInputVisible } from '../../utils/mobileInput';
 import { Input } from './Field';
 
 interface StepperInputProps {
@@ -61,7 +61,7 @@ export function StepperInput({
     'flex h-11 w-9 shrink-0 items-center justify-center text-slate-500 hover:text-amber-600 active:bg-slate-100 disabled:opacity-30 disabled:hover:text-slate-500 dark:text-slate-400 dark:hover:text-amber-400 dark:active:bg-slate-800';
 
   return (
-    <div className={cn('flex items-center overflow-hidden rounded-xl border border-slate-300 bg-white dark:border-white/20 dark:bg-slate-800', className)}>
+    <div className={cn('stepper-input flex items-center overflow-hidden rounded-xl border border-slate-300 bg-white dark:border-white/20 dark:bg-slate-800', className)}>
       <button type="button" onClick={dec} aria-label={`Diminuir ${ariaLabel}`} className={btn} disabled={current != null && current <= min}>
         <Minus className="h-4 w-4" />
       </button>
@@ -71,7 +71,12 @@ export function StepperInput({
           type="text"
           inputMode={inputMode}
           defaultValue={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            onChange(e.target.value);
+            // Chrome Android: força o redesenho do dígito recém-digitado — o
+            // teclado pode abrir sem o navegador repintar o texto do campo.
+            forceInputRepaint(e.currentTarget);
+          }}
           onFocus={(e) => {
             // Android/iOS: o teclado abre DEPOIS do focus e reduz o viewport —
             // agenda rolagens para o campo continuar visível acima do teclado.
@@ -86,7 +91,9 @@ export function StepperInput({
           // Fonte 16px INLINE: impede o zoom automático do iOS e garante o
           // mesmo tamanho em qualquer navegador (Chrome Android incluso).
           style={{ fontSize: 16 }}
-          className={cn('min-h-[44px] border-0 bg-transparent px-1 text-center font-semibold shadow-none focus:ring-0 dark:bg-transparent', inputClassName)}
+          // O fundo do campo é SÓLIDO (ver .stepper-input input no index.css):
+          // o texto pinta sobre camada própria — nunca some no Chrome Android.
+          className={cn('min-h-[44px] border-0 px-1 text-center font-semibold shadow-none focus:ring-0', inputClassName)}
         />
         {suffix && (
           <span className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-xs text-slate-400">{suffix}</span>

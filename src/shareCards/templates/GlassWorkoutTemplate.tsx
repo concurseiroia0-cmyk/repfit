@@ -1,7 +1,7 @@
 import { ACCENT, PILL_YELLOW, SUB, TEXT, TABULAR } from '../glassStyles';
 import { safe } from '../formatShareStats';
 import type { ShareTemplateProps } from '../types';
-import { AvatarCircle, EffortLine, ExerciseRows, GlassPanel, RecordStrip, ShareCardFrame, buildMetrics } from './shared';
+import { AvatarCircle, EffortLine, ExerciseRows, GlassPanel, ModePill, RecordStrip, ShareCardFrame, buildMetrics } from './shared';
 
 /**
  * TEMPLATE 1 — GLASS
@@ -46,21 +46,26 @@ export function GlassWorkoutTemplate(props: ShareTemplateProps) {
                 <div style={{ fontSize: compact ? 18 : 22, color: SUB, marginTop: 2 }}>{data.dateLabel}</div>
               </div>
             </div>
-            {data.workoutType && (
-              <span
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: 999,
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  fontSize: compact ? 18 : 22,
-                  fontWeight: 700,
-                  color: SUB,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {safe(data.workoutType)}
-              </span>
+            {(data.workoutType || data.mode) && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
+                {data.workoutType && (
+                  <span
+                    style={{
+                      padding: '10px 24px',
+                      borderRadius: 999,
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.16)',
+                      fontSize: compact ? 18 : 22,
+                      fontWeight: 700,
+                      color: SUB,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {safe(data.workoutType)}
+                  </span>
+                )}
+                <ModePill mode={data.mode} compact={compact} />
+              </div>
             )}
           </div>
 

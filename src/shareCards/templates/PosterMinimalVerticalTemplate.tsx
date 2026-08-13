@@ -2,7 +2,7 @@ import { ACCENT, SUB, TEXT, TABULAR } from '../glassStyles';
 import { fmtBig, fmtInt, safe } from '../formatShareStats';
 import type { ShareCardData, ShareFormat, ShareTemplateProps } from '../types';
 import { Barbell } from './CardShell';
-import { ShareCardFrame } from './shared';
+import { ModePill, ShareCardFrame } from './shared';
 
 /**
  * TEMPLATE — PÔSTER MINIMAL VERTICAL
@@ -108,6 +108,13 @@ export function PosterMinimalVerticalTemplate(props: ShareTemplateProps) {
             }}
           >
             {fmtInt(data.totals.exercises)} Exercícios
+          </div>
+        )}
+
+        {/* Selo da modalidade (academia/calistenia) */}
+        {data.mode && (
+          <div style={{ marginTop: 18 }}>
+            <ModePill mode={data.mode} compact={compact} />
           </div>
         )}
 

@@ -62,7 +62,7 @@ export function NewWorkoutPage() {
             type: tpl.type,
             notes: tpl.notes,
             durationMin: tpl.durationMin != null ? String(tpl.durationMin) : '',
-            mode: 'academia',
+            mode: src.mode ?? 'academia',
             restSec: tpl.restSec ?? 0,
             exercises: tpl.exercises.map((e) => ({
               id: e.id,
@@ -91,7 +91,7 @@ export function NewWorkoutPage() {
             type: w.type,
             notes: w.notes,
             durationMin: w.durationMin != null ? String(w.durationMin) : '',
-            mode: 'academia',
+            mode: w.mode ?? 'academia',
             restSec: w.restSec ?? 0,
             exercises: w.exercises.map((e) => ({
               id: e.id,
@@ -189,6 +189,7 @@ export function NewWorkoutPage() {
         weekday: parseLocalDate(form.date).getDay(),
         name: form.name.trim(),
         type: form.type,
+        mode: form.mode,
         notes: form.notes.trim(),
         exercises,
         photoId: null,

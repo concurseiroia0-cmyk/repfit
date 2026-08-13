@@ -34,6 +34,7 @@ function makeData(): ShareCardData {
   return {
     workoutName: 'Peito Forte',
     workoutType: 'Peito + Tríceps',
+    mode: 'academia',
     dateLabel: '12 AGO 2026',
     photoId: null,
     username: 'Ana',
@@ -95,6 +96,29 @@ describe('templates renderizados (smoke test)', () => {
       const html = render(tpl, 0.25);
       expect(html, `template ${tpl} deve renderizar`).toContain('Peito Forte');
       expect(html, `template ${tpl} deve ter a data`).toContain('12 AGO 2026');
+      expect(html, `template ${tpl} deve ter o selo de modalidade`).toContain('Academia');
+    }
+  });
+
+  it('sem modalidade salva → nenhum selo de academia/calistenia no card', () => {
+    const d = { ...makeData(), mode: null };
+    for (const tpl of ALL_TEMPLATES) {
+      const html = renderToStaticMarkup(
+        <ShareCardCanvas
+          data={d}
+          template={tpl}
+          format={SHARE_FORMATS[0]}
+          scale={0.25}
+          photo={null}
+          custom={CUSTOM}
+          overlay={0.42}
+          logoUrl={null}
+        />
+      );
+      expect(html, `template ${tpl}`).not.toContain('Academia');
+      expect(html, `template ${tpl}`).not.toContain('Calistenia');
+      expect(html, `template ${tpl}`).not.toContain('🏋️');
+      expect(html, `template ${tpl}`).not.toContain('🤸');
     }
   });
 

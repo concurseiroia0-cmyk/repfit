@@ -1,7 +1,7 @@
 import { ACCENT, SUB, TABULAR } from '../glassStyles';
 import { fmtNum, safe } from '../formatShareStats';
 import type { ShareTemplateProps } from '../types';
-import { GlassPanel, ShareCardFrame, buildMetrics } from './shared';
+import { GlassPanel, ModePill, ShareCardFrame, buildMetrics } from './shared';
 
 /**
  * TEMPLATE 4 — MINIMAL
@@ -129,6 +129,11 @@ export function MinimalTemplate(props: ShareTemplateProps) {
         >
           {data.dateLabel}
         </div>
+        {data.mode && (
+          <div style={{ marginTop: 22 }}>
+            <ModePill mode={data.mode} compact={compact} />
+          </div>
+        )}
       </div>
     </ShareCardFrame>
   );

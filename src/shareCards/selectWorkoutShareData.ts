@@ -78,6 +78,7 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
   return {
     workoutName: workout.name.trim(),
     workoutType: workout.type,
+    mode: workout.mode ?? null,
     dateLabel: dateLabel(workout.date),
     photoId: workout.photoId != null ? Number(workout.photoId) : null,
     username: settings.username,

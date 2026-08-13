@@ -33,3 +33,26 @@ export function scheduleKeepInputVisible(el: HTMLInputElement | HTMLTextAreaElem
   window.visualViewport?.addEventListener('resize', onResize);
   el.addEventListener('blur', onBlur);
 }
+
+/**
+ * Chrome Android: força a repintura de um campo logo após o onChange.
+ * Quando o teclado abre e a página reflui (interactive-widget=resizes-content),
+ * o navegador às vezes deixa de redesenhar o dígito recém-digitado — o texto
+ * fica invisível, mas o valor continua salvo no estado. Um reflow forçado +
+ * camada própria por um frame faz o Chrome repintar o valor atual do campo.
+ */
+export function forceInputRepaint(el: HTMLElement | null | undefined): void {
+  if (!el) return;
+  try {
+    // Reflow forçado: o navegador reavalia a pintura do campo agora mesmo.
+    void el.offsetHeight;
+    el.style.willChange = 'transform';
+    requestAnimationFrame(() => {
+      if (el.isConnected && el.style.willChange === 'transform') {
+        el.style.willChange = '';
+      }
+    });
+  } catch {
+    /* navegadores antigos */
+  }
+}
