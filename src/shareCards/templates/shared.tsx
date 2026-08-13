@@ -145,7 +145,7 @@ export function ShareCardFrame({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'radial-gradient(120% 90% at 50% 12%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.45) 100%)',
+            background: 'radial-gradient(120% 90% at 50% 12%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.22) 100%)',
             pointerEvents: 'none',
           }}
         />

@@ -42,8 +42,7 @@ export function PosterMinimalVerticalTemplate(props: ShareTemplateProps) {
   return (
     <ShareCardFrame
       {...props}
-      overlay={0.42}
-      darken={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.18) 42%, rgba(0,0,0,0.52) 100%)' }}
+      darken={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.16), rgba(0,0,0,0.09) 42%, rgba(0,0,0,0.26) 100%)' }}
       footer={<CenteredBrand logoUrl={logoUrl} format={format} />}
     >
       <div

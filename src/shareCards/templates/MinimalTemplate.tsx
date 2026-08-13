@@ -24,7 +24,7 @@ export function MinimalTemplate(props: ShareTemplateProps) {
   const rec = custom.showRecord ? data.record : null;
 
   return (
-    <ShareCardFrame {...props} overlay={0.3}>
+    <ShareCardFrame {...props}>
       {/* Painel de métricas no topo */}
       <div style={{ position: 'absolute', top: pad, left: pad, right: pad, display: 'flex', justifyContent: 'center' }}>
         <GlassPanel

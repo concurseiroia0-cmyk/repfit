@@ -32,8 +32,7 @@ export function PerformanceTemplate(props: ShareTemplateProps) {
   return (
     <ShareCardFrame
       {...props}
-      overlay={0.4}
-      darken={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.45), rgba(0,0,0,0.05) 50%)' }}
+      darken={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.22), rgba(0,0,0,0.03) 50%)' }}
     >
       <GlassPanel
         radius={40}

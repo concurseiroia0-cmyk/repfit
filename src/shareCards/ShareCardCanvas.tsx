@@ -41,8 +41,11 @@ interface ShareCardCanvasProps {
 /**
  * Palco do card no tamanho real do formato (ex.: 1080×1350).
  * A prévia é o MESMO nó em escala 1 dentro de um wrapper escalado com
- * `transform: scale()` — assim preview === PNG (o transform nunca toca o nó
- * que é exportado). `forwardRef` expõe o nó real para o exportador.
+ * `transform: scale()` — assim preview === PNG. O transform fica em um
+ * WRAPPER INTERMEDIÁRIO e nunca no nó exportado: o `html-to-image` dimensiona
+ * o canvas por `clientWidth` (que ignora transforms), então um transform no
+ * nó exportado produziria um PNG gigante e preto com o card encolhido no
+ * canto. `forwardRef` expõe o nó real (escala 1) para o exportador.
  */
 export const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(function ShareCardCanvas(
   { data, template, format, scale, photo, custom, overlay, logoUrl },
@@ -58,7 +61,6 @@ export const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
       }}
     >
       <div
-        ref={ref}
         style={{
           width: format.width,
           height: format.height,
@@ -66,7 +68,9 @@ export const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
           transformOrigin: 'top left',
         }}
       >
-        {renderShareCard({ data, template, format, photo, custom, overlay, logoUrl })}
+        <div ref={ref} style={{ width: format.width, height: format.height }}>
+          {renderShareCard({ data, template, format, photo, custom, overlay, logoUrl })}
+        </div>
       </div>
     </div>
   );

@@ -21,8 +21,7 @@ export function GlassWorkoutTemplate(props: ShareTemplateProps) {
   return (
     <ShareCardFrame
       {...props}
-      overlay={0.5}
-      darken={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55) 75%)' }}
+      darken={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.28) 75%)' }}
     >
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: pad }}>
         <GlassPanel

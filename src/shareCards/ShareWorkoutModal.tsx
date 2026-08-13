@@ -22,6 +22,7 @@ import { cn } from '../utils/misc';
 import { Logo } from '../components/Logo';
 import { selectWorkoutShareData } from './selectWorkoutShareData';
 import { exportShareCard, exportShareCardFallback } from './exportShareCard';
+import { APP_VERSION } from '../buildStamp';
 import { downloadBlob, shareImage } from './shareImage';
 import { shareFileName } from './formatShareStats';
 import { ShareCardCanvas } from './ShareCardCanvas';
@@ -83,7 +84,7 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
 
   const [step, setStep] = useState<StepId>('photo');
   const [photo, setPhoto] = useState<SharePhoto | null>(null);
-  const [overlay, setOverlay] = useState(0.42);
+  const [overlay, setOverlay] = useState(0.3);
   const [custom, setCustom] = useState<ShareCustomization>(DEFAULT_CUSTOMIZATION);
   const [template, setTemplate] = useState<ShareTemplateId>('glass');
   const [formatId, setFormatId] = useState<ShareFormatId>('feed');
@@ -108,7 +109,7 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
     setDone(false);
     setStep('photo');
     setPhoto(null);
-    setOverlay(0.42);
+    setOverlay(0.3);
     setCustom(DEFAULT_CUSTOMIZATION);
     setTemplate('glass');
     selectWorkoutShareData(workoutId)
@@ -223,11 +224,21 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
     setDone(false);
     try {
       let blob: Blob;
+      let fallbackReason = '';
       try {
-        blob = await exportShareCard(node);
-      } catch {
-        // Fallback Canvas 2D — nunca deixa o usuário sem a imagem.
-        blob = await exportShareCardFallback(data, format, template);
+        // A foto vai pelo ESTADO (dataURL) — a exportação não depende do <img>
+        // do DOM estar carregado na hora do clique (era o que sumia/pretoava no
+        // celular).
+        blob = await exportShareCard(node, photo);
+      } catch (err) {
+        // Fallback Canvas 2D — nunca deixa o usuário sem a imagem, mas avisa
+        // que o template exato não pôde ser gerado (o PNG verificado falhou).
+        // A foto do usuário é desenhada mesmo no fallback (Canvas 2D puro),
+        // então ela NUNCA some do card final. O código do erro fica visível
+        // para diagnóstico no celular.
+        fallbackReason = err instanceof Error ? ` [${err.message}]` : '';
+        blob = await exportShareCardFallback(data, format, template, photo);
+        push(`Não foi possível gerar o template exato; usando o card padrão com a sua foto.${fallbackReason}`, 'info');
       }
       const filename = shareFileName(data.workoutName, workoutDate || new Date().toISOString().slice(0, 10));
       if (mode === 'save') {
@@ -296,25 +307,33 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
         </div>
 
         {/* Formato (vale para todos os passos — define a proporção do editor e do PNG) */}
-        <div className="flex flex-wrap gap-2">
-          {SHARE_FORMATS.map((f) => {
-            const active = f.id === formatId;
-            return (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFormatId(f.id)}
-                className={cn(
-                  'rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-150',
-                  active
-                    ? 'bg-amber-400 text-black shadow-[0_4px_12px_rgba(245,197,24,0.28)] -translate-y-0.5 motion-reduce:translate-y-0 motion-reduce:shadow-none'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-[#26262b] dark:text-slate-300 dark:hover:bg-slate-700'
-                )}
-              >
-                {f.label}
-              </button>
-            );
-          })}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-wrap gap-2">
+            {SHARE_FORMATS.map((f) => {
+              const active = f.id === formatId;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFormatId(f.id)}
+                  className={cn(
+                    'rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-150',
+                    active
+                      ? 'bg-amber-400 text-black shadow-[0_4px_12px_rgba(245,197,24,0.28)] -translate-y-0.5 motion-reduce:translate-y-0 motion-reduce:shadow-none'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-[#26262b] dark:text-slate-300 dark:hover:bg-slate-700'
+                  )}
+                >
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+          <span
+            title="Versão do build — se não mudou, recarregue sem cache (Ctrl+Shift+R) ou reabra o app"
+            className="shrink-0 pt-2 text-[10px] font-semibold tabular-nums text-slate-400/80 dark:text-slate-600"
+          >
+            v{APP_VERSION}
+          </span>
         </div>
 
         {error && <p className="text-sm text-rose-500">{error}</p>}
