@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Flame, Plus, Star, Zap } from 'lucide-react';
 import type { ExerciseCatalogItem, Unit, WorkoutExercise, WorkoutFormState } from '../../types';
 import { WORKOUT_TYPES } from '../../utils/constants';
@@ -8,9 +8,11 @@ import { scheduleKeepInputVisible } from '../../utils/mobileInput';
 import { Button } from '../ui/Button';
 import { Card, CardHeader } from '../ui/Card';
 import { Field, Input, Textarea } from '../ui/Field';
-import { ExerciseCard } from './ExerciseCard';
-import { PhotoPicker } from './PhotoPicker';
-import { RestTimer, type RestTimerHandle } from './RestTimer';
+import { ExerciseCard, exerciseFitsMode } from './ExerciseCard';
+import { RestQuestion } from './RestQuestion';
+
+/** Modalidades disponíveis para filtrar as sugestões de exercícios. */
+const MODES = ['academia', 'calistenia'] as const;
 
 export function emptyWorkoutFormState(date = todayString()): WorkoutFormState {
   return {
@@ -19,6 +21,7 @@ export function emptyWorkoutFormState(date = todayString()): WorkoutFormState {
     type: '',
     notes: '',
     durationMin: '',
+    mode: 'academia',
     restSec: 0,
     exercises: [],
   };
@@ -37,9 +40,6 @@ export function emptyExercise(): {
 interface WorkoutFormProps {
   form: WorkoutFormState;
   onChange: (next: WorkoutFormState) => void;
-  photoId: string | null;
-  photoWorkoutId: string;
-  onPhotoChange: (id: string | null) => void;
   unit: Unit;
   catalog: ExerciseCatalogItem[];
   /** Exercícios do treino anterior (modo "repetir") para comparação. */
@@ -55,9 +55,6 @@ interface WorkoutFormProps {
 export function WorkoutForm({
   form,
   onChange,
-  photoId,
-  photoWorkoutId,
-  onPhotoChange,
   unit,
   catalog,
   previous,
@@ -67,8 +64,10 @@ export function WorkoutForm({
   draftBanner,
   onDiscardDraft,
 }: WorkoutFormProps) {
-  const restTimerRef = useRef<RestTimerHandle>(null);
   const update = (patch: Partial<WorkoutFormState>) => onChange({ ...form, ...patch });
+
+  // Modalidade escolhida (normaliza rascunhos antigos sem o campo).
+  const mode = form.mode === 'calistenia' ? 'calistenia' : 'academia';
 
   const addExercise = (prefill?: { name: string; lastWeight: number | null; lastReps: number | null }) => {
     const ex = emptyExercise();
@@ -98,22 +97,22 @@ export function WorkoutForm({
     update({ exercises: next });
   };
 
-  const favorites = useMemo(() => catalog.filter((c) => c.favorite).slice(0, 6), [catalog]);
-  const recents = useMemo(
-    () => [...catalog].sort((a, b) => b.timesUsed - a.timesUsed).slice(0, 6),
-    [catalog]
-  );
   const quick = useMemo(() => {
+    // Sugestões da modalidade escolhida: mais usados primeiro, depois em ordem
+    // alfabética — assim quem treina calistenia vê exercícios de calistenia
+    // mesmo que nunca os tenha usado antes.
     const seen = new Set<string>();
     const out: ExerciseCatalogItem[] = [];
-    for (const c of [...favorites, ...recents]) {
-      if (!seen.has(c.name) && c.timesUsed > 0) {
-        seen.add(c.name);
-        out.push(c);
-      }
+    const ordered = catalog
+      .filter((c) => exerciseFitsMode(c, mode))
+      .sort((a, b) => b.timesUsed - a.timesUsed || a.name.localeCompare(b.name, 'pt-BR'));
+    for (const c of ordered) {
+      if (seen.has(c.name)) continue;
+      seen.add(c.name);
+      out.push(c);
     }
     return out.slice(0, 8);
-  }, [favorites, recents]);
+  }, [catalog, mode]);
 
   const setCount = form.exercises.reduce((a, e) => a + e.sets.length, 0);
 
@@ -200,26 +199,11 @@ export function WorkoutForm({
         </div>
       </Card>
 
-      {/* Foto */}
+      {/* Descanso (opcional) */}
       <Card>
-        <CardHeader title="Foto" subtitle="Salva apenas neste dispositivo" />
+        <CardHeader title="Descanso" subtitle="Opcional — houve descanso entre as séries?" />
         <div className="px-5 pb-5">
-          <PhotoPicker photoId={photoId} workoutId={photoWorkoutId} onChange={onPhotoChange} />
-        </div>
-      </Card>
-
-      {/* Cronômetro de descanso */}
-      <Card>
-        <CardHeader
-          title="Cronômetro de descanso"
-          subtitle="Descanse entre as séries e registre o tempo usado"
-        />
-        <div className="px-5 pb-5">
-          <RestTimer
-            ref={restTimerRef}
-            totalRestSec={form.restSec}
-            onComplete={(sec) => update({ restSec: (form.restSec ?? 0) + sec })}
-          />
+          <RestQuestion value={form.restSec} onChange={(sec) => update({ restSec: sec })} />
         </div>
       </Card>
 
@@ -235,6 +219,35 @@ export function WorkoutForm({
           }
         />
         <div className="px-5 pb-5">
+          {/* Modalidade: filtra as sugestões (rápidos + autocomplete). */}
+          <div className="mb-4">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              Onde você treinou?
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {MODES.map((m) => {
+                const active = mode === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => update({ mode: m })}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition-all duration-150',
+                      active && ACTIVE_PILL,
+                      active && 'border-transparent',
+                      !active &&
+                        'border-slate-300 text-slate-600 hover:border-amber-400 hover:text-amber-600 dark:border-white/20 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-400'
+                    )}
+                  >
+                    {m === 'academia' ? '🏋️ Academia' : '🤸 Calistenia'}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {quick.length > 0 && (
             <div className="mb-4">
               <p className="mb-1.5 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -274,7 +287,7 @@ export function WorkoutForm({
                   unit={unit}
                   previous={previous?.[i] ?? null}
                   catalog={catalog}
-                  onRest={() => restTimerRef.current?.quickStart()}
+                  mode={mode}
                   onChange={(next) => updateExercise(ex.id, next)}
                   onRemove={() => removeExercise(ex.id)}
                   onMove={(dir) => moveExercise(ex.id, dir)}

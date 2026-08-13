@@ -8,7 +8,7 @@ import { SkeletonCard } from '../components/ui/Feedback';
 import { useToast } from '../components/ui/Toast';
 import { displayToKg, formatNumber, parseNum } from '../utils/calc';
 import { formatDayShort, parseLocalDate, todayString } from '../utils/date';
-import { clearDraft, clearDraftPhotos, draftPhotoWorkoutId, loadDraft, saveDraft } from '../services/draftService';
+import { clearDraft, clearDraftPhotos, loadDraft, saveDraft } from '../services/draftService';
 import { relinkPhoto } from '../services/photoService';
 import { useSettings } from '../services/settingsService';
 import { getWorkout, saveWorkout, workoutFromTemplate } from '../services/workoutService';
@@ -47,8 +47,6 @@ export function NewWorkoutPage() {
   const [repeatSourceDate, setRepeatSourceDate] = useState<string | null>(null);
   const restoredRef = useRef(false);
 
-  const photoTarget = isEdit ? String(id) : draftPhotoWorkoutId();
-
   // Carrega treino (editar ou repetir) ou restaura o rascunho.
   useEffect(() => {
     let alive = true;
@@ -64,6 +62,7 @@ export function NewWorkoutPage() {
             type: tpl.type,
             notes: tpl.notes,
             durationMin: tpl.durationMin != null ? String(tpl.durationMin) : '',
+            mode: 'academia',
             restSec: tpl.restSec ?? 0,
             exercises: tpl.exercises.map((e) => ({
               id: e.id,
@@ -92,6 +91,7 @@ export function NewWorkoutPage() {
             type: w.type,
             notes: w.notes,
             durationMin: w.durationMin != null ? String(w.durationMin) : '',
+            mode: 'academia',
             restSec: w.restSec ?? 0,
             exercises: w.exercises.map((e) => ({
               id: e.id,
@@ -244,9 +244,6 @@ export function NewWorkoutPage() {
       <WorkoutForm
         form={form}
         onChange={setForm}
-        photoId={photoId}
-        photoWorkoutId={photoTarget}
-        onPhotoChange={setPhotoId}
         unit={settings.unit}
         catalog={catalog}
         previous={previous}

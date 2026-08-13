@@ -1,11 +1,20 @@
 import { useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Timer, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import type { ExerciseCatalogItem, ExerciseDraft, SetDraft, Unit, WorkoutExercise } from '../../types';
 import { displayToKg, exerciseVolume, formatWeight, parseNum } from '../../utils/calc';
 import { uid } from '../../utils/misc';
 import { EffortSelector } from './EffortSelector';
 import { StepperInput } from '../ui/StepperInput';
 import { Textarea } from '../ui/Field';
+
+/**
+ * Exercício do catálogo serve para a modalidade escolhida? Exercícios
+ * criados pelo usuário (sem mode) aparecem nas duas modalidades.
+ */
+export function exerciseFitsMode(c: ExerciseCatalogItem, mode: 'academia' | 'calistenia'): boolean {
+  if (!c.mode || c.mode === 'ambos' || c.mode === mode) return true;
+  return false;
+}
 
 interface ExerciseCardProps {
   exercise: ExerciseDraft;
@@ -15,25 +24,26 @@ interface ExerciseCardProps {
   /** Exercício correspondente do treino anterior (modo "repetir"). */
   previous?: WorkoutExercise | null;
   catalog: ExerciseCatalogItem[];
-  /** Inicia o cronômetro de descanso com o último tempo usado. */
-  onRest?: () => void;
+  /** Modalidade escolhida no treino (filtra o autocomplete). */
+  mode: 'academia' | 'calistenia';
   onChange: (next: ExerciseDraft) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
 }
 
-export function ExerciseCard({ exercise, index, total, unit, previous, catalog, onRest, onChange, onRemove, onMove }: ExerciseCardProps) {
+export function ExerciseCard({ exercise, index, total, unit, previous, catalog, mode, onChange, onRemove, onMove }: ExerciseCardProps) {
   const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const q = exercise.name.trim().toLowerCase();
 
   const suggestions = useMemo(() => {
     const list = catalog
+      .filter((c) => exerciseFitsMode(c, mode))
       .map((c) => ({ name: c.name, lastWeight: c.lastWeight, lastReps: c.lastReps }))
       .filter((c) => (q ? c.name.toLowerCase().includes(q) : true))
       .slice(0, 7);
     return list;
-  }, [catalog, q]);
+  }, [catalog, q, mode]);
 
   const exact = catalog.find((c) => c.name.toLowerCase() === q);
 
@@ -161,16 +171,6 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
         <div className="mb-1.5 flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Séries</span>
           <div className="flex gap-1.5">
-            {onRest && (
-              <button
-                type="button"
-                onClick={onRest}
-                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-                aria-label="Iniciar descanso entre séries com o último tempo usado"
-              >
-                <Timer className="h-3.5 w-3.5" /> descansar
-              </button>
-            )}
             {exercise.sets.length > 1 && (
               <button type="button" onClick={applyToAll} className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
                 igualar

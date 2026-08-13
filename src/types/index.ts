@@ -44,11 +44,16 @@ export interface Workout {
   updatedAt: number;
 }
 
+/** Modalidade de um exercício do catálogo (para filtrar sugestões). */
+export type ExerciseMode = 'academia' | 'calistenia' | 'ambos';
+
 /** Item do catálogo de exercícios (sugestões/recentes/favoritos). */
 export interface ExerciseCatalogItem {
   id?: number;
   name: string;
   muscleGroup: string;
+  /** Onde o exercício costuma ser feito. Ausente = exercício criado pelo usuário (aparece nas duas modalidades). */
+  mode?: ExerciseMode;
   favorite: boolean;
   lastWeight: number | null;
   lastReps: number | null;
@@ -126,7 +131,9 @@ export interface WorkoutFormState {
   type: string;
   notes: string;
   durationMin: string;
-  /** Descanso acumulado nesta sessão do formulário (em segundos). */
+  /** Modalidade escolhida: filtra as sugestões de exercícios. */
+  mode: 'academia' | 'calistenia';
+  /** Descanso entre séries em segundos (0 = sem resposta / não houve). */
   restSec: number;
   exercises: ExerciseDraft[];
 }

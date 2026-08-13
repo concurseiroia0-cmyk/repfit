@@ -176,6 +176,7 @@ describe('Modo offline (rede caída)', () => {
       type: 'Pernas',
       notes: '',
       durationMin: '',
+      mode: 'academia' as const,
       restSec: 0,
       exercises: [{ id: 'e', name: 'Agachamento Livre', sets: [{ id: 's', weight: '60', reps: '12' }], effort: 4, notes: '' }],
     };

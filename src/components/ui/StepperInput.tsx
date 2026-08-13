@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '../../utils/misc';
 import { parseNum } from '../../utils/calc';
@@ -34,6 +34,20 @@ export function StepperInput({
   const current = parseNum(value);
   const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n * 10) / 10));
 
+  // O input é NÃO controlado (defaultValue): no Chrome Android, um input
+  // controlado pode deixar de exibir os dígitos digitados quando o teclado
+  // abre e a página faz reflow (interactive-widget=resizes-content) — o valor
+  // fica no estado mas o campo continua vazio. Com defaultValue o navegador
+  // guarda o que foi digitado e o onChange apenas alimenta o estado. Mudanças
+  // EXTERNAS (pré-preencher, repetir treino, botões +/−) são aplicadas pelo
+  // efeito abaixo. Durante a digitação o DOM já está em sincronia com o
+  // estado (onChange), então reatribuir o mesmo valor não move o cursor.
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value !== value) {
+      inputRef.current.value = value;
+    }
+  }, [value]);
+
   const dec = () => {
     const n = (current ?? 0) - step;
     onChange(String(clamp(n)));
@@ -56,7 +70,7 @@ export function StepperInput({
           ref={inputRef}
           type="text"
           inputMode={inputMode}
-          value={value}
+          defaultValue={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={(e) => {
             // Android/iOS: o teclado abre DEPOIS do focus e reduz o viewport —
