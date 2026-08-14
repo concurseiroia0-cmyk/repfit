@@ -7,3 +7,8 @@ dev-dist
 npm-debug.log*
 .node-tools
 .freebuff
+
+# Supabase
+.env
+.env.*
+!.env.example

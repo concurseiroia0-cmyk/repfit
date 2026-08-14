@@ -150,3 +150,12 @@ export interface WorkoutDraft {
   photoId: string | null;
   updatedAt: number;
 }
+
+/** Mapa id-local → id-na-nuvem, usado pela sincronização com o Supabase. */
+export interface SyncMapEntry {
+  /** Chave composta: `${entity}:${localId}` (ex.: 'workout:12'). */
+  key: string;
+  /** Id UUID da linha na nuvem. */
+  cloudId: string;
+  entity: 'workout' | 'exercise' | 'photo';
+}

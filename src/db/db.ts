@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { BodyMeasurement, ExerciseCatalogItem, Photo, Settings, Workout } from '../types';
+import type { BodyMeasurement, ExerciseCatalogItem, Photo, Settings, SyncMapEntry, Workout } from '../types';
 
 /**
  * Banco local (IndexedDB) do RepFit.
@@ -15,6 +15,8 @@ export class DiarioDB extends Dexie {
   photos!: Table<Photo, number>;
   settings!: Table<{ key: string; value: unknown }, string>;
   measurements!: Table<BodyMeasurement, number>;
+  /** Mapa id-local → id-na-nuvem (usado pela sincronização Supabase). */
+  syncMap!: Table<SyncMapEntry, string>;
 
   constructor() {
     super('diario-de-treino');
@@ -30,6 +32,14 @@ export class DiarioDB extends Dexie {
       photos: '++id, workoutId',
       settings: 'key',
       measurements: '++id, date, createdAt',
+    });
+    this.version(3).stores({
+      workouts: '++id, date, name, type, createdAt, [date+type]',
+      exerciseCatalog: '++id, name, favorite, timesUsed',
+      photos: '++id, workoutId',
+      settings: 'key',
+      measurements: '++id, date, createdAt',
+      syncMap: 'key, cloudId, entity',
     });
   }
 }
