@@ -216,6 +216,24 @@ describe('templates renderizados (smoke test)', () => {
       expect(html, `template ${tpl}`).not.toContain(LOGO_URL);
     }
   });
+
+  it('com foto de perfil: o avatar aparece em img circular no template Glass', () => {
+    const AVATAR_URL = 'data:image/jpeg;base64,BBBB';
+    const html = renderToStaticMarkup(
+      <ShareCardCanvas
+        data={{ ...makeData(), avatarUrl: AVATAR_URL }}
+        template="glass"
+        format={SHARE_FORMATS[0]}
+        scale={0.25}
+        photo={null}
+        custom={CUSTOM}
+        overlay={0.42}
+        logoUrl={null}
+      />
+    );
+    expect(html).toContain(AVATAR_URL);
+    expect(html).toContain('border-radius:50%');
+  });
 });
 
 // ---------------------------------------------------------------------------

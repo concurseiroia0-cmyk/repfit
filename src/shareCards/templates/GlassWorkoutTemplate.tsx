@@ -38,7 +38,7 @@ export function GlassWorkoutTemplate(props: ShareTemplateProps) {
           {/* Topo: avatar + nome + data */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-              {custom.showAvatar && <AvatarCircle name={data.username} size={tall ? 84 : 64} />}
+              {custom.showAvatar && <AvatarCircle name={data.username} avatarUrl={data.avatarUrl} size={tall ? 84 : 64} />}
               <div>
                 <div style={{ fontSize: compact ? 24 : 28, fontWeight: 800, color: TEXT }}>
                   {hasUser ? safe(data.username) : 'Treino concluído'}

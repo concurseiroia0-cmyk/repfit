@@ -42,6 +42,7 @@ import { Button } from '../components/ui/Button';
 import { Card, CardHeader } from '../components/ui/Card';
 import { ConfirmDialog, Modal } from '../components/ui/Modal';
 import { Field, Input, Select } from '../components/ui/Field';
+import { AvatarPicker } from '../components/ui/AvatarPicker';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { EmptyState } from '../components/ui/Feedback';
 
@@ -51,6 +52,7 @@ export function SettingsPage() {
   const catalog = useLiveQuery(() => db.exerciseCatalog.orderBy('name').toArray(), []) ?? [];
 
   const [username, setUsername] = useState(settings.username);
+  const [avatar, setAvatar] = useState<string | null>(settings.avatarDataUrl ?? null);
   const [profileSex, setProfileSex] = useState<Sex | ''>(settings.sex ?? '');
   const [profileAge, setProfileAge] = useState(settings.age != null ? String(settings.age) : '');
   const [profileHeight, setProfileHeight] = useState(settings.heightCm != null ? String(settings.heightCm) : '');
@@ -80,6 +82,10 @@ export function SettingsPage() {
   }, [settings.username]);
 
   useEffect(() => {
+    setAvatar(settings.avatarDataUrl ?? null);
+  }, [settings.avatarDataUrl]);
+
+  useEffect(() => {
     setProfileSex(settings.sex ?? '');
     setProfileAge(settings.age != null ? String(settings.age) : '');
     setProfileHeight(settings.heightCm != null ? String(settings.heightCm) : '');
@@ -106,6 +112,12 @@ export function SettingsPage() {
   async function saveUsername() {
     await saveSettings({ username: username.trim() });
     push('Nome salvo.');
+  }
+
+  async function saveAvatar(dataUrl: string | null) {
+    setAvatar(dataUrl);
+    await saveSettings({ avatarDataUrl: dataUrl ?? undefined });
+    push(dataUrl ? 'Foto de perfil salva.' : 'Foto de perfil removida.');
   }
 
   async function saveProfile() {
@@ -237,7 +249,10 @@ export function SettingsPage() {
       <div className="space-y-4">
         {/* Perfil */}
         <Card>
-          <CardHeader title="Perfil" subtitle="Usado na saudação da tela inicial" />
+          <CardHeader title="Perfil" subtitle="Usado na saudação da tela inicial e nos cards" />
+          <div className="px-5 pb-5">
+            <AvatarPicker value={avatar} onChange={(v) => void saveAvatar(v)} size={84} />
+          </div>
           <div className="flex flex-col gap-2 px-5 pb-5 sm:flex-row">
             <Field label="Seu nome" className="flex-1">
               <div className="relative">

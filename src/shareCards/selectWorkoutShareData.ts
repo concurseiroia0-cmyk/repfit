@@ -82,7 +82,7 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
     dateLabel: dateLabel(workout.date),
     photoId: workout.photoId != null ? Number(workout.photoId) : null,
     username: settings.username,
-    avatarUrl: null, // o app ainda não tem avatar
+    avatarUrl: settings.avatarDataUrl ?? null,
     unit: settings.unit,
     totals: {
       exercises: workout.exercises.length,

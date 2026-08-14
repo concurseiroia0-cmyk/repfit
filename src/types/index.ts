@@ -93,6 +93,8 @@ export interface Settings {
   weightKg?: number | null;
   /** Onboarding de perfil concluído (ou pulado). */
   profileDone?: boolean;
+  /** Foto do perfil como dataURL comprimida (256px, JPEG) — barata de guardar. */
+  avatarDataUrl?: string;
 }
 
 /** Definição de um tipo de medida corporal (Peso, Braço, Cintura…). */

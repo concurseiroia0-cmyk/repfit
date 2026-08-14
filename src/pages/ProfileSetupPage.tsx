@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mars, Ruler, Scale, UserRound, UserRoundCog, Venus } from 'lucide-react';
+import { AtSign, Mars, Ruler, Scale, UserRound, UserRoundCog, Venus } from 'lucide-react';
 import type { Sex } from '../types';
 import { parseNum, unitToKg } from '../utils/calc';
 import { todayString } from '../utils/date';
@@ -10,8 +10,9 @@ import { saveMeasurement } from '../services/measurementService';
 import { useToast } from '../components/ui/Toast';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Field } from '../components/ui/Field';
+import { Field, Input } from '../components/ui/Field';
 import { StepperInput } from '../components/ui/StepperInput';
+import { AvatarPicker } from '../components/ui/AvatarPicker';
 import { Logo } from '../components/Logo';
 
 const SEX_OPTIONS: { value: Sex; label: string; icon: React.ReactNode }[] = [
@@ -37,10 +38,24 @@ export function ProfileSetupPage() {
   const settings = useSettings();
   const [saving, setSaving] = useState(false);
 
+  const [name, setName] = useState(settings.username);
+  const [avatar, setAvatar] = useState<string | null>(settings.avatarDataUrl ?? null);
   const [sex, setSex] = useState<Sex | ''>(settings.sex ?? '');
   const [age, setAge] = useState(settings.age != null ? String(settings.age) : '');
   const [height, setHeight] = useState(settings.heightCm != null ? String(settings.heightCm) : '');
   const [weight, setWeight] = useState(kgToInput(settings.weightKg, settings.unit));
+
+  // O useSettings() resolve depois do primeiro render (valor padrão vazio) —
+  // sincroniza o formulário com o que está salvo assim que carrega.
+  useEffect(() => {
+    setName(settings.username);
+    setAvatar(settings.avatarDataUrl ?? null);
+    setSex(settings.sex ?? '');
+    setAge(settings.age != null ? String(settings.age) : '');
+    setHeight(settings.heightCm != null ? String(settings.heightCm) : '');
+    setWeight(kgToInput(settings.weightKg, settings.unit));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.username, settings.avatarDataUrl, settings.sex, settings.age, settings.heightCm, settings.weightKg, settings.unit]);
 
   async function finish(skip: boolean) {
     setSaving(true);
@@ -48,6 +63,9 @@ export function ProfileSetupPage() {
       const weightNum = parseNum(weight);
       const weightKg = weightNum != null && weightNum > 0 ? Math.round(unitToKg(weightNum, settings.unit) * 10) / 10 : null;
       await saveSettings({
+        // Nome e foto valem sempre (mesmo pulando as medidas).
+        username: name.trim(),
+        avatarDataUrl: avatar ?? undefined,
         sex: skip ? undefined : sex || undefined,
         age: skip || !age.trim() ? undefined : parseNum(age),
         heightCm: skip || !height.trim() ? undefined : parseNum(height),
@@ -81,6 +99,29 @@ export function ProfileSetupPage() {
 
         <Card className="mt-6 p-5">
           <div className="space-y-5">
+            {/* Foto de perfil */}
+            <div>
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <UserRound className="h-4 w-4 text-amber-500 dark:text-amber-400" /> Foto de perfil
+              </p>
+              <AvatarPicker value={avatar} onChange={setAvatar} size={88} />
+            </div>
+
+            {/* Nome/apelido */}
+            <Field label="Nome / apelido">
+              <div className="relative">
+                <AtSign className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Como quer ser chamado?"
+                  maxLength={40}
+                  className="pl-10"
+                />
+              </div>
+            </Field>
+
             {/* Sexo */}
             <div>
               <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">

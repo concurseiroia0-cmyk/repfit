@@ -213,8 +213,24 @@ function BrandMark({ logoUrl }: { logoUrl: string | null }) {
   return <Barbell size={30} />;
 }
 
-/** Avatar: monograma em círculo amarelo (o app ainda não tem foto de perfil). */
-export function AvatarCircle({ name, size = 72 }: { name: string; size?: number }) {
+/** Avatar: foto de perfil em círculo (ou monograma amarelo sem foto). */
+export function AvatarCircle({ name, avatarUrl, size = 72 }: { name: string; avatarUrl?: string | null; size?: number }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={safe(name) || 'Usuário'}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          border: '2px solid rgba(255,255,255,0.35)',
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
   return (
     <div
       style={{

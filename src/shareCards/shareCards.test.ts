@@ -100,6 +100,14 @@ describe('selectWorkoutShareData (dados do card)', () => {
     await db.close();
   });
 
+  it('propaga a foto de perfil (avatarDataUrl) para o card', async () => {
+    await saveSettings({ username: 'Ana', avatarDataUrl: 'data:image/jpeg;base64,AAAA' });
+    const id = (await db.workouts.add(makeWorkout({ name: 'Com Foto' }))) as number;
+    const d = await selectWorkoutShareData(id);
+    expect(d).not.toBeNull();
+    expect(d!.avatarUrl).toBe('data:image/jpeg;base64,AAAA');
+  });
+
   it('calcula totais reais: exercícios, séries, reps, volume, duração e esforço', async () => {
     await saveSettings({ username: 'Ana' });
     const id = (await db.workouts.add(
@@ -125,6 +133,7 @@ describe('selectWorkoutShareData (dados do card)', () => {
     expect(d!.workoutName).toBe('Peito Forte');
     expect(d!.dateLabel).toBe('12 AGO 2026');
     expect(d!.username).toBe('Ana');
+    expect(d!.avatarUrl).toBeNull();
     expect(d!.photoId).toBe(42);
     expect(d!.hasLoad).toBe(true);
     expect(d!.averageEffort).toBe(3);

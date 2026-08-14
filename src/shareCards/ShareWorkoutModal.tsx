@@ -341,7 +341,9 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
         {/* ESPERA — logo + animação após subir a foto */}
         {step === 'wait' && (
           <div className="flex flex-col items-center justify-center gap-6 rounded-3xl border border-white/10 bg-gradient-to-b from-[#161616] to-[#0D0D0D] px-6 py-16">
-            <Logo className="h-24 w-24 rounded-3xl shadow-[0_8px_24px_rgba(245,197,24,0.2)]" />
+            <div className="repfit-logo-pop h-24 w-24">
+              <Logo className="h-full w-full rounded-3xl shadow-[0_8px_24px_rgba(245,197,24,0.2)]" />
+            </div>
             <div className="flex items-center gap-2.5" aria-hidden="true">
               {[0, 1, 2, 3].map((i) => (
                 <span key={i} className="repfit-dot" style={{ animationDelay: `${i * 0.16}s` }} />

@@ -451,12 +451,28 @@ export async function exportShareCardFallback(
   const pad = 52 * s;
   const y0 = 120 * s;
 
-  // Cabeçalho: monograma + nome + data
+  // Cabeçalho: avatar (foto de perfil ou monograma) + nome + data
   const av = 72 * s;
   roundRect(pad, y0, av, av, av / 2);
-  ctx.fillStyle = ACCENT;
-  ctx.fill();
-  text(monogram(data.username), pad + av / 2, y0 + av / 2 + 14 * s, 32 * s, '#0B0B0B', 900, 'center');
+  const drawMonogram = () => {
+    ctx.fillStyle = ACCENT;
+    ctx.fill();
+    text(monogram(data.username), pad + av / 2, y0 + av / 2 + 14 * s, 32 * s, '#0B0B0B', 900, 'center');
+  };
+  if (data.avatarUrl) {
+    try {
+      const avatarImg = await loadPhotoImage(data.avatarUrl, 3000);
+      ctx.save();
+      roundRect(pad, y0, av, av, av / 2);
+      ctx.clip();
+      ctx.drawImage(avatarImg, pad, y0, av, av);
+      ctx.restore();
+    } catch {
+      drawMonogram();
+    }
+  } else {
+    drawMonogram();
+  }
   line(data.username.trim() || 'Treino concluído', pad + av + 20 * s, y0 + 34 * s, 28 * s, '#fff', 800);
   line(data.dateLabel, pad + av + 20 * s, y0 + 62 * s, 21 * s, SUB, 600);
 
