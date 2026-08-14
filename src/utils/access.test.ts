@@ -25,8 +25,12 @@ describe('decideAccess — gating por assinatura', () => {
     expect(decideAccess(args({ configured: false }))).toBe('allow');
   });
 
-  it('sem login → liberado (uso local gratuito)', () => {
-    expect(decideAccess(args({ user: null }))).toBe('allow');
+  it('sem login → bloqueado (cadastro obrigatório)', () => {
+    expect(decideAccess(args({ user: null }))).toBe('block');
+  });
+
+  it('sem login e sem Supabase configurado → liberado (não há como cadastrar)', () => {
+    expect(decideAccess(args({ configured: false, user: null }))).toBe('allow');
   });
 
   it('falha ao buscar a assinatura → liberado (não prende pagante por erro/offline)', () => {

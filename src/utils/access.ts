@@ -2,8 +2,8 @@
 // Decisão de acesso à plataforma (gating por assinatura).
 // ----------------------------------------------------------------------------
 // Regras:
-//   * Supabase NÃO configurado  → liberado (modo 100% local/offline, como antes);
-//   * sem login                 → liberado (uso local gratuito);
+//   * Supabase NÃO configurado  → liberado (modo 100% local — sem Supabase não há como cadastrar);
+//   * sem login                 → BLOQUEADO (cadastro obrigatório — redireciona para /login);
 //   * falha ao buscar assinatura → liberado (não prender pagante por erro/offline);
 //   * e-mail do DONO            → liberado (acesso total sem pagar);
 //   * assinatura válida         → liberado (active/trial/past_due/canceled-válida/lifetime);
@@ -33,7 +33,8 @@ export interface AccessArgs {
 
 export function decideAccess(args: AccessArgs): AccessDecision {
   if (!args.configured) return 'allow';
-  if (!args.user) return 'allow';
+  // Cadastro obrigatório: quem não está logado é bloqueado (redirecionado ao /login).
+  if (!args.user) return 'block';
   if (args.fetchFailed) return 'allow';
   if (isOwnerEmail(args.user.email, args.ownerEmails)) return 'allow';
   if (hasSubscriptionAccess(args.subscription)) return 'allow';

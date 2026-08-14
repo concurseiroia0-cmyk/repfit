@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Cloud, Loader2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
@@ -33,6 +33,12 @@ export function LoginPage() {
   const { user, loading, configured, signIn, signOut } = useSupabaseAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Login concluído (popup/redirect) → vai para o app. A sessão fica SALVA no
+  // dispositivo (localStorage + auto-refresh): na próxima visita não pede de novo.
+  useEffect(() => {
+    if (user && !loading) navigate('/', { replace: true });
+  }, [user, loading, navigate]);
 
   async function handleSignIn() {
     setBusy(true);
@@ -138,6 +144,11 @@ export function LoginPage() {
             )}
           </div>
 
+          <p className="mx-auto mt-6 max-w-sm text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+            Você entra uma única vez com o Google — o login fica <b>salvo neste dispositivo</b> e não
+            será pedido de novo nas próximas visitas.
+          </p>
+
           <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left">
             <li className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 dark:border-white/10 dark:bg-[#161616] dark:text-slate-200">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400">
@@ -159,10 +170,7 @@ export function LoginPage() {
             </li>
           </ul>
 
-          <p className="mx-auto mt-6 max-w-sm text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-            Login opcional: sem entrar, o RepFit continua funcionando localmente como antes, sem
-            enviar nada.
-          </p>
+
         </div>
       </div>
     </div>

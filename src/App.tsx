@@ -56,11 +56,11 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route
             element={
-              <WelcomeGate>
-                <SubscriptionGate>
+              <SubscriptionGate>
+                <WelcomeGate>
                   <AppLayout />
-                </SubscriptionGate>
-              </WelcomeGate>
+                </WelcomeGate>
+              </SubscriptionGate>
             }
           >
             <Route path="/" element={<HomePage />} />

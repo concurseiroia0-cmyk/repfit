@@ -73,8 +73,8 @@ export function PaywallPage({ subscription }: { subscription: SubscriptionRow | 
         </div>
 
         <p className="mx-auto mt-4 max-w-sm text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-          Sem entrar com uma conta, o RepFit continua <b>100% gratuito e offline</b>, com tudo salvo
-          apenas no seu dispositivo.
+          Seu login fica <b>salvo neste dispositivo</b> — ao renovar o plano, o acesso é liberado
+          automaticamente sem precisar entrar de novo.
         </p>
       </div>
     </div>
