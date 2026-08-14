@@ -15,6 +15,7 @@ import { WelcomePage } from './pages/WelcomePage';
 import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
 import { SyncManager } from './components/SyncManager';
+import { SubscriptionGate } from './components/SubscriptionGate';
 import { useSettings } from './services/settingsService';
 import { db } from './db/db';
 
@@ -56,7 +57,9 @@ export default function App() {
           <Route
             element={
               <WelcomeGate>
-                <AppLayout />
+                <SubscriptionGate>
+                  <AppLayout />
+                </SubscriptionGate>
               </WelcomeGate>
             }
           >
