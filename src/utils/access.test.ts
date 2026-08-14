@@ -20,6 +20,15 @@ function sub(overrides: Partial<SubscriptionLike> = {}): SubscriptionLike {
   return { status: 'active', current_period_end: END, cancel_at_period_end: false, ...overrides };
 }
 
+function grant(overrides: Partial<{ access_until: string | null; status: string | null; revoked_at: string | null }> = {}) {
+  return {
+    access_until: END,
+    status: 'active',
+    revoked_at: null,
+    ...overrides,
+  };
+}
+
 describe('decideAccess — gating por assinatura', () => {
   it('sem Supabase configurado → liberado (offline/local)', () => {
     expect(decideAccess(args({ configured: false }))).toBe('allow');
@@ -64,5 +73,21 @@ describe('decideAccess — gating por assinatura', () => {
 
   it('lifetime → liberado', () => {
     expect(decideAccess(args({ subscription: sub({ status: 'lifetime', current_period_end: null }) }))).toBe('allow');
+  });
+
+  it('acesso gratuito/manual ativo → liberado mesmo sem assinatura', () => {
+    expect(decideAccess(args({ grants: [grant()] }))).toBe('allow');
+  });
+
+  it('acesso gratuito expirado → bloqueado (sem assinatura)', () => {
+    expect(decideAccess(args({ grants: [grant({ access_until: '2026-08-01T00:00:00.000Z' })] }))).toBe('block');
+  });
+
+  it('acesso gratuito revogado → bloqueado', () => {
+    expect(decideAccess(args({ grants: [grant({ revoked_at: '2026-08-10T00:00:00.000Z' })] }))).toBe('block');
+  });
+
+  it('usuário com assinatura paga + acesso gratuito → liberado (preserva a paga)', () => {
+    expect(decideAccess(args({ subscription: sub(), grants: [grant()] }))).toBe('allow');
   });
 });

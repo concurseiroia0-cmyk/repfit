@@ -3,9 +3,12 @@ import {
   getDaysRemaining,
   getEffectiveStatus,
   getSubscriptionAccessInfo,
+  hasActiveAccess,
+  hasActiveGrant,
   hasPlatformAccess,
   hasSubscriptionAccess,
   isOwnerEmail,
+  type GrantLike,
   type SubscriptionLike,
 } from './subscription';
 
@@ -149,6 +152,64 @@ describe('hasPlatformAccess — dono (acesso total sem pagar) + assinatura', () 
         email: 'alguem@exemplo.com',
         subscription: sub({ status: 'expired' }),
         now: NOW,
+      })
+    ).toBe(false);
+  });
+});
+
+describe('hasActiveGrant — acesso gratuito/manual (access_grants)', () => {
+  const g = (overrides: Partial<GrantLike> = {}): GrantLike => ({
+    access_until: END,
+    status: 'active',
+    revoked_at: null,
+    ...overrides,
+  });
+
+  it('ativa e dentro do prazo → acesso', () => {
+    expect(hasActiveGrant([g()], NOW)).toBe(true);
+  });
+
+  it('expirada → sem acesso', () => {
+    expect(hasActiveGrant([g({ access_until: '2026-08-01T00:00:00.000Z' })], NOW)).toBe(false);
+  });
+
+  it('revogada → sem acesso mesmo dentro do prazo', () => {
+    expect(hasActiveGrant([g({ revoked_at: '2026-08-10T00:00:00.000Z' })], NOW)).toBe(false);
+  });
+
+  it('status não-active → sem acesso', () => {
+    expect(hasActiveGrant([g({ status: 'expired' })], NOW)).toBe(false);
+  });
+
+  it('lista vazia → sem acesso', () => {
+    expect(hasActiveGrant([], NOW)).toBe(false);
+    expect(hasActiveGrant(null, NOW)).toBe(false);
+  });
+});
+
+describe('hasActiveAccess — FUNÇÃO ÚNICA centralizada', () => {
+  it('dono → acesso (mesmo sem assinatura e sem grant)', () => {
+    expect(hasActiveAccess({ email: 'juliocesa219853@gmail.com', ownerEmails: ['juliocesa219853@gmail.com'], subscription: null, grants: [] })).toBe(true);
+  });
+
+  it('assinatura válida → acesso', () => {
+    expect(hasActiveAccess({ email: 'x@ex.com', subscription: sub(), grants: [] })).toBe(true);
+  });
+
+  it('acesso gratuito ativo → acesso', () => {
+    expect(hasActiveAccess({ email: 'x@ex.com', subscription: null, grants: [{ access_until: END, status: 'active', revoked_at: null }] })).toBe(true);
+  });
+
+  it('nada → sem acesso', () => {
+    expect(hasActiveAccess({ email: 'x@ex.com', subscription: null, grants: [] })).toBe(false);
+  });
+
+  it('grant expirado não salva assinatura expirada', () => {
+    expect(
+      hasActiveAccess({
+        email: 'x@ex.com',
+        subscription: sub({ status: 'expired' }),
+        grants: [{ access_until: '2026-08-01T00:00:00.000Z', status: 'active', revoked_at: null }],
       })
     ).toBe(false);
   });

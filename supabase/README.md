@@ -194,10 +194,119 @@ supabase gen types typescript --project-id ybhiyiobmcoszmvrwkef --schema public 
 ## 9. Testes
 
 ```bash
-npm test          # inclui subscription.test.ts e sync.test.ts
+npm test          # inclui subscription, sync, acesso e normalização Kirvano/GGCheckout
 npm run typecheck
 npm run build
 ```
 
 Os testes cobrem especialmente a **regra crítica**: cancelar hoje com
 `current_period_end` no futuro mantém o acesso até a data; depois dela, expira.
+
+---
+
+## 10. Webhooks Kirvano + GGCheckout (Supabase Edge Functions)
+
+### Arquitetura (processador ÚNICO)
+
+```
+Kirvano ─┐                    ┌── Simulador (painel /admin)
+         ├─> Webhook → Validação de segurança → Normalização → Idempotência ─> Processador ÚNICO ─> Supabase (assinatura/pagamento/acesso) ─> Log ─> HTTP
+GGCheckout┘                    └── Mesmo processador (sem lógica duplicada)
+```
+
+### Estrutura
+
+```
+supabase/functions/
+  _shared/types.ts        formato interno único (NormalizedEvent)
+  _shared/normalize.ts    normalização Kirvano/GGCheckout (pura, testada)
+  _shared/processor.ts    processador único + concessão/revogação de acesso
+  _shared/security.ts     validação de token/secreto (tempo constante)
+  _shared/owners.ts       donos (env ∪ app_config.owner_emails)
+  webhook-kirvano/index.ts   POST público (verify_jwt = false)
+  webhook-ggcheckout/index.ts POST público (verify_jwt = false)
+  admin/index.ts          simulador/concessão/revogação/logs (verify_jwt = true + dono)
+```
+
+### Deploy (requer CLI com login)
+
+```bash
+supabase login
+supabase functions deploy webhook-kirvano --no-verify-jwt
+supabase functions deploy webhook-ggcheckout --no-verify-jwt
+supabase functions deploy admin
+
+# Segredos (NUNCA no código):
+supabase secrets set KIRVANO_WEBHOOK_TOKEN=<token da Kirvano>
+supabase secrets set GGCHECKOUT_WEBHOOK_SECRET=<secret da GGCheckout>
+supabase secrets set OWNER_EMAILS=juliocesa219853@gmail.com,juliotrabalho2004@gmail.com
+```
+
+O `config.toml` já define `verify_jwt` por função (webhooks públicos, admin protegido).
+
+### URLs dos webhooks
+
+- Kirvano: `https://ybhiyiobmcoszmvrwkef.supabase.co/functions/v1/webhook-kirvano`
+- GGCheckout: `https://ybhiyiobmcoszmvrwkef.supabase.co/functions/v1/webhook-ggcheckout`
+
+### Configuração nas plataformas
+
+**Kirvano** (Integrações → Webhooks):
+- URL: `.../webhook-kirvano`
+- Token: preencher o mesmo valor de `KIRVANO_WEBHOOK_TOKEN` (enviado no header)
+- Eventos: Compra aprovada (recorrente), Assinatura cancelada, Cobrança recusada, Chargeback
+
+**GGCheckout** (Settings → Webhooks):
+- URL: `.../webhook-ggcheckout`
+- Secret: preencher o mesmo valor de `GGCHECKOUT_WEBHOOK_SECRET` — a GGCheckout envia
+  `Authorization: Bearer <secret>` e `x-secret: <secret>` (documentação oficial)
+- Eventos: `card.paid`, `card.failed`, `card.refunded`, `pix.*`
+
+### Mapeamento de eventos → estado interno
+
+| Plataforma | Evento | Normalizado | Ação de acesso |
+|---|---|---|---|
+| Kirvano | `SALE_APPROVED` (RECURRING) | `subscription_activated` | conceder (período de `plan.next_charge_date`) |
+| Kirvano | `SALE_APPROVED` (ONE_TIME) | `payment_approved` | conceder |
+| Kirvano | `SUBSCRIPTION_CANCELED` | `subscription_canceled` | cancelar (válido até fim do período) |
+| Kirvano | `SALE_REFUSED` | `payment_failed` | nenhuma (não revoga acesso existente) |
+| Kirvano | `SALE_CHARGEBACK` | `chargeback` | revogar |
+| GGCheckout | `card.paid` / `pix.paid` | `payment_approved` | conceder |
+| GGCheckout | `card.failed` / `pix.failed` / `*.expired` | `payment_failed` | nenhuma |
+| GGCheckout | `card.refunded` / `pix.refunded` | `refund_created` | revogar |
+| GGCheckout | `payment.status = charged_back` | `chargeback` | revogar |
+
+### Idempotência
+
+Índice único `(provider, external_event_id)` em `subscription_events`: o mesmo evento
+reenviado pela plataforma é ignorado (`status: duplicate`).
+
+### Teste manual (curl)
+
+```bash
+# Webhook válido GGCheckout (com secret)
+curl -X POST https://ybhiyiobmcoszmvrwkef.supabase.co/functions/v1/webhook-ggcheckout \
+  -H "Content-Type: application/json" -H "Authorization: Bearer SEU_SECRET" \
+  -d '{"event":"card.paid","customer":{"email":"aluno@exemplo.com"},"payment":{"id":"p1","status":"paid","amount":49},"product":{"title":"RepFit"}}'
+
+# Webhook INVALIDO (sem secret) → 401
+curl -X POST https://ybhiyiobmcoszmvrwkef.supabase.co/functions/v1/webhook-ggcheckout \
+  -H "Content-Type: application/json" -d '{"event":"card.paid","customer":{"email":"aluno@exemplo.com"}}'
+```
+
+O painel `/admin` (somente donos) tem o simulador que dispara o MESMO processador.
+
+---
+
+## 11. Acesso gratuito manual (`access_grants`)
+
+Migration 0009 cria `access_grants` — concedido pelo admin no painel (origem
+`manual/free`), com `access_until` calculado (5 min a 365 dias) e revogável.
+Separação total da assinatura paga: um usuário com assinatura ativa + acesso
+gratuito continua com os dados da assinatura intactos.
+
+A decisão de acesso é centralizada em `hasActiveAccess` (src/utils/subscription.ts):
+
+1. e-mail de DONO (juliocesa219853@gmail.com / juliotrabalho2004@gmail.com) → acesso;
+2. assinatura paga válida (status + `current_period_end`);
+3. concessão ativa (`access_grants` dentro do prazo e não revogada).

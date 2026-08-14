@@ -1,0 +1,21 @@
+# ============================================================================
+# Supabase — configuração do projeto (edge functions)
+# ----------------------------------------------------------------------------
+# Referência: https://supabase.com/docs/guides/functions/config
+# project_id precisa bater com o projeto (ybhiyiobmcoszmvrwkef).
+# ============================================================================
+
+project_id = "ybhiyiobmcoszmvrwkef"
+
+# Webhooks públicos: as plataformas NÃO enviam JWT do Supabase — a segurança é
+# feita pelo token/secreto próprio de cada gateway (validado no código).
+[functions.webhook-kirvano]
+verify_jwt = false
+
+[functions.webhook-ggcheckout]
+verify_jwt = false
+
+# Painel administrativo: exige JWT válido do Supabase (só usuários autenticados
+# conseguem chamar) + verificação de e-mail de dono dentro da função.
+[functions.admin]
+verify_jwt = true

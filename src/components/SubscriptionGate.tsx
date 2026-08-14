@@ -19,7 +19,7 @@ import { PaywallPage } from '../pages/PaywallPage';
 
 export function SubscriptionGate({ children }: { children: ReactNode }) {
   const auth = useSupabaseAuth();
-  const { subscription, loading, failed } = useSubscription(auth.user?.id ?? null);
+  const { subscription, grants, loading, failed } = useSubscription(auth.user?.id ?? null);
 
   if (auth.loading || loading) return null;
 
@@ -30,11 +30,12 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
   // dispositivo, então isso acontece só na primeira vez).
   if (!auth.user) return <Navigate to="/login" replace />;
 
-  // Logado: dono/assinatura válida liberam; caso contrário → paywall.
+  // Logado: dono/assinatura válida/concessão ativa liberam; senão → paywall.
   const decision = decideAccess({
     configured: true,
     user: auth.user,
     subscription,
+    grants,
     ownerEmails: OWNER_EMAILS,
     fetchFailed: failed,
   });

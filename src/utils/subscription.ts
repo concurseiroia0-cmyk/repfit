@@ -23,7 +23,9 @@ export type SubscriptionStatus =
   | 'canceled'
   | 'expired'
   | 'pending'
-  | 'lifetime';
+  | 'lifetime'
+  | 'refunded'
+  | 'chargeback';
 
 /** Apenas os campos que a lógica de acesso consome (compatível com a Row do Supabase). */
 export interface SubscriptionLike {
@@ -60,6 +62,8 @@ function normalizeStatus(status: string | null | undefined): SubscriptionStatus 
     case 'expired':
     case 'pending':
     case 'lifetime':
+    case 'refunded':
+    case 'chargeback':
       return status;
     default:
       // Status desconhecido → nega por padrão (safe default).
@@ -153,6 +157,57 @@ export function hasSubscriptionAccess(
   return end == null || end > now.getTime();
 }
 
+// ---------------------------------------------------------------------------
+// Acesso GRATUITO manual (access_grants) — separado da assinatura paga.
+// ---------------------------------------------------------------------------
+
+/** Linha mínima de access_grants (compatível com a Row do Supabase). */
+export interface GrantLike {
+  access_until: string | null;
+  status: string | null;
+  revoked_at: string | null;
+}
+
+/** Há uma concessão ativa (manual/free) ainda dentro do prazo? */
+export function hasActiveGrant(
+  grants: readonly GrantLike[] | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (!grants || grants.length === 0) return false;
+  return grants.some((g) => {
+    if (g.status !== 'active') return false;
+    if (g.revoked_at) return false;
+    const until = toMs(g.access_until);
+    return until != null && until > now.getTime();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// hasActiveAccess — FUNÇÃO ÚNICA centralizada de decisão de acesso.
+// ---------------------------------------------------------------------------
+
+/**
+ * Decide se o usuário TEM acesso agora. Considera, nesta ordem:
+ *   1. e-mail de DONO (acesso total, sem pagar);
+ *   2. assinatura paga válida (status + current_period_end);
+ *   3. acesso gratuito/manual ativo (access_grants dentro do prazo).
+ *
+ * TODAS as verificações de acesso do RepFit devem passar por aqui.
+ */
+export function hasActiveAccess(args: {
+  email?: string | null;
+  ownerEmails?: readonly string[];
+  subscription?: SubscriptionLike | null;
+  grants?: readonly GrantLike[] | null;
+  now?: Date;
+}): boolean {
+  const { email, ownerEmails, subscription, grants, now } = args;
+  if (isOwnerEmail(email, ownerEmails)) return true;
+  if (hasSubscriptionAccess(subscription, now)) return true;
+  if (hasActiveGrant(grants, now)) return true;
+  return false;
+}
+
 /** E-mail do dono (lista de permissão) → acesso total, sem precisar pagar. */
 export function isOwnerEmail(
   email: string | null | undefined,
@@ -163,18 +218,18 @@ export function isOwnerEmail(
   return ownerEmails.some((o) => o.trim().toLowerCase() === normalized);
 }
 
-/** Ponto único de entrada do app: dono OU assinatura válida. */
-export function hasPlatformAccess(
-  args: {
-    subscription?: SubscriptionLike | null;
-    email?: string | null;
-    ownerEmails?: readonly string[];
-    now?: Date;
-  }
-): boolean {
-  const { subscription, email, ownerEmails, now } = args;
-  if (isOwnerEmail(email, ownerEmails)) return true;
-  return hasSubscriptionAccess(subscription, now);
+/**
+ * Compatibilidade: hasPlatformAccess == hasActiveAccess (dono + assinatura +
+ * acesso gratuito). Ponto único de entrada do app.
+ */
+export function hasPlatformAccess(args: {
+  subscription?: SubscriptionLike | null;
+  grants?: readonly GrantLike[] | null;
+  email?: string | null;
+  ownerEmails?: readonly string[];
+  now?: Date;
+}): boolean {
+  return hasActiveAccess(args);
 }
 
 const fmtDate = (d: Date): string =>

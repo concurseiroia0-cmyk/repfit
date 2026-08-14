@@ -42,6 +42,7 @@ import { InstallAppButton } from '../components/PwaInstall';
 import { ShareAppModal } from '../components/ShareApp';
 import { useSettings, saveSettings } from '../services/settingsService';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
+import { OWNER_EMAILS } from '../services/supabase/config';
 import { getLastSync, getLastSyncAt, runSync } from '../services/supabase/syncState';
 import type { SyncResult } from '../services/supabase/sync';
 import { clearAllData, exportAllData, importAllData, type ImportResult } from '../services/exportService';
@@ -94,6 +95,7 @@ export function SettingsPage() {
   const pwa = usePwaInstall();
   const auth = useSupabaseAuth();
   const navigate = useNavigate();
+  const isOwner = auth.user != null && OWNER_EMAILS.includes((auth.user.email ?? '').toLowerCase());
 
   useEffect(() => {
     setUsername(settings.username);
@@ -706,6 +708,18 @@ export function SettingsPage() {
             </div>
           </div>
         </Card>
+
+        {/* Painel administrativo (só donos) */}
+        {isOwner && (
+          <Card>
+            <CardHeader title="Painel administrativo" subtitle="Simulador de webhooks, acesso manual e auditoria" />
+            <div className="px-5 pb-5">
+              <Button onClick={() => navigate('/admin')}>
+                <ShieldCheck className="h-4 w-4" /> Abrir painel do admin
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Conta e sincronização (Supabase) */}
         <Card>

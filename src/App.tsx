@@ -14,6 +14,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { WelcomePage } from './pages/WelcomePage';
 import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
+import { AdminPage } from './pages/AdminPage';
 import { SyncManager } from './components/SyncManager';
 import { SubscriptionGate } from './components/SubscriptionGate';
 import { useSettings } from './services/settingsService';
@@ -72,6 +73,7 @@ export default function App() {
             <Route path="/medidas" element={<MeasurementsPage />} />
             <Route path="/evolucao" element={<EvolutionPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
