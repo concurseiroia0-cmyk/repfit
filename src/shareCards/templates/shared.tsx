@@ -303,9 +303,6 @@ export function ModePill({ mode, compact }: { mode: 'academia' | 'calistenia' | 
         whiteSpace: 'nowrap' as const,
       }}
     >
-      <span style={{ fontSize: compact ? 14 : 18 }} aria-hidden="true">
-        {academia ? '🏋️' : '🤸'}
-      </span>
       {academia ? 'Academia' : 'Calistenia'}
     </span>
   );

@@ -241,7 +241,7 @@ export function WorkoutForm({
                         'border-slate-300 text-slate-600 hover:border-amber-400 hover:text-amber-600 dark:border-white/20 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-400'
                     )}
                   >
-                    {m === 'academia' ? '🏋️ Academia' : '🤸 Calistenia'}
+                    {m === 'academia' ? 'Academia' : 'Calistenia'}
                   </button>
                 );
               })}

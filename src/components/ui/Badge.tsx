@@ -24,7 +24,6 @@ export function ModeBadge({ mode, className }: { mode: 'academia' | 'calistenia'
         className
       )}
     >
-      <span aria-hidden="true">{academia ? '🏋️' : '🤸'}</span>
       {academia ? 'Academia' : 'Calistenia'}
     </span>
   );
