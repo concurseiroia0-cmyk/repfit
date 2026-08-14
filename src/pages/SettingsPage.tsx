@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   CheckCircle2,
+  Cloud,
   Database,
   Download,
   HardDrive,
   Info,
+  LogIn,
+  LogOut,
   Mars,
   Monitor,
   Moon,
   Plus,
+  RefreshCw,
   Ruler,
   Search,
   ShieldCheck,
@@ -24,6 +28,7 @@ import {
   UserRound,
   Venus,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { Sex } from '../types';
 import type { WeeklyGoal } from '../utils/goals';
 import { db } from '../db/db';
@@ -36,6 +41,9 @@ import { isIOS, usePwaInstall } from '../hooks/usePwaInstall';
 import { InstallAppButton } from '../components/PwaInstall';
 import { ShareAppModal } from '../components/ShareApp';
 import { useSettings, saveSettings } from '../services/settingsService';
+import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
+import { getLastSync, getLastSyncAt, runSync } from '../services/supabase/syncState';
+import type { SyncResult } from '../services/supabase/sync';
 import { clearAllData, exportAllData, importAllData, type ImportResult } from '../services/exportService';
 import { createSampleData } from '../services/sampleData';
 import { seedCatalogIfEmpty } from '../db/seed';
@@ -79,8 +87,13 @@ export function SettingsPage() {
   const [persist, setPersist] = useState<PersistStatus | null>(null);
   const [persistBusy, setPersistBusy] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [lastSync, setLastSync] = useState<SyncResult | null>(getLastSync());
+  const [lastSyncAt, setLastSyncAt] = useState<number | null>(getLastSyncAt());
+  const [syncing, setSyncing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const pwa = usePwaInstall();
+  const auth = useSupabaseAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setUsername(settings.username);
@@ -118,6 +131,42 @@ export function SettingsPage() {
     if (status === 'persisted') push('Proteção de dados ativada! O navegador não vai mais limpar seus dados.', 'success');
     else if (status === 'denied') push('O navegador negou a permissão. Tente novamente em Configurações.', 'error');
     else push('Este navegador não oferece essa proteção.', 'info');
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    const result = await runSync();
+    setLastSync(result);
+    setLastSyncAt(getLastSyncAt());
+    setSyncing(false);
+    if (result.status === 'ok') {
+      push(`Sincronizado: ${result.pushed} treinos enviados, ${result.pulled} baixados.`, 'success');
+    } else if (result.status === 'error') {
+      push(result.message, 'error');
+    } else {
+      push(
+        result.reason === 'signed-out'
+          ? 'Entre com o Google para sincronizar.'
+          : 'Supabase não configurado no .env.',
+        'info'
+      );
+    }
+  }
+
+  function syncStatusLine(): string {
+    if (lastSyncAt != null) {
+      const mins = Math.max(0, Math.round((Date.now() - lastSyncAt) / 60_000));
+      const when = mins < 1 ? 'agora há pouco' : mins === 1 ? 'há 1 min' : `há ${mins} min`;
+      if (lastSync?.status === 'ok') {
+        return `✓ Última sincronização ${when}: ${lastSync.pushed} enviados, ${lastSync.pulled} baixados.`;
+      }
+      if (lastSync?.status === 'error') {
+        return `⚠️ Falha na última sincronização (${when}): ${lastSync.message}`;
+      }
+      return `Última tentativa ${when}: ${lastSync?.reason === 'signed-out' ? 'sem login' : 'sem configuração'}.`;
+    }
+    if (lastSync?.status === 'error') return `⚠️ Falha: ${lastSync.message}`;
+    return 'Nada sincronizado ainda — clique em “Sincronizar agora”.';
   }
 
   async function saveUsername() {
@@ -655,6 +704,83 @@ export function SettingsPage() {
                 )}
               </div>
             </div>
+          </div>
+        </Card>
+
+        {/* Conta e sincronização (Supabase) */}
+        <Card>
+          <CardHeader
+            title="Conta e sincronização"
+            subtitle="Backup automático dos seus treinos na nuvem (Supabase)"
+          />
+          <div className="space-y-3 px-5 pb-5">
+            {!auth.configured ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
+                <p className="flex items-center gap-1.5 font-bold">
+                  <Cloud className="h-4 w-4 shrink-0" /> Nuvem desativada
+                </p>
+                <p className="mt-1 text-xs leading-relaxed">
+                  Para sincronizar, copie <code>.env.example</code> para <code>.env</code>, preencha{' '}
+                  <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (Settings → API →
+                  anon public) e rode <code>npm run dev</code> novamente.
+                </p>
+              </div>
+            ) : auth.loading ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Verificando sessão…</p>
+            ) : auth.user ? (
+              <>
+                <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/60">
+                  {auth.user.avatarUrl ? (
+                    <img
+                      src={auth.user.avatarUrl}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="h-11 w-11 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">
+                      {(auth.user.fullName ?? auth.user.email ?? '?').slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {auth.user.fullName ?? 'Usuário'}
+                    </p>
+                    <p className="truncate text-xs text-slate-400">{auth.user.email}</p>
+                  </div>
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={() => void handleSync()} disabled={syncing}>
+                    <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
+                    {syncing ? 'Sincronizando…' : 'Sincronizar agora'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => void auth.signOut()}
+                    disabled={syncing}
+                  >
+                    <LogOut className="h-4 w-4" /> Sair
+                  </Button>
+                </div>
+                <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {syncStatusLine()}
+                </p>
+                <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  A sincronização também acontece automaticamente ao entrar e quando a internet volta.
+                </p>
+              </>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                  Entre com o Google para fazer backup dos seus treinos, medidas e fotos na nuvem e
+                  acessá-los de qualquer dispositivo. Sem login, o app continua 100% local.
+                </p>
+                <Button onClick={() => navigate('/login')}>
+                  <LogIn className="h-4 w-4" /> Entrar com Google
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
 

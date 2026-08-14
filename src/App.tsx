@@ -13,6 +13,8 @@ import { MeasurementsPage } from './pages/MeasurementsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { WelcomePage } from './pages/WelcomePage';
 import { ProfileSetupPage } from './pages/ProfileSetupPage';
+import { LoginPage } from './pages/LoginPage';
+import { SyncManager } from './components/SyncManager';
 import { useSettings } from './services/settingsService';
 import { db } from './db/db';
 
@@ -45,9 +47,12 @@ export default function App() {
   return (
     <BrowserRouter basename={ROUTER_BASE}>
       <ToastProvider>
+        {/* Sincronização automática (login/reconexão) — inofensiva sem .env */}
+        <SyncManager />
         <Routes>
           <Route path="/boas-vindas" element={<WelcomePage />} />
           <Route path="/perfil" element={<ProfileSetupPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route
             element={
               <WelcomeGate>
