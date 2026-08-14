@@ -188,6 +188,34 @@ describe('templates renderizados (smoke test)', () => {
       expect(html, `template ${tpl}`).not.toContain(PHOTO.url);
     }
   });
+
+  it('com logo carregada: a marca d\'água (logo embutida) aparece em todos os templates', () => {
+    const LOGO_URL = 'data:image/png;base64,AAAA'; // só um marcador
+    for (const tpl of ALL_TEMPLATES) {
+      const html = renderToStaticMarkup(
+        <ShareCardCanvas
+          data={makeData()}
+          template={tpl}
+          format={SHARE_FORMATS[0]}
+          scale={0.25}
+          photo={null}
+          custom={CUSTOM}
+          overlay={0.42}
+          logoUrl={LOGO_URL}
+        />
+      );
+      // O dataURL da logo só existe no card por causa da marca d'água.
+      expect(html, `template ${tpl} deve ter a marca d'água`).toContain(LOGO_URL);
+    }
+  });
+
+  it('sem logo: nenhuma marca d\'água no card', () => {
+    const LOGO_URL = 'data:image/png;base64,AAAA';
+    for (const tpl of ALL_TEMPLATES) {
+      const html = render(tpl, 0.25, null);
+      expect(html, `template ${tpl}`).not.toContain(LOGO_URL);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------

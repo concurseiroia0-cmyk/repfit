@@ -159,41 +159,66 @@ function resize(rgba, srcW, srcH, dstW, dstH) {
 const src = decodePNG(fs.readFileSync(SRC));
 const { width: W, height: H, rgba } = src;
 
-// Amostra os cantos para decidir a cor do padding.
-const corner = (x, y) => rgba[(y * W + x) * 4 + 3];
-const cornersAlpha = [corner(2, 2), corner(W - 3, 2), corner(2, H - 3), corner(W - 3, H - 3)];
-const transparent = cornersAlpha.every((a) => a < 16);
-console.log(`logo: ${W}x${H}, cantos transparentes: ${transparent} (alphas: ${cornersAlpha.join(',')})`);
-
-// Padroniza para quadrado (padding centralizado).
-const side = Math.max(W, H);
-const padX = Math.floor((side - W) / 2);
-const padY = Math.floor((side - H) / 2);
-const square = Buffer.alloc(side * side * 4);
-if (transparent) {
-  square.fill(0); // alpha 0
-} else {
-  for (let i = 0; i < square.length; i += 4) {
-    square[i] = 0;
-    square[i + 1] = 0;
-    square[i + 2] = 0;
-    square[i + 3] = 255;
+// RECORTE: remove a área transparente ao redor do conteúdo (o squircle passa
+// a preencher o ícone inteiro, de borda a borda — sem "parte escura" em
+// volta). A base de cálculo é a caixa dos pixels visíveis.
+let minX = W, minY = H, maxX = -1, maxY = -1;
+for (let y = 0; y < H; y++) {
+  for (let x = 0; x < W; x++) {
+    if (rgba[(y * W + x) * 4 + 3] > 160) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
   }
 }
-for (let y = 0; y < H; y++) {
-  rgba.copy(square, ((y + padY) * side + padX) * 4, y * W * 4, (y + 1) * W * 4);
+const cw = maxX - minX + 1;
+const ch = maxY - minY + 1;
+const side = Math.max(cw, ch);
+const crop = Buffer.alloc(side * side * 4); // alpha 0
+for (let y = 0; y < ch; y++) {
+  for (let x = 0; x < cw; x++) {
+    const si = ((minY + y) * W + (minX + x)) * 4;
+    const di = (y * side + x) * 4;
+    crop[di] = rgba[si];
+    crop[di + 1] = rgba[si + 1];
+    crop[di + 2] = rgba[si + 2];
+    crop[di + 3] = rgba[si + 3];
+  }
+}
+console.log(`logo: ${W}x${H} -> conteudo ${cw}x${ch} (recortado para ${side}x${side})`);
+
+// Estende 1px para fora copiando a borda: garante que as laterais fiquem
+// opacas até a beirada após o redimensionamento (sem halo semi-transparente).
+const ext = 1;
+const es = side + ext * 2;
+const square = Buffer.alloc(es * es * 4);
+for (let y = 0; y < es; y++) {
+  for (let x = 0; x < es; x++) {
+    const sx = Math.min(side - 1, Math.max(0, x - ext));
+    const sy = Math.min(side - 1, Math.max(0, y - ext));
+    const si = (sy * side + sx) * 4;
+    const di = (y * es + x) * 4;
+    square[di] = crop[si];
+    square[di + 1] = crop[si + 1];
+    square[di + 2] = crop[si + 2];
+    square[di + 3] = crop[si + 3];
+  }
 }
 
 fs.mkdirSync(OUT, { recursive: true });
 const targets = [
+  // O squircle preenche o ícone inteiro — sem fundo preto em volta.
   { name: 'icon-512.png', size: 512, blackBg: false },
-  { name: 'maskable-512.png', size: 512, blackBg: true },
+  { name: 'maskable-512.png', size: 512, blackBg: false },
+  { name: 'brand-logo.png', size: 512, blackBg: false },
   { name: 'icon-192.png', size: 192, blackBg: false },
-  { name: 'apple-touch-icon.png', size: 180, blackBg: true },
+  { name: 'apple-touch-icon.png', size: 180, blackBg: false },
   { name: 'favicon.png', size: 64, blackBg: false },
 ];
 for (const t of targets) {
-  let resized = resize(square, side, side, t.size, t.size);
+  let resized = resize(square, es, es, t.size, t.size);
   if (t.blackBg) {
     // Fundo preto opaco: alguns navegadores/iOS não renderizam transparência.
     for (let i = 0; i < resized.length; i += 4) {

@@ -46,7 +46,9 @@ export function WelcomePage() {
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center">
-        <Logo className="mx-auto h-20 w-20 rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]" />
+        <div className="repfit-logo-pop mx-auto h-20 w-20">
+          <Logo className="h-full w-full rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]" />
+        </div>
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           Bem-vindo ao <span className="text-amber-500 dark:text-amber-400">RepFit</span> ⚡
         </h1>

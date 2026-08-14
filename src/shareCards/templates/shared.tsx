@@ -151,8 +151,33 @@ export function ShareCardFrame({
         />
       )}
       {darken && <div style={{ position: 'absolute', inset: 0, ...darken, pointerEvents: 'none' }} />}
+      <BrandWatermark logoUrl={logoUrl} format={format} />
       {children}
       {footer ?? <BrandFooterAbs logoUrl={logoUrl} format={format} />}
+    </div>
+  );
+}
+
+/**
+ * Marca d'água: a logo da marca em transparência baixa, centralizada atrás
+ * do conteúdo — aparece em todos os templates (só se a logo estiver
+ * carregada; a prévia é idêntica ao PNG exportado).
+ */
+export function BrandWatermark({ logoUrl, format }: { logoUrl: string | null; format: ShareFormat }) {
+  if (!logoUrl) return null;
+  const size = Math.min(format.width, format.height) * 0.5;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+      }}
+    >
+      <img src={logoUrl} alt="" draggable={false} style={{ width: size, height: size, objectFit: 'contain', opacity: 0.05 }} />
     </div>
   );
 }
