@@ -41,7 +41,11 @@ export async function signInWithGoogle(): Promise<{
   if (!sb) return { error: supabaseUnavailable() };
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: {
+      // Resolve para a base do app (ex.: '/repfit/' no GitHub Pages) para o
+      // callback do Google voltar para o app e não para a raiz do domínio.
+      redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
+    },
   });
   return { error: error ? new Error(error.message) : null };
 }
