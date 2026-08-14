@@ -64,6 +64,13 @@ export function PlansPage() {
             Treinos ilimitados, backup na nuvem, recordes e gráficos de evolução. O acesso é
             liberado automaticamente assim que o pagamento for aprovado.
           </p>
+          <button
+            type="button"
+            onClick={() => navigate('/oferta')}
+            className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-amber-600 transition-colors hover:text-amber-500 dark:text-amber-400"
+          >
+            🔥 Ver oferta promocional por R$ 27,90
+          </button>
         </div>
 
         {/* Status atual da conta */}

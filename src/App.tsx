@@ -16,6 +16,7 @@ import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { PlansPage } from './pages/PlansPage';
+import { SalesPage } from './pages/SalesPage';
 import { AdminPage } from './pages/AdminPage';
 import { SyncManager } from './components/SyncManager';
 import { SubscriptionGate } from './components/SubscriptionGate';
@@ -61,6 +62,8 @@ export default function App() {
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           {/* Planos visíveis também para quem está sem assinatura (paywall) */}
           <Route path="/planos" element={<PlansPage />} />
+          {/* Página de vendas pública (divulgação/oferta) */}
+          <Route path="/oferta" element={<SalesPage />} />
           <Route
             element={
               <SubscriptionGate>
