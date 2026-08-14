@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Cloud, Loader2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
+import { signInWithGoogleIdToken } from '../services/supabase/client';
+import { loadGoogleIdentity, renderOneTap } from '../services/supabase/oneTap';
 import { Button } from '../components/ui/Button';
 import { Logo } from '../components/Logo';
+
+// Client ID do Google para o One Tap (opcional — público por design).
+// Se não estiver definido, o botão "Entrar com Google" funciona normalmente.
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
 
 function GoogleG({ className }: { className?: string }) {
   return (
@@ -33,12 +39,46 @@ export function LoginPage() {
   const { user, loading, configured, signIn, signOut } = useSupabaseAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const oneTapAttempted = useRef(false);
 
-  // Login concluído (popup/redirect) → vai para o app. A sessão fica SALVA no
-  // dispositivo (localStorage + auto-refresh): na próxima visita não pede de novo.
+  // Login concluído (One Tap/redirect) → vai para o app. A sessão fica SALVA
+  // no dispositivo (localStorage + auto-refresh): na próxima visita não pede de novo.
   useEffect(() => {
     if (user && !loading) navigate('/', { replace: true });
   }, [user, loading, navigate]);
+
+  // One Tap (desktop): com contas Google salvas, mostra o seletor rápido.
+  // Silencioso se indisponível (mobile/bloqueado/sem client ID) — o botão cobre.
+  useEffect(() => {
+    if (user || loading || !configured || !GOOGLE_CLIENT_ID || oneTapAttempted.current) return;
+    oneTapAttempted.current = true;
+    let active = true;
+
+    void (async () => {
+      const ok = await loadGoogleIdentity();
+      if (!ok || !active) return;
+      renderOneTap(
+        GOOGLE_CLIENT_ID,
+        async (credential) => {
+          if (!active) return;
+          setBusy(true);
+          setError(null);
+          const { error: err } = await signInWithGoogleIdToken(credential);
+          if (active) {
+            setBusy(false);
+            if (err) setError(err.message);
+          }
+        },
+        () => {
+          // Usuário fechou o One Tap — nada a fazer (o botão continua lá).
+        }
+      );
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [user, loading, configured]);
 
   async function handleSignIn() {
     setBusy(true);

@@ -14,6 +14,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { WelcomePage } from './pages/WelcomePage';
 import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { PlansPage } from './pages/PlansPage';
 import { AdminPage } from './pages/AdminPage';
 import { SyncManager } from './components/SyncManager';
@@ -56,6 +57,8 @@ export default function App() {
           <Route path="/boas-vindas" element={<WelcomePage />} />
           <Route path="/perfil" element={<ProfileSetupPage />} />
           <Route path="/login" element={<LoginPage />} />
+          {/* Retorno do Google OAuth (troca o código/token pela sessão) */}
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           {/* Planos visíveis também para quem está sem assinatura (paywall) */}
           <Route path="/planos" element={<PlansPage />} />
           <Route

@@ -33,7 +33,22 @@ export const supabaseUnavailable = (): never => {
   throw new Error('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.');
 };
 
-/** Login com Google (popup). Redireciona de volta para a origem após autenticar. */
+/**
+ * URL do callback OAuth dentro do app (respeita a base '/repfit/' no GitHub
+ * Pages). O Google redireciona para cá e a página /auth/callback troca o
+ * código/access token pela sessão.
+ */
+export function buildGoogleRedirectUrl(baseUrl: string): string {
+  return `${baseUrl}auth/callback`;
+}
+
+/**
+ * Login com Google (fluxo de redirecionamento — o mais confiável no mobile).
+ *
+ * `prompt=select_account` faz o Google abrir o SELETOR DE CONTAS (as contas
+ * salvas no dispositivo aparecem para escolher com um toque) em vez de cair
+ * direto na tela de e-mail/senha. A sessão volta pelo /auth/callback.
+ */
 export async function signInWithGoogle(): Promise<{
   error: Error | null;
 }> {
@@ -42,11 +57,28 @@ export async function signInWithGoogle(): Promise<{
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      // Resolve para a base do app (ex.: '/repfit/' no GitHub Pages) para o
-      // callback do Google voltar para o app e não para a raiz do domínio.
-      redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
+      redirectTo: buildGoogleRedirectUrl(`${window.location.origin}${import.meta.env.BASE_URL}`),
+      queryParams: {
+        // Abre o seletor de contas Google (em vez da digitação manual).
+        // Quando não há conta salva, o próprio Google pede o login normalmente.
+        prompt: 'select_account',
+      },
     },
   });
+  return { error: error ? new Error(error.message) : null };
+}
+
+/**
+ * Login rápido via Google Identity Services (One Tap): troca o ID token do
+ * Google por uma sessão Supabase. Usado apenas quando VITE_GOOGLE_CLIENT_ID
+ * está configurado; o botão normal continua funcionando como fallback.
+ */
+export async function signInWithGoogleIdToken(token: string): Promise<{
+  error: Error | null;
+}> {
+  const sb = getSupabase();
+  if (!sb) return { error: supabaseUnavailable() };
+  const { error } = await sb.auth.signInWithIdToken({ provider: 'google', token });
   return { error: error ? new Error(error.message) : null };
 }
 

@@ -46,15 +46,44 @@ tabelas (`profiles`, `app_config`, `subscriptions`, `payments`,
 
 ## 2. Autenticação (Google)
 
-Já habilitada no seu projeto. O fluxo:
+Já habilitada no seu projeto. O fluxo (implementado em
+`src/services/supabase/client.ts` + `src/pages/AuthCallbackPage.tsx`):
 
-1. Usuário clica **"Entrar com Google"** → `signInWithGoogle()` (em
-   `src/services/supabase/client.ts`).
-2. O Supabase cria o usuário em `auth.users`.
-3. O trigger `handle_new_user` (migration 0001) cria a linha em `profiles`
-   automaticamente (nome/e-mail/foto vindos do Google).
+1. Usuário clica **"Entrar com Google"** → `signInWithGoogle()` com
+   `prompt=select_account`: o Google abre o **seletor de contas salvas** no
+   dispositivo (escolhe com um toque) em vez da digitação manual.
+2. O Google redireciona para **`/auth/callback`** dentro do app, que troca o
+   código/token pela sessão e limpa a URL (sem token no histórico).
+3. O Supabase cria o usuário em `auth.users` e o trigger `handle_new_user`
+   (migration 0001) cria a linha em `profiles` automaticamente.
+4. Opcional (desktop): com `VITE_GOOGLE_CLIENT_ID` definido, o login exibe o
+   **Google One Tap** (seletor de contas rápido). Sem isso, o botão continua
+   funcionando normalmente — o One Tap nunca quebra o fluxo.
 
 > Nenhuma senha é armazenada no banco — tudo é do Supabase Auth.
+
+### Configuração necessária no painel Supabase (Auth → URL Configuration)
+
+- **Site URL**: `https://concurseiroia0-cmyk.github.io/repfit/`
+- **Redirect URLs**: incluir `https://concurseiroia0-cmyk.github.io/repfit/**`
+  (ou ao menos `.../repfit/auth/callback`). Sem isso o Google volta para a
+  raiz e o login pode falhar ou perder a sessão.
+- **Confirm email (Authentication → Providers → Email):** **DESLIGADO** — com
+  login só por Google não faz sentido pedir confirmação de e-mail; deixar
+  ligado pode exigir o passo extra de "confirmar na caixa de e-mail"
+  (`mailer_autoconfirm` ficou `false` neste projeto).
+
+### Google Cloud (One Tap / contas)
+
+- O `client_id` público (ex.: `...apps.googleusercontent.com`) é o MESMO do
+  Supabase (Auth → Providers → Google).
+- Para o **One Tap** renderizar, a origem `https://concurseiroia0-cmyk.github.io`
+  precisa estar em **Authorized JavaScript origins** do OAuth Client no Google
+  Cloud (Credentials). Se não estiver, o One Tap apenas não aparece — o botão
+  normal cobre. A tela de e-mail/senha do Google e o passo "verificar que é
+  você" (código por e-mail/SMS) são decisões de segurança do próprio Google
+  quando o dispositivo/navegador não tem sessão salva — o app não consegue
+  removê-los (nem deve).
 
 ---
 
