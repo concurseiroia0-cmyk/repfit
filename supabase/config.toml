@@ -19,3 +19,8 @@ verify_jwt = false
 # conseguem chamar) + verificação de e-mail de dono dentro da função.
 [functions.admin]
 verify_jwt = true
+
+# Reprocessamento de webhooks pendentes (quem comprou antes de se cadastrar):
+# o JWT é validado manualmente no código — o e-mail vem do token, nunca do corpo.
+[functions.reprocess-pending]
+verify_jwt = false

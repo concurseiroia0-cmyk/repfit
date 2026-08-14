@@ -15,7 +15,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import type { Gateway, NormalizedEvent, WebhookResult } from './types.ts';
 import { normalizeEvent } from './normalize.ts';
-import { computeRevenueMetrics, type RevenueMetrics } from './metrics.ts';
+import { computeRevenueMetrics, subscriptionHasAccess, type RevenueMetrics, type SubscriptionRowLike } from './metrics.ts';
 
 export type DbClient = SupabaseClient;
 
@@ -171,6 +171,30 @@ async function insertPayment(supabase: DbClient, userId: string, subscriptionId:
   if (error) console.error('[repfit-webhook] falha ao registrar pagamento:', error.message);
 }
 
+/** Aplica um evento normalizado a um usuário (cria/atualiza assinatura + pagamento). */
+async function applyEventToUser(supabase: DbClient, userId: string, e: NormalizedEvent): Promise<void> {
+  switch (e.action) {
+    case 'grant': {
+      const subId = await upsertSubscription(supabase, userId, e);
+      await insertPayment(supabase, userId, subId, e);
+      break;
+    }
+    case 'cancel': {
+      await upsertSubscription(supabase, userId, e);
+      break;
+    }
+    case 'revoke': {
+      await upsertSubscription(supabase, userId, e);
+      break;
+    }
+    case 'noop':
+    case 'unknown':
+    default:
+      // Nenhuma alteração de acesso (eventos informativos/pendentes).
+      break;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // PROCESSADOR ÚNICO
 // ---------------------------------------------------------------------------
@@ -207,26 +231,7 @@ export async function processEvent(gateway: Gateway, payload: unknown): Promise<
   }
 
   try {
-    switch (event.action) {
-      case 'grant': {
-        const subId = await upsertSubscription(supabase, userId, event);
-        await insertPayment(supabase, userId, subId, event);
-        break;
-      }
-      case 'cancel': {
-        await upsertSubscription(supabase, userId, event);
-        break;
-      }
-      case 'revoke': {
-        await upsertSubscription(supabase, userId, event); // status refunded/chargeback → sem acesso
-        break;
-      }
-      case 'noop':
-      case 'unknown':
-      default:
-        // Nenhuma alteração de acesso (eventos informativos/pendentes).
-        break;
-    }
+    await applyEventToUser(supabase, userId, event);
     await markEvent(supabase, eventRowId, 'processed');
     return { ok: true, status: 'processed', eventId: event.eventId, eventType: event.eventType, email: event.email };
   } catch (err) {
@@ -320,6 +325,91 @@ export async function listActiveGrants(): Promise<unknown[]> {
     .limit(50);
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// REPROCESSAMENTO de eventos pendentes (quem comprou antes de se cadastrar)
+// ---------------------------------------------------------------------------
+// Quando um webhook chega para um e-mail que ainda não existe no banco, o
+// evento fica com status 'no-user'. Assim que o usuário SE CADASTRA (Google),
+// o app chama esta função: ela localiza os eventos 'no-user' do e-mail e
+// aplica a assinatura automaticamente — o acesso libera no primeiro login.
+//
+// Segurança:
+//   * SÓ eventos 'no-user' do PRÓPRIO e-mail (nunca de outro usuário);
+//   * claim atômico (no-user → processing) evita processamento duplicado;
+//   * se o usuário JÁ possui acesso, nada é feito (nunca reescreve uma
+//     assinatura existente).
+// ============================================================================
+
+export async function reprocessPendingEventsForUser(email: string): Promise<{
+  status: 'processed' | 'noop' | 'skipped' | 'no-user';
+  processed: number;
+  error?: string;
+}> {
+  const supabase = getServiceClient();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const userId = await findUserIdByEmail(supabase, normalizedEmail);
+  if (!userId) {
+    return { status: 'no-user', processed: 0, error: 'usuário ainda não existe' };
+  }
+
+  // Já tem acesso? Nada a fazer (nunca reescreve assinatura existente).
+  const { data: subs } = await supabase
+    .from('subscriptions')
+    .select('id, status, amount, currency, current_period_end, cancel_at_period_end, plan_name, provider')
+    .eq('user_id', userId)
+    .limit(50);
+  const now = new Date();
+  if ((subs ?? []).some((s) => subscriptionHasAccess(s as SubscriptionRowLike, now))) {
+    return { status: 'skipped', processed: 0, error: 'usuário já possui acesso' };
+  }
+
+  // Recupera eventos presos em 'processing' (crash no meio do processamento
+  // anterior) — apenas os antigos (>10 min) para nunca disputar com um
+  // processamento em andamento.
+  await supabase
+    .from('subscription_events')
+    .update({ processing_status: 'no-user' })
+    .eq('email', normalizedEmail)
+    .eq('processing_status', 'processing')
+    .lt('created_at', new Date(Date.now() - 10 * 60_000).toISOString());
+
+  const { data: events, error } = await supabase
+    .from('subscription_events')
+    .select('id, provider, payload')
+    .eq('email', normalizedEmail)
+    .eq('processing_status', 'no-user')
+    .order('created_at', { ascending: true })
+    .limit(50);
+  if (error) throw new Error(`falha ao buscar eventos pendentes: ${error.message}`);
+
+  let processed = 0;
+  for (const ev of events ?? []) {
+    // Claim atômico: só um processador aplica o evento (idempotente).
+    const { data: claimed, error: claimErr } = await supabase
+      .from('subscription_events')
+      .update({ processing_status: 'processing' })
+      .eq('id', ev.id)
+      .eq('processing_status', 'no-user')
+      .select('id')
+      .maybeSingle();
+    if (claimErr || !claimed) continue;
+
+    try {
+      const normalized = normalizeEvent(ev.provider as Gateway, ev.payload);
+      await applyEventToUser(supabase, userId, normalized);
+      await markEvent(supabase, ev.id, 'processed');
+      processed += 1;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'erro ao reprocessar';
+      // Volta para 'no-user' para tentar de novo na próxima sessão.
+      await markEvent(supabase, ev.id, 'no-user', message);
+    }
+  }
+
+  return { status: processed > 0 ? 'processed' : 'noop', processed };
 }
 
 // ---------------------------------------------------------------------------

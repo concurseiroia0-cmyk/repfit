@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import type { SubscriptionRow } from '../../types/supabase';
 import { getSupabase } from './client';
+import { reprocessPendingSubscriptions } from './reprocessPending';
 import type { GrantLike } from '../../utils/subscription';
 
 export interface SubscriptionState {
@@ -43,39 +44,49 @@ export function useSubscription(userId: string | null): SubscriptionState {
     }
 
     setLoading(true);
-    Promise.all([
-      sb
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      sb
-        .from('access_grants')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .order('access_until', { ascending: false })
-        .limit(20),
-    ])
-      .then(([subResult, grantsResult]) => {
-        if (cancelled) return;
-        if (subResult.error || grantsResult.error) {
-          setFailed(true);
-          setSubscription(null);
-          setGrants([]);
-        } else {
-          setSubscription(subResult.data);
-          setGrants(grantsResult.data ?? []);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
+    void (async () => {
+      // 1) Quem comprou ANTES de se cadastrar: aplica os webhooks pendentes
+      //    ('no-user') do e-mail — o acesso libera já no primeiro login.
+      try {
+        await reprocessPendingSubscriptions();
+      } catch {
+        // sem rede/erro → segue a consulta normal (o gate não bloqueia)
+      }
+      if (cancelled) return;
+
+      // 2) Busca a assinatura + concessões (depois do reprocess, para o gate
+      //    ver a assinatura recém-aplicada).
+      const [subResult, grantsResult] = await Promise.all([
+        sb
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        sb
+          .from('access_grants')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .order('access_until', { ascending: false })
+          .limit(20),
+      ]);
+      if (cancelled) return;
+      if (subResult.error || grantsResult.error) {
         setFailed(true);
-        setLoading(false);
-      });
+        setSubscription(null);
+        setGrants([]);
+      } else {
+        setSubscription(subResult.data);
+        setGrants(grantsResult.data ?? []);
+      }
+      setLoading(false);
+    })().catch(() => {
+      if (cancelled) return;
+      setFailed(true);
+      setLoading(false);
+    });
 
     return () => {
       cancelled = true;

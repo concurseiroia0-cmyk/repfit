@@ -225,7 +225,8 @@ supabase/functions/
   _shared/owners.ts       donos (env ∪ app_config.owner_emails)
   webhook-kirvano/index.ts   POST público (verify_jwt = false)
   webhook-ggcheckout/index.ts POST público (verify_jwt = false)
-  admin/index.ts          simulador/concessão/revogação/logs (verify_jwt = true + dono)
+  admin/index.ts          simulador/concessão/revogação/logs/métricas (verify_jwt = true + dono)
+  reprocess-pending/index.ts aplica webhooks 'no-user' após o cadastro (JWT do usuário)
 ```
 
 ### Deploy (requer CLI com login)
@@ -235,6 +236,7 @@ supabase login
 supabase functions deploy webhook-kirvano --no-verify-jwt
 supabase functions deploy webhook-ggcheckout --no-verify-jwt
 supabase functions deploy admin
+supabase functions deploy reprocess-pending --no-verify-jwt
 
 # Segredos (NUNCA no código):
 supabase secrets set KIRVANO_WEBHOOK_TOKEN=<token da Kirvano>
