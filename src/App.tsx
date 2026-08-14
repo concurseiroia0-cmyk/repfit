@@ -16,7 +16,7 @@ import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { PlansPage } from './pages/PlansPage';
-import { SalesPage } from './pages/SalesPage';
+import { SalesPage } from './landing';
 import { AdminPage } from './pages/AdminPage';
 import { SyncManager } from './components/SyncManager';
 import { SubscriptionGate } from './components/SubscriptionGate';
