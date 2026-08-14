@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CreditCard, Lock, RefreshCw } from 'lucide-react';
 import type { SubscriptionRow } from '../types/supabase';
 import { getSubscriptionAccessInfo } from '../utils/subscription';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
@@ -64,10 +64,13 @@ export function PaywallPage({ subscription }: { subscription: SubscriptionRow | 
         </div>
 
         <div className="mx-auto mt-4 flex max-w-sm flex-col gap-2">
-          <Button size="lg" onClick={() => window.location.reload()}>
+          <Button size="lg" onClick={() => navigate('/planos')}>
+            <CreditCard className="h-4 w-4" /> Ver planos e assinar
+          </Button>
+          <Button variant="secondary" size="lg" onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4" /> Verificar novamente
           </Button>
-          <Button variant="secondary" size="lg" onClick={() => void handleSignOut()} disabled={busy}>
+          <Button variant="ghost" size="lg" onClick={() => void handleSignOut()} disabled={busy}>
             Sair da conta (voltar ao modo local)
           </Button>
         </div>

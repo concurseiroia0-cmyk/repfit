@@ -15,6 +15,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import type { Gateway, NormalizedEvent, WebhookResult } from './types.ts';
 import { normalizeEvent } from './normalize.ts';
+import { computeRevenueMetrics, type RevenueMetrics } from './metrics.ts';
 
 export type DbClient = SupabaseClient;
 
@@ -319,4 +320,35 @@ export async function listActiveGrants(): Promise<unknown[]> {
     .limit(50);
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Métricas de receita (painel admin) — service role + agregação pura.
+// ---------------------------------------------------------------------------
+
+export async function getRevenueMetrics(): Promise<RevenueMetrics> {
+  const supabase = getServiceClient();
+  const [paymentsRes, subsRes, profilesRes] = await Promise.all([
+    supabase
+      .from('payments')
+      .select('id, user_id, amount, currency, status, paid_at, payment_method, provider')
+      .order('paid_at', { ascending: false })
+      .limit(2000),
+    supabase
+      .from('subscriptions')
+      .select('id, user_id, status, amount, currency, current_period_end, cancel_at_period_end, plan_name, provider')
+      .limit(2000),
+    supabase.from('profiles').select('id, email').limit(20000),
+  ]);
+
+  if (paymentsRes.error) throw new Error(`payments: ${paymentsRes.error.message}`);
+  if (subsRes.error) throw new Error(`subscriptions: ${subsRes.error.message}`);
+  if (profilesRes.error) throw new Error(`profiles: ${profilesRes.error.message}`);
+
+  const emailById: Record<string, string> = {};
+  for (const p of profilesRes.data ?? []) {
+    if (p.id && p.email) emailById[p.id] = p.email;
+  }
+
+  return computeRevenueMetrics(paymentsRes.data ?? [], subsRes.data ?? [], emailById);
 }

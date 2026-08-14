@@ -17,6 +17,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import {
+  getRevenueMetrics,
   grantFreeAccess,
   listActiveGrants,
   listRecentEvents,
@@ -210,6 +211,11 @@ Deno.serve(async (req) => {
       case 'events': {
         const events = await listRecentEvents(Number(body.limit) || 10);
         return json({ ok: true, action: 'events', events });
+      }
+
+      case 'metrics': {
+        const metrics = await getRevenueMetrics();
+        return json({ ok: true, action: 'metrics', metrics });
       }
 
       case 'grants': {

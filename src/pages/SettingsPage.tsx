@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
+  BadgeCheck,
   CheckCircle2,
   Cloud,
+  CreditCard,
   Database,
   Download,
   HardDrive,
@@ -42,6 +44,8 @@ import { InstallAppButton } from '../components/PwaInstall';
 import { ShareAppModal } from '../components/ShareApp';
 import { useSettings, saveSettings } from '../services/settingsService';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
+import { useSubscription } from '../services/supabase/useSubscription';
+import { getSubscriptionAccessInfo } from '../utils/subscription';
 import { OWNER_EMAILS } from '../services/supabase/config';
 import { getLastSync, getLastSyncAt, runSync } from '../services/supabase/syncState';
 import type { SyncResult } from '../services/supabase/sync';
@@ -96,6 +100,8 @@ export function SettingsPage() {
   const auth = useSupabaseAuth();
   const navigate = useNavigate();
   const isOwner = auth.user != null && OWNER_EMAILS.includes((auth.user.email ?? '').toLowerCase());
+  const { subscription: mySubscription, loading: subLoading } = useSubscription(auth.user?.id ?? null);
+  const subInfo = mySubscription ? getSubscriptionAccessInfo(mySubscription) : null;
 
   useEffect(() => {
     setUsername(settings.username);
@@ -720,6 +726,39 @@ export function SettingsPage() {
             </div>
           </Card>
         )}
+
+        {/* Assinatura e planos */}
+        <Card>
+          <CardHeader title="Assinatura e planos" subtitle="Seu plano, renovação e acesso à plataforma" />
+          <div className="space-y-3 px-5 pb-5">
+            {!auth.user ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Entre com o Google para ver o status da sua assinatura.
+              </p>
+            ) : subLoading ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Verificando…</p>
+            ) : (
+              <>
+                <div className="rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/60">
+                  <p className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">
+                    <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" />
+                    {isOwner ? 'Acesso vitalício do dono' : (subInfo?.lines[0] ?? 'Sem plano ativo')}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                    {isOwner
+                      ? 'Você tem acesso total à plataforma sem assinatura.'
+                      : (subInfo?.lines.slice(1).join(' · ') || 'Assine um plano para desbloquear a plataforma.')}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={() => navigate('/planos')}>
+                    <CreditCard className="h-4 w-4" /> Ver planos e assinar
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Card>
 
         {/* Conta e sincronização (Supabase) */}
         <Card>

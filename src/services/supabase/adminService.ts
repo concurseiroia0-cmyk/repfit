@@ -64,6 +64,8 @@ export const adminApi = {
 
   events: (limit = 10) => callAdmin<{ events: unknown[] }>('events', { limit }),
 
+  metrics: () => callAdmin<{ metrics: unknown }>('metrics'),
+
   grants: () => callAdmin<{ grants: unknown[] }>('grants'),
 
   config: () => callAdmin<{ webhooks: { kirvano: string; ggcheckout: string }; owners: string[]; adminEmail: string }>('config'),

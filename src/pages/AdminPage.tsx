@@ -2,17 +2,23 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
+  CalendarDays,
   CheckCircle2,
   ClipboardCopy,
   Clock,
+  DollarSign,
   Gift,
   History,
   Loader2,
   Lock,
+  Receipt,
   RefreshCw,
   Send,
   ShieldCheck,
   Trash2,
+  TrendingUp,
+  Undo2,
+  Users,
   XCircle,
 } from 'lucide-react';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
@@ -79,8 +85,35 @@ interface GrantRow {
   granted_at: string | null;
 }
 
+interface MetricsRow {
+  now: string;
+  totalPaid: number;
+  totalRefunded: number;
+  paidCount: number;
+  refundedCount: number;
+  monthPaid: number;
+  monthCount: number;
+  activeSubscriptions: number;
+  trialSubscriptions: number;
+  canceledSubscriptions: number;
+  mrr: number;
+  recentPayments: {
+    id: string;
+    email: string | null;
+    amount: number;
+    currency: string;
+    status: string;
+    payment_method: string | null;
+    provider: string | null;
+    paid_at: string | null;
+  }[];
+}
+
 const fmt = (iso: string | null | undefined): string =>
   iso ? new Date(iso).toLocaleString('pt-BR') : '—';
+
+const brl = (n: number): string =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
 
 export function AdminPage() {
   const auth = useSupabaseAuth();
@@ -114,6 +147,10 @@ export function AdminPage() {
   const [eventsBusy, setEventsBusy] = useState(false);
   const [openEventId, setOpenEventId] = useState<string | null>(null);
 
+  // Métricas de receita
+  const [metrics, setMetrics] = useState<MetricsRow | null>(null);
+  const [metricsBusy, setMetricsBusy] = useState(false);
+
   useEffect(() => {
     void getOwnerEmails()
       .then(setOwners)
@@ -123,6 +160,7 @@ export function AdminPage() {
     });
     void refreshGrants();
     void refreshEvents();
+    void refreshMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -187,6 +225,14 @@ export function AdminPage() {
     void refreshGrants();
   }
 
+  async function refreshMetrics() {
+    setMetricsBusy(true);
+    const r = await adminApi.metrics();
+    setMetricsBusy(false);
+    if (r.ok && r.data) setMetrics(r.data.metrics as MetricsRow);
+    else if (!r.ok) push(`Erro ao carregar métricas: ${r.error}`, 'error');
+  }
+
   if (checking || auth.loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -217,6 +263,89 @@ export function AdminPage() {
       <h1 className="mb-4 text-xl font-extrabold text-slate-900 dark:text-white">Painel administrativo</h1>
 
       <div className="space-y-4">
+        {/* Métricas de receita */}
+        <Card>
+          <CardHeader
+            title="Métricas de receita"
+            subtitle="Visão geral do faturamento (assinaturas e pagamentos)"
+            action={
+              <Button variant="secondary" size="sm" onClick={() => void refreshMetrics()} disabled={metricsBusy}>
+                <RefreshCw className={metricsBusy ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+              </Button>
+            }
+          />
+          <div className="space-y-4 px-5 pb-5">
+            {!metrics && !metricsBusy ? (
+              <EmptyState icon={<TrendingUp className="h-6 w-6" />} title="Sem dados ainda" className="py-6" />
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  <MetricCard
+                    icon={<DollarSign className="h-4 w-4" />}
+                    label="Receita total (paga)"
+                    value={brl(metrics?.totalPaid ?? 0)}
+                    hint={`${metrics?.paidCount ?? 0} pagamentos`}
+                  />
+                  <MetricCard
+                    icon={<CalendarDays className="h-4 w-4" />}
+                    label="Receita no mês"
+                    value={brl(metrics?.monthPaid ?? 0)}
+                    hint={`${metrics?.monthCount ?? 0} pagamentos`}
+                  />
+                  <MetricCard
+                    icon={<Users className="h-4 w-4" />}
+                    label="Assinantes ativos"
+                    value={String(metrics?.activeSubscriptions ?? 0)}
+                    hint={`${metrics?.trialSubscriptions ?? 0} em trial · ${metrics?.canceledSubscriptions ?? 0} canceladas`}
+                  />
+                  <MetricCard
+                    icon={<TrendingUp className="h-4 w-4" />}
+                    label="Receita mensal estimada (MRR)"
+                    value={brl(metrics?.mrr ?? 0)}
+                    hint="Soma das assinaturas ativas"
+                  />
+                </div>
+
+                {metrics && metrics.totalRefunded > 0 && (
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-rose-500">
+                    <Undo2 className="h-3.5 w-3.5" />
+                    Reembolsos: {brl(metrics.totalRefunded)} ({metrics.refundedCount})
+                  </p>
+                )}
+
+                {metrics && metrics.recentPayments.length > 0 && (
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/15">
+                    <table className="w-full min-w-[640px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400 dark:border-white/10">
+                          <th className="px-3 py-2.5">Data</th>
+                          <th className="px-3 py-2.5">E-mail</th>
+                          <th className="px-3 py-2.5">Gateway</th>
+                          <th className="px-3 py-2.5">Método</th>
+                          <th className="px-3 py-2.5 text-right">Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                        {metrics.recentPayments.map((p) => (
+                          <tr key={p.id}>
+                            <td className="whitespace-nowrap px-3 py-2.5 text-slate-500">{fmt(p.paid_at)}</td>
+                            <td className="px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-100">{p.email ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-slate-500">{p.provider ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-slate-500">{p.payment_method ?? '—'}</td>
+                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                              {brl(p.amount)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </Card>
+
         {/* URLs dos webhooks */}
         <Card>
           <CardHeader title="URLs dos webhooks" subtitle="Cole estas URLs na configuração de cada plataforma" />
@@ -401,6 +530,18 @@ export function AdminPage() {
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function MetricCard({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-800/60">
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-400">
+        {icon} {label}
+      </p>
+      <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-slate-400">{hint}</p>}
     </div>
   );
 }

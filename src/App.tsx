@@ -14,6 +14,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { WelcomePage } from './pages/WelcomePage';
 import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
+import { PlansPage } from './pages/PlansPage';
 import { AdminPage } from './pages/AdminPage';
 import { SyncManager } from './components/SyncManager';
 import { SubscriptionGate } from './components/SubscriptionGate';
@@ -55,6 +56,8 @@ export default function App() {
           <Route path="/boas-vindas" element={<WelcomePage />} />
           <Route path="/perfil" element={<ProfileSetupPage />} />
           <Route path="/login" element={<LoginPage />} />
+          {/* Planos visíveis também para quem está sem assinatura (paywall) */}
+          <Route path="/planos" element={<PlansPage />} />
           <Route
             element={
               <SubscriptionGate>
