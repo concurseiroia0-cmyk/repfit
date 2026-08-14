@@ -26,15 +26,16 @@ import {
 import { getOwnerEmails } from '../_shared/owners.ts';
 import type { Gateway } from '../_shared/types.ts';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    },
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
 }
 
@@ -135,7 +136,10 @@ function buildSamplePayload(gateway: Gateway, event: string, email: string, plan
 // ---------------------------------------------------------------------------
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return json({ ok: true }, 204);
+  // Pré-voo CORS: 204 SEM corpo (corpo em 204 lança TypeError no runtime).
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
   if (req.method !== 'POST') return json({ ok: false, error: 'Método não permitido' }, 405);
 
   // 1) Autenticação: JWT do Supabase (verify_jwt já exige; valida de novo aqui).

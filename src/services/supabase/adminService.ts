@@ -33,8 +33,10 @@ async function callAdmin<T = unknown>(action: string, body: Record<string, unkno
       },
       body: JSON.stringify({ action, ...body }),
     });
-  } catch {
-    return { ok: false, error: 'Sem conexão com a nuvem (função admin não alcançável).' };
+  } catch (err) {
+    // fetch lança quando o pré-voo CORS falha ou sem rede. Inclui o motivo real.
+    const detail = err instanceof Error && err.message ? ` (${err.message})` : '';
+    return { ok: false, error: `Sem conexão com a nuvem (função admin não alcançável)${detail}.` };
   }
 
   const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } & T | null;
