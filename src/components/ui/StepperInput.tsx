@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '../../utils/misc';
 import { parseNum } from '../../utils/calc';
-import { forceInputRepaint, scheduleKeepInputVisible } from '../../utils/mobileInput';
+import { forceInputRepaint } from '../../utils/mobileInput';
 import { Input } from './Field';
 
 interface StepperInputProps {
@@ -34,17 +34,16 @@ export function StepperInput({
   const current = parseNum(value);
   const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n * 10) / 10));
 
-  // O input é NÃO controlado (defaultValue): no Chrome Android, um input
-  // controlado pode deixar de exibir os dígitos digitados quando o teclado
-  // abre e a página faz reflow (interactive-widget=resizes-content) — o valor
-  // fica no estado mas o campo continua vazio. Com defaultValue o navegador
-  // guarda o que foi digitado e o onChange apenas alimenta o estado. Mudanças
-  // EXTERNAS (pré-preencher, repetir treino, botões +/−) são aplicadas pelo
-  // efeito abaixo. Durante a digitação o DOM já está em sincronia com o
-  // estado (onChange), então reatribuir o mesmo valor não move o cursor.
+  // SOLUÇÃO DE CONTORNO para o Chrome Android: o campo é SOMENTE-LEITURA e o
+  // valor é definido programaticamente — o teclado nem abre, então não existe
+  // o problema do dígito digitado ficar invisível. O usuário muda o número
+  // pelos botões −/+, que atualizam o estado e reatribuem o valor abaixo.
+  // Mesmo assim forçamos uma repintura a cada mudança (o Chrome Android às
+  // vezes deixa de desenhar o novo texto depois de um reflow).
   useEffect(() => {
     if (inputRef.current && inputRef.current.value !== value) {
       inputRef.current.value = value;
+      forceInputRepaint(inputRef.current);
     }
   }, [value]);
 
@@ -71,17 +70,8 @@ export function StepperInput({
           type="text"
           inputMode={inputMode}
           defaultValue={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            // Chrome Android: força o redesenho do dígito recém-digitado — o
-            // teclado pode abrir sem o navegador repintar o texto do campo.
-            forceInputRepaint(e.currentTarget);
-          }}
-          onFocus={(e) => {
-            // Android/iOS: o teclado abre DEPOIS do focus e reduz o viewport —
-            // agenda rolagens para o campo continuar visível acima do teclado.
-            scheduleKeepInputVisible(e.currentTarget);
-          }}
+          readOnly
+          onFocus={(e) => e.currentTarget.blur()}
           aria-label={ariaLabel}
           autoComplete="off"
           autoCapitalize="off"

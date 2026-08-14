@@ -34,7 +34,7 @@ export function emptyExercise(): {
   effort: number | null;
   notes: string;
 } {
-  return { id: uid(), name: '', sets: [{ id: uid(), weight: '', reps: '' }], effort: null, notes: '' };
+  return { id: uid(), name: '', sets: [{ id: uid(), weight: '0', reps: '0' }], effort: null, notes: '' };
 }
 
 interface WorkoutFormProps {

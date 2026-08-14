@@ -52,7 +52,7 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
   const updateSet = (setId: string, patch: Partial<SetDraft>) => {
     update({ sets: exercise.sets.map((s) => (s.id === setId ? { ...s, ...patch } : s)) });
   };
-  const addSet = () => update({ sets: [...exercise.sets, { id: uid(), weight: '', reps: '' }] });
+  const addSet = () => update({ sets: [...exercise.sets, { id: uid(), weight: '0', reps: '0' }] });
   const removeSet = (setId: string) => update({ sets: exercise.sets.filter((s) => s.id !== setId) });
   const applyToAll = () => {
     const first = exercise.sets[0];
@@ -62,7 +62,7 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
   function pickSuggestion(name: string, lastWeight: number | null, lastReps: number | null) {
     const empty = exercise.sets.every((s) => !s.weight.trim() && !s.reps.trim());
     const sets = empty
-      ? [{ id: uid(), weight: lastWeight != null ? formatWeightRaw(lastWeight, unit) : '', reps: lastReps != null ? String(lastReps) : '' }]
+      ? [{ id: uid(), weight: lastWeight != null ? formatWeightRaw(lastWeight, unit) : '0', reps: lastReps != null ? String(lastReps) : '0' }]
       : exercise.sets;
     onChange({ ...exercise, name, sets });
     setOpen(false);
