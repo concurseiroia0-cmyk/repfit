@@ -79,6 +79,15 @@ describe('hasSubscriptionAccess — REGRA CRÍTICA: cancelamento mantém acesso 
     expect(hasSubscriptionAccess(sub({ status: 'expired' }), NOW)).toBe(false);
   });
 
+  it('refunded → SEM acesso, mesmo com current_period_end no futuro', () => {
+    expect(hasSubscriptionAccess(sub({ status: 'refunded' }), NOW)).toBe(false);
+    expect(hasSubscriptionAccess(sub({ status: 'refunded', current_period_end: null }), NOW)).toBe(false);
+  });
+
+  it('chargeback → SEM acesso, mesmo com current_period_end no futuro', () => {
+    expect(hasSubscriptionAccess(sub({ status: 'chargeback' }), NOW)).toBe(false);
+  });
+
   it('status desconhecido → SEM acesso (safe default)', () => {
     expect(hasSubscriptionAccess(sub({ status: 'whatever' }), NOW)).toBe(false);
   });
@@ -202,6 +211,22 @@ describe('hasActiveAccess — FUNÇÃO ÚNICA centralizada', () => {
 
   it('nada → sem acesso', () => {
     expect(hasActiveAccess({ email: 'x@ex.com', subscription: null, grants: [] })).toBe(false);
+  });
+
+  it('assinatura reembolsada + concessão ativa → acesso (a concessão salva)', () => {
+    expect(
+      hasActiveAccess({
+        email: 'x@ex.com',
+        subscription: sub({ status: 'refunded' }),
+        grants: [{ access_until: END, status: 'active', revoked_at: null }],
+      })
+    ).toBe(true);
+  });
+
+  it('assinatura reembolsada sem concessão → sem acesso', () => {
+    expect(
+      hasActiveAccess({ email: 'x@ex.com', subscription: sub({ status: 'refunded' }), grants: [] })
+    ).toBe(false);
   });
 
   it('grant expirado não salva assinatura expirada', () => {

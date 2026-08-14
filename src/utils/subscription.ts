@@ -137,6 +137,8 @@ export function getEffectiveStatus(
  *  - pending                                    → acesso somente se existir
  *    outro período válido (ex.: renovação em processamento com período atual
  *    ainda ativo);
+ *  - refunded / chargeback                      → SEM acesso, SEMPRE (perda
+ *    definitiva — reembolso/chargeback, mesmo com current_period_end no futuro);
  *  - expired / desconhecido                     → sem acesso.
  */
 export function hasSubscriptionAccess(
@@ -146,6 +148,10 @@ export function hasSubscriptionAccess(
   const status = getEffectiveStatus(sub, now);
   if (status === 'lifetime') return true;
   if (status === 'expired') return false;
+
+  // Reembolso/chargeback: perda DEFINITIVA de acesso — nunca libera,
+  // independentemente do current_period_end.
+  if (status === 'refunded' || status === 'chargeback') return false;
 
   if (status === 'canceled' || status === 'pending') {
     const end = toMs(sub?.current_period_end);
