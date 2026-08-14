@@ -57,11 +57,15 @@ export function BrandMark({ logoUrl, size = 30 }: { logoUrl: string | null; size
   }
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <line x1="10" y1="32" x2="54" y2="32" stroke={ACCENT} strokeWidth="6" strokeLinecap="round" />
-      <rect x="3" y="21" width="8" height="22" rx="2.5" fill={ACCENT} />
-      <rect x="53" y="21" width="8" height="22" rx="2.5" fill={ACCENT} />
-      <rect x="13" y="24" width="6" height="16" rx="2" fill="#d9a505" />
-      <rect x="45" y="24" width="6" height="16" rx="2" fill="#d9a505" />
+      <rect width="64" height="64" rx="14" fill={ACCENT} />
+      <g fill="#222222">
+        <rect x="9.5" y="22" width="3.4" height="20" rx="1.7" transform="rotate(8 11.2 32)" />
+        <rect x="18" y="17" width="4.4" height="30" rx="2.2" transform="rotate(8 20.2 32)" />
+        <circle cx="30.4" cy="32" r="3.1" />
+        <circle cx="33.6" cy="32" r="3.1" />
+        <rect x="41.6" y="17" width="4.4" height="30" rx="2.2" transform="rotate(-8 43.8 32)" />
+        <rect x="51.1" y="22" width="3.4" height="20" rx="1.7" transform="rotate(-8 52.8 32)" />
+      </g>
     </svg>
   );
 }

@@ -17,17 +17,17 @@ export function Logo({ className }: { className?: string }) {
       <span
         role="img"
         aria-label="Logo do RepFit"
-        className={cn('flex items-center justify-center overflow-hidden bg-[#0a0a0b]', base)}
+        className={cn('flex items-center justify-center overflow-hidden bg-[#e2b31a]', base)}
       >
         <svg viewBox="0 0 64 64" className="h-[72%] w-[72%]" aria-hidden="true">
-          {/* barra */}
-          <line x1="10" y1="32" x2="54" y2="32" stroke="#F5C518" strokeWidth="5" strokeLinecap="round" />
-          {/* anilhas externas */}
-          <rect x="3" y="21" width="8" height="22" rx="2.5" fill="#F5C518" />
-          <rect x="53" y="21" width="8" height="22" rx="2.5" fill="#F5C518" />
-          {/* anilhas internas */}
-          <rect x="13" y="24" width="6" height="16" rx="2" fill="#d9a505" />
-          <rect x="45" y="24" width="6" height="16" rx="2" fill="#d9a505" />
+          <g fill="#222222">
+            <rect x="9.5" y="22" width="3.4" height="20" rx="1.7" transform="rotate(8 11.2 32)" />
+            <rect x="18" y="17" width="4.4" height="30" rx="2.2" transform="rotate(8 20.2 32)" />
+            <circle cx="30.4" cy="32" r="3.1" />
+            <circle cx="33.6" cy="32" r="3.1" />
+            <rect x="41.6" y="17" width="4.4" height="30" rx="2.2" transform="rotate(-8 43.8 32)" />
+            <rect x="51.1" y="22" width="3.4" height="20" rx="1.7" transform="rotate(-8 52.8 32)" />
+          </g>
         </svg>
       </span>
     );
