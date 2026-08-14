@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { addDays, differenceInCalendarDays } from 'date-fns';
+import { addDays, differenceInCalendarDays, startOfWeek } from 'date-fns';
 
 /** Converte Date em string YYYY-MM-DD usando a hora LOCAL (evita bug de fuso). */
 export function toDateString(d: Date): string {
@@ -18,6 +18,11 @@ export function parseLocalDate(s: string): Date {
 
 export function todayString(): string {
   return toDateString(new Date());
+}
+
+/** YYYY-MM-DD da segunda-feira da semana atual (base das metas semanais). */
+export function currentWeekStart(): string {
+  return toDateString(startOfWeek(new Date(), { weekStartsOn: 1 }));
 }
 
 /** '2026-08-09' -> '09/08/2026' */

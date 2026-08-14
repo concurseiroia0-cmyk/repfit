@@ -12,6 +12,7 @@ import {
   Share2,
   Smartphone,
   Sparkles,
+  Target,
   Trophy,
   TrendingUp,
 } from 'lucide-react';
@@ -19,8 +20,9 @@ import { workoutsLive } from '../services/workoutService';
 import { computeRecords } from '../services/recordsService';
 import { useSettings } from '../services/settingsService';
 import { createSampleData } from '../services/sampleData';
-import { currentStreak, formatDayShort, formatMonthYearCap, toDateString, todayString, weekdayName } from '../utils/date';
+import { currentStreak, currentWeekStart, formatDayShort, formatMonthYearCap, toDateString, todayString, weekdayName } from '../utils/date';
 import { formatNumber, formatWeight, sumVolume } from '../utils/calc';
+import { weeklyGoalProgress, type WeeklyGoalProgress } from '../utils/goals';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState, SkeletonCard } from '../components/ui/Feedback';
@@ -50,9 +52,11 @@ export function HomePage() {
     const dates = workouts.map((w) => w.date);
     const streak = currentStreak(dates);
 
-    const weekStart = now.getDate() - ((now.getDay() + 6) % 7);
-    const weekStartStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(weekStart).padStart(2, '0')}`;
-    const weekVolume = sumVolume(workouts.filter((w) => w.date >= weekStartStr));
+    const weekStartStr = currentWeekStart();
+    const weekWorkouts = workouts.filter((w) => w.date >= weekStartStr);
+    const weekVolume = sumVolume(weekWorkouts);
+    const weekCount = weekWorkouts.length;
+    const weekDuration = weekWorkouts.reduce((a, w) => a + (w.durationMin ?? 0), 0);
 
     const withEffort = workouts.filter((w) => w.avgEffort != null).slice(0, 5);
     const avgEffort = withEffort.length
@@ -64,6 +68,8 @@ export function HomePage() {
       monthCount,
       streak,
       weekVolume,
+      weekCount,
+      weekDuration,
       avgEffort,
       monthLabel: formatMonthYearCap(`${monthPrefix}-01`),
       dates,
@@ -92,6 +98,11 @@ export function HomePage() {
   }, [workouts]);
 
   const records = useMemo(() => (workouts ? computeRecords(workouts).slice(0, 3) : []), [workouts]);
+
+  const goalProgress = useMemo(
+    () => weeklyGoalProgress(workouts, settings.weeklyGoal, currentWeekStart()),
+    [workouts, settings.weeklyGoal]
+  );
 
   async function handleSample() {
     setCreatingSample(true);
@@ -215,6 +226,9 @@ export function HomePage() {
         <StatCard icon={<Activity className="h-5 w-5" />} label="Esforço médio recente" value={avgEffort != null ? `${formatNumber(avgEffort)}/6` : '—'} />
       </div>
 
+      {/* Meta da semana */}
+      {goalProgress && <WeeklyGoalCard progress={goalProgress} unit={settings.unit} />}
+
       {/* Calendário (design da referência: dias em círculos, treino em dourado) */}
       <div className="mb-4">
         <HomeCalendar workouts={workouts} unit={settings.unit} />
@@ -315,6 +329,42 @@ function InstallBanner({ canInstall, onShare }: { canInstall: boolean; onShare: 
         </Button>
       </div>
     </div>
+  );
+}
+
+function WeeklyGoalCard({ progress, unit }: { progress: WeeklyGoalProgress; unit: string }) {
+  const label =
+    progress.type === 'frequency' ? 'Treinos' : progress.type === 'volume' ? `Volume (${unit})` : 'Duração (min)';
+  const valueText =
+    progress.type === 'volume' ? formatNumber(progress.value) : formatNumber(progress.value);
+  const targetText = progress.type === 'volume' ? formatNumber(progress.target) : String(progress.target);
+
+  return (
+    <Card className="mb-4 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+          <Target className="h-4 w-4 text-amber-400" /> Meta da semana
+        </h2>
+        <span
+          className={
+            progress.done
+              ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+              : 'text-xs font-bold text-slate-500 dark:text-slate-400'
+          }
+        >
+          {progress.done ? 'Meta batida! 🎉' : `${progress.percent}%`}
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {label}: <b className="text-slate-700 dark:text-slate-200">{valueText}</b> de {targetText}
+      </p>
+      <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500"
+          style={{ width: `${Math.max(4, progress.percent)}%` }}
+        />
+      </div>
+    </Card>
   );
 }
 

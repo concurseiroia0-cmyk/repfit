@@ -95,6 +95,8 @@ export interface Settings {
   profileDone?: boolean;
   /** Foto do perfil como dataURL comprimida (256px, JPEG) — barata de guardar. */
   avatarDataUrl?: string;
+  /** Meta semanal opcional (ex.: 3 treinos/semana, 12.000 kg, 180 min). */
+  weeklyGoal?: { type: 'frequency' | 'volume' | 'duration'; target: number };
 }
 
 /** Definição de um tipo de medida corporal (Peso, Braço, Cintura…). */

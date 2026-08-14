@@ -17,6 +17,7 @@ import {
   Sparkles,
   Star,
   Sun,
+  Target,
   Trash2,
   Upload,
   User,
@@ -24,6 +25,7 @@ import {
   Venus,
 } from 'lucide-react';
 import type { Sex } from '../types';
+import type { WeeklyGoal } from '../utils/goals';
 import { db } from '../db/db';
 import { DEFAULT_MUSCLE_GROUPS } from '../utils/constants';
 import { formatBytes, parseNum, unitToKg } from '../utils/calc';
@@ -53,6 +55,9 @@ export function SettingsPage() {
 
   const [username, setUsername] = useState(settings.username);
   const [avatar, setAvatar] = useState<string | null>(settings.avatarDataUrl ?? null);
+  const [goalEnabled, setGoalEnabled] = useState(Boolean(settings.weeklyGoal));
+  const [goalType, setGoalType] = useState<WeeklyGoal['type']>(settings.weeklyGoal?.type ?? 'frequency');
+  const [goalTarget, setGoalTarget] = useState(settings.weeklyGoal ? String(settings.weeklyGoal.target) : '');
   const [profileSex, setProfileSex] = useState<Sex | ''>(settings.sex ?? '');
   const [profileAge, setProfileAge] = useState(settings.age != null ? String(settings.age) : '');
   const [profileHeight, setProfileHeight] = useState(settings.heightCm != null ? String(settings.heightCm) : '');
@@ -84,6 +89,12 @@ export function SettingsPage() {
   useEffect(() => {
     setAvatar(settings.avatarDataUrl ?? null);
   }, [settings.avatarDataUrl]);
+
+  useEffect(() => {
+    setGoalEnabled(Boolean(settings.weeklyGoal));
+    setGoalType(settings.weeklyGoal?.type ?? 'frequency');
+    setGoalTarget(settings.weeklyGoal ? String(settings.weeklyGoal.target) : '');
+  }, [settings.weeklyGoal]);
 
   useEffect(() => {
     setProfileSex(settings.sex ?? '');
@@ -118,6 +129,18 @@ export function SettingsPage() {
     setAvatar(dataUrl);
     await saveSettings({ avatarDataUrl: dataUrl ?? undefined });
     push(dataUrl ? 'Foto de perfil salva.' : 'Foto de perfil removida.');
+  }
+
+  async function saveGoal() {
+    const target = parseNum(goalTarget);
+    if (goalEnabled && (target == null || target <= 0)) {
+      push('Informe um valor para a meta.', 'error');
+      return;
+    }
+    await saveSettings({
+      weeklyGoal: goalEnabled && target != null && target > 0 ? { type: goalType, target } : undefined,
+    });
+    push(goalEnabled ? 'Meta da semana salva!' : 'Meta da semana removida.');
   }
 
   async function saveProfile() {
@@ -344,6 +367,67 @@ export function SettingsPage() {
               </div>
               <Button onClick={() => void saveProfile()}>Salvar perfil</Button>
             </div>
+          </div>
+        </Card>
+
+        {/* Metas semanais */}
+        <Card>
+          <CardHeader title="Metas semanais" subtitle="Barra de progresso na tela inicial" />
+          <div className="space-y-4 px-5 pb-5">
+            <label className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={goalEnabled}
+                onChange={(e) => setGoalEnabled(e.target.checked)}
+                className="h-4 w-4 accent-amber-400"
+              />
+              Ativar meta da semana
+            </label>
+
+            {goalEnabled ? (
+              <>
+                <Field label="Tipo de meta">
+                  <SegmentedControl
+                    options={[
+                      { value: 'frequency', label: 'Frequência' },
+                      { value: 'volume', label: 'Volume' },
+                      { value: 'duration', label: 'Duração' },
+                    ]}
+                    value={goalType}
+                    onChange={setGoalType}
+                    ariaLabel="Tipo da meta semanal"
+                  />
+                </Field>
+                <Field
+                  label={
+                    goalType === 'frequency'
+                      ? 'Treinos por semana'
+                      : goalType === 'volume'
+                        ? `Volume semanal (${settings.unit})`
+                        : 'Minutos por semana'
+                  }
+                >
+                  <StepperInput
+                    value={goalTarget}
+                    onChange={setGoalTarget}
+                    step={goalType === 'volume' ? 500 : 1}
+                    min={goalType === 'volume' ? 500 : 1}
+                    max={goalType === 'volume' ? 200000 : goalType === 'duration' ? 600 : 14}
+                    suffix={goalType === 'frequency' ? 'treinos' : goalType === 'volume' ? settings.unit : 'min'}
+                    inputMode="numeric"
+                    ariaLabel="Meta semanal"
+                  />
+                </Field>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => void saveGoal()}>Salvar meta</Button>
+                </div>
+              </>
+            ) : (
+              <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <Target className="h-3.5 w-3.5 shrink-0" />
+                Ex.: 3 treinos por semana, 12.000 kg de volume ou 180 minutos de treino.
+              </p>
+            )}
           </div>
         </Card>
 

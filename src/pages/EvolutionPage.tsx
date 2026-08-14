@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { addDays, startOfToday } from 'date-fns';
-import { GitCompare, TrendingUp, Trophy } from 'lucide-react';
+import { GitCompare, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
 import { workoutsLive } from '../services/workoutService';
 import { computeRecords } from '../services/recordsService';
 import { useSettings } from '../services/settingsService';
@@ -222,6 +222,9 @@ export function EvolutionPage() {
         />
       ) : (
         <>
+          {/* Resumo da progressão da carga */}
+          <ProgressionSummary history={history} unit={unit} />
+
           {/* Progressão em lista */}
           <Card className="mb-4 p-5">
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -348,6 +351,54 @@ export function EvolutionPage() {
         </>
       )}
     </div>
+  );
+}
+
+function ProgressionSummary({ history, unit }: { history: ExerciseHistoryPoint[]; unit: Unit }) {
+  const loaded = history.filter((h) => h.maxWeight > 0);
+  const first = loaded[0] ?? null;
+  const last = loaded.length > 0 ? loaded[loaded.length - 1] : null;
+  const maior = loaded.reduce((m, h) => Math.max(m, h.maxWeight), 0);
+  const delta = first && last ? Math.round((last.maxWeight - first.maxWeight) * 10) / 10 : 0;
+  const deltaPct = first && first.maxWeight > 0 ? Math.round((delta / first.maxWeight) * 100) : 0;
+
+  if (!first || !last || first.maxWeight <= 0) return null;
+
+  const up = delta > 0;
+  const down = delta < 0;
+  const TrendIcon = up ? TrendingUp : down ? TrendingDown : GitCompare;
+  const trendColor = up ? 'text-emerald-500' : down ? 'text-rose-500' : 'text-slate-400';
+
+  return (
+    <Card className="mb-4 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+          <TrendIcon className={`h-5 w-5 ${trendColor}`} /> Progressão da carga
+        </h2>
+        {delta !== 0 && (
+          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${up ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'}`}>
+            {up ? '▲' : '▼'} {up ? '+' : ''}{formatNumber(delta)} {unit} · {up ? '+' : ''}{deltaPct}%
+          </span>
+        )}
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+          <div className="text-base font-extrabold text-slate-900 dark:text-white">{formatWeight(first.maxWeight, unit)}</div>
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">primeira</div>
+        </div>
+        <div className="rounded-xl bg-amber-50 p-3 dark:bg-amber-400/10">
+          <div className="text-base font-extrabold text-amber-600 dark:text-amber-400">{formatWeight(last.maxWeight, unit)}</div>
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">última</div>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+          <div className="text-base font-extrabold text-slate-900 dark:text-white">{formatWeight(maior, unit)}</div>
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">maior carga</div>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+        {loaded.length} {loaded.length === 1 ? 'treino com' : 'treinos com'} este exercício no período selecionado.
+      </p>
+    </Card>
   );
 }
 
