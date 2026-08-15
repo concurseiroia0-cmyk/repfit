@@ -33,28 +33,6 @@ const DIFFERENTIALS = [
   },
 ];
 
-/** Mini gráfico de evolução (barras crescentes). */
-function EvolutionChartMockup() {
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="text-sm font-extrabold text-slate-900">Evolução do Supino Reto</p>
-        <p className="text-xs font-black text-amber-600">40 kg → 52 kg</p>
-      </div>
-      <div className="mt-4 flex h-20 items-end gap-1.5">
-        {[38, 42, 44, 48, 51, 55, 58, 63].map((h, i) => (
-          <div key={i} className="flex-1 rounded-t-md bg-amber-400/70" style={{ height: `${h}%` }} />
-        ))}
-        <div
-          className="flex-1 rounded-t-md bg-amber-500 shadow-[0_0_12px_rgba(245,197,24,0.6)]"
-          style={{ height: '100%' }}
-        />
-      </div>
-      <p className="mt-2 text-[11px] font-semibold text-slate-400">Carga subindo semana após semana — visível no app.</p>
-    </div>
-  );
-}
-
 /** Seção diferencial — compartilhar treino + mostrar evolução. */
 export function ShareSection() {
   return (
@@ -83,10 +61,6 @@ export function ShareSection() {
               </li>
             ))}
           </ul>
-
-          <div className="mt-5">
-            <EvolutionChartMockup />
-          </div>
         </div>
 
         {/* Amostras reais dos cards de compartilhamento do app */}
