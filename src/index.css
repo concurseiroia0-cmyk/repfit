@@ -44,26 +44,15 @@
 }
 
 /*
- * Chrome Android: o texto digitado pode SUMIR nos inputs de peso/repetições
- * quando o teclado abre e a página reflui (o navegador deixa de repintar o
- * texto — o valor continua salvo no estado). Correção de vez:
- *  - cor do texto EXPLÍCITA (nunca transparente nem herdada de forma automática);
- *  - -webkit-text-fill-color e caret-color explícitos, no mesmo valor da cor;
- *  - fundo SÓLIDO no próprio campo: o texto pinta sobre uma camada própria, e
- *    não sobre uma camada de cor idêntica que some quando o campo ganha foco.
- * Regras FORA de @layer vencem as utilidades do Tailwind (tema claro/escuro).
+ * StepperInput (peso/repetições): o valor é texto puro numa <div> (nunca um
+ * <input>), com cor explícita em cada tema — o Chrome Android não tem como
+ * esconder o número, pois não existe campo de texto para repintar.
  */
-.stepper-input input {
+.stepper-input [role='textbox'] {
   color: #0f172a;
-  -webkit-text-fill-color: #0f172a;
-  caret-color: #0f172a;
-  background-color: #ffffff;
 }
-.dark .stepper-input input {
+.dark .stepper-input [role='textbox'] {
   color: #f1f5f9;
-  -webkit-text-fill-color: #f1f5f9;
-  caret-color: #f1f5f9;
-  background-color: #1e293b;
 }
 
 /* Animação de espera do compartilhamento (pontos quicando, estilo Lottie). */

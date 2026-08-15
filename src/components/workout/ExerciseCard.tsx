@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import type { ExerciseCatalogItem, ExerciseDraft, SetDraft, Unit, WorkoutExercise } from '../../types';
-import { displayToKg, exerciseVolume, formatWeight, parseNum } from '../../utils/calc';
+import { displayToKg, formatWeight, parseNum } from '../../utils/calc';
 import { uid } from '../../utils/misc';
 import { EffortSelector } from './EffortSelector';
 import { StepperInput } from '../ui/StepperInput';
@@ -69,14 +69,6 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
   }
 
   const weightStep = unit === 'kg' ? 1 : 2.5;
-  const volume = exerciseVolume({
-    id: exercise.id,
-    name: exercise.name,
-    order: index,
-    effort: exercise.effort,
-    notes: exercise.notes,
-    sets: exercise.sets.map((s) => ({ id: s.id, weight: displayToKg(s.weight, unit), reps: parseNum(s.reps) })),
-  });
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#161616]">
@@ -148,9 +140,6 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
-          <span className="text-right text-xs font-semibold text-slate-400 dark:text-slate-500">
-            {volume > 0 ? `${volume.toLocaleString('pt-BR')} ${unit}` : ''}
-          </span>
         </div>
       </div>
 

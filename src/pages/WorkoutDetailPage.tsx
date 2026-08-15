@@ -19,7 +19,7 @@ import { useSettings } from '../services/settingsService';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { effortLevel } from '../utils/constants';
 import { formatDate, formatDayShort, weekdayName } from '../utils/date';
-import { exerciseVolume, formatDurationShort, formatNumber, formatWeight, pluralize } from '../utils/calc';
+import { formatDurationShort, formatNumber, formatWeight, pluralize } from '../utils/calc';
 import { ModeBadge, TypeBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -160,7 +160,6 @@ export function WorkoutDetailPage() {
       <div className="space-y-3">
         {workout.exercises.map((ex, i) => {
           const exEffort = effortLevel(ex.effort);
-          const vol = exerciseVolume(ex);
           return (
             <Card key={ex.id} className="p-5">
               <div className="flex items-start justify-between gap-3">
@@ -171,7 +170,6 @@ export function WorkoutDetailPage() {
                   <h3 className="font-bold text-slate-900 dark:text-white">{ex.name}</h3>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
-                  {vol > 0 && <span>{formatNumber(vol)} {settings.unit}</span>}
                   {exEffort && (
                     <span
                       className="rounded-full px-2 py-0.5 text-white"
