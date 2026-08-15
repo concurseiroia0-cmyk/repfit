@@ -1,4 +1,5 @@
 import type { Unit } from '../types';
+import type { MuscleId } from './muscleMap';
 
 /** Formatos suportados (o palco renderiza no tamanho real). */
 export type ShareFormatId = 'feed' | 'square' | 'story';
@@ -22,13 +23,14 @@ export function getFormat(id: ShareFormatId): ShareFormat {
 }
 
 /** Os estilos visuais (cada um é um componente real, não um PNG). */
-export type ShareTemplateId = 'glass' | 'performance' | 'minimal' | 'posterMinimal';
+export type ShareTemplateId = 'glass' | 'performance' | 'minimal' | 'posterMinimal' | 'muscleMap';
 
 export const SHARE_TEMPLATES: { id: ShareTemplateId; label: string; hint: string }[] = [
   { id: 'glass', label: 'Glass', hint: 'Painel de vidro flutuante sobre a foto.' },
   { id: 'performance', label: 'Performance', hint: 'Métricas grandes e gráfico de volume.' },
   { id: 'minimal', label: 'Minimal', hint: 'Editorial, limpo, título gigante.' },
   { id: 'posterMinimal', label: 'Pôster minimal', hint: 'Pôster vertical: dados centralizados e assinatura do treino.' },
+  { id: 'muscleMap', label: 'Mapa muscular', hint: 'Mapa anatômico com os músculos trabalhados em destaque.' },
 ];
 
 /** Exercício pronto para renderizar no card. */
@@ -100,6 +102,8 @@ export interface ShareCardData {
   evolution: ShareEvolution | null;
   /** true se o treino tem pelo menos um peso válido. */
   hasLoad: boolean;
+  /** Grupos musculares trabalhados neste treino (para o template anatômico). */
+  muscles: MuscleId[];
 }
 
 /** Foto do usuário já processada (dataURL local, em memória). */

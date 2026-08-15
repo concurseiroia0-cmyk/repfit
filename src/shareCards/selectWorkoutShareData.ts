@@ -3,6 +3,8 @@ import { getSettings } from '../services/settingsService';
 import { computeRecords } from '../services/recordsService';
 import { exerciseVolume } from '../utils/calc';
 import type { Workout, WorkoutExercise } from '../types';
+import { collectMuscles } from './muscleMap';
+import type { MuscleId } from './muscleMap';
 import { dateLabel } from './formatShareStats';
 import type { ShareCardData, ShareEvolution, ShareEvolutionPoint, ShareExercise, ShareRecord } from './types';
 
@@ -14,6 +16,17 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
   const workout = await db.workouts.get(workoutId);
   if (!workout) return null;
   const [all, settings] = await Promise.all([db.workouts.toArray(), getSettings()]);
+
+  // ---- Músculos trabalhados (template anatômico) ----
+  const catalog = await db.exerciseCatalog.toArray();
+  const groupByName = new Map<string, string>();
+  for (const c of catalog) groupByName.set(c.name.toLowerCase(), c.muscleGroup);
+  const muscles: MuscleId[] = collectMuscles(
+    workout.exercises.map((e) => ({
+      name: e.name,
+      muscleGroup: groupByName.get(e.name.trim().toLowerCase()) ?? null,
+    }))
+  );
 
   // ---- Totais ----
   let sets = 0;
@@ -97,6 +110,7 @@ export async function selectWorkoutShareData(workoutId: number): Promise<ShareCa
     record,
     evolution,
     hasLoad,
+    muscles,
   };
 }
 

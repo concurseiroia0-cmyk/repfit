@@ -59,6 +59,7 @@ function makeData(): ShareCardData {
     },
     evolution: null,
     hasLoad: true,
+    muscles: ['peito', 'triceps', 'biceps'],
   };
 }
 
@@ -69,7 +70,7 @@ const PHOTO: SharePhoto = {
   panY: 0,
 };
 
-const ALL_TEMPLATES: ShareTemplateId[] = ['glass', 'performance', 'minimal', 'posterMinimal'];
+const ALL_TEMPLATES: ShareTemplateId[] = ['glass', 'performance', 'minimal', 'posterMinimal', 'muscleMap'];
 
 function render(template: ShareTemplateId, scale: number, photo: SharePhoto | null = null): string {
   return renderToStaticMarkup(
@@ -91,7 +92,7 @@ function render(template: ShareTemplateId, scale: number, photo: SharePhoto | nu
 // ---------------------------------------------------------------------------
 
 describe('templates renderizados (smoke test)', () => {
-  it('renderiza os 4 templates com o conteúdo do treino', () => {
+  it('renderiza os 5 templates com o conteúdo do treino', () => {
     for (const tpl of ALL_TEMPLATES) {
       const html = render(tpl, 0.25);
       expect(html, `template ${tpl} deve renderizar`).toContain('Peito Forte');

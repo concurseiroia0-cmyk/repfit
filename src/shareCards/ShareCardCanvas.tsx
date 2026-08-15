@@ -11,6 +11,7 @@ import { GlassWorkoutTemplate } from './templates/GlassWorkoutTemplate';
 import { PerformanceTemplate } from './templates/PerformanceTemplate';
 import { MinimalTemplate } from './templates/MinimalTemplate';
 import { PosterMinimalVerticalTemplate } from './templates/PosterMinimalVerticalTemplate';
+import { MuscleMapTemplate } from './templates/MuscleMapTemplate';
 
 /** Renderiza o template ativo. Templates são burros: só props → JSX. */
 export function renderShareCard(props: ShareTemplateProps) {
@@ -21,6 +22,8 @@ export function renderShareCard(props: ShareTemplateProps) {
       return <MinimalTemplate {...props} />;
     case 'posterMinimal':
       return <PosterMinimalVerticalTemplate {...props} />;
+    case 'muscleMap':
+      return <MuscleMapTemplate {...props} />;
     default:
       return <GlassWorkoutTemplate {...props} />;
   }
