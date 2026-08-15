@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
+
 /** Cabeçalho padrão das seções da landing (título + subtítulo centralizados). */
-export function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
+export function SectionHeading({ title, subtitle }: { title: ReactNode; subtitle?: string }) {
   return (
     <div className="text-center">
       <h2 className="text-2xl font-black tracking-tight text-slate-900">{title}</h2>

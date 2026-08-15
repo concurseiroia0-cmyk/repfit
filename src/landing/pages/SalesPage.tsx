@@ -12,6 +12,7 @@ import { HowItWorksSection } from '../sections/HowItWorksSection';
 import { ObjectionsSection } from '../sections/ObjectionsSection';
 import { OfferSection } from '../sections/OfferSection';
 import { PainsSection } from '../sections/PainsSection';
+import { ShareSection } from '../sections/ShareSection';
 import { SocialProofSection } from '../sections/SocialProofSection';
 import { StickyCtaSection } from '../sections/StickyCtaSection';
 
@@ -58,6 +59,9 @@ export function SalesPage() {
 
         {/* 4. Quebra de objeções */}
         <ObjectionsSection />
+
+        {/* Diferencial: compartilhar treino + evolução */}
+        <ShareSection />
 
         {/* 5. Bônus / oferta irresistível */}
         <BonusSection onCheckout={handleCheckout} />

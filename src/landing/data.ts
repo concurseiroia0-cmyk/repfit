@@ -79,22 +79,22 @@ export const OBJECTIONS: IconCard[] = [
   {
     icon: MousePointerClick,
     title: 'Método simples',
-    text: 'Você não precisa ser especialista para começar.',
+    text: 'Anote séries, peso e repetições em segundos — sem planilha e sem complicação.',
   },
   {
     icon: Smartphone,
     title: 'Só precisa do celular',
-    text: 'Acesse e aplique mesmo sem equipamentos caros.',
+    text: 'Funciona na academia e na calistenia, direto do seu celular, até em casa.',
   },
   {
     icon: GraduationCap,
     title: 'Sem conhecimento avançado',
-    text: 'Passo a passo direto, pensado para qualquer pessoa.',
+    text: 'Interface simples, feita para qualquer pessoa — do primeiro treino ao avançado.',
   },
   {
     icon: Zap,
     title: 'Resultado rápido',
-    text: 'Criado para facilitar o processo e economizar tempo.',
+    text: 'Anote em segundos e veja sua evolução nos gráficos, treino após treino.',
   },
 ];
 

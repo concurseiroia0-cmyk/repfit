@@ -22,6 +22,7 @@ src/landing/
     ├── OfferSection.tsx        (2. oferta)
     ├── SocialProofSection.tsx  (3. prova social)
     ├── ObjectionsSection.tsx   (4. quebra de objeções)
+    ├── ShareSection.tsx        (diferencial: compartilhar treino + evolução)
     ├── BonusSection.tsx        (5. bônus)
     ├── PainsSection.tsx        (6. dores + solução)
     ├── HowItWorksSection.tsx   (7. como funciona)
