@@ -2,17 +2,54 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../utils/misc';
 import shareCardTreinoConcluido from '../assets/share-card-treino-concluido.png';
 import shareCardBiceps from '../assets/share-card-biceps.png';
+import telaInicio from '../assets/tela-inicio.png';
+import telaNovoTreino from '../assets/tela-novo-treino.png';
+import telaHistorico from '../assets/tela-historico.png';
+import telaCalendario from '../assets/tela-calendario.png';
+import telaMedidas from '../assets/tela-medidas.png';
+import telaEvolucao from '../assets/tela-evolucao.png';
 
 // ============================================================================
 // Gifcard em moldura de celular: mostra os prints das telas do RepFit em um
-// carrossel automático (a cada 3,5s), com pontos clicáveis e legenda.
+// carrossel automático, com pontos clicáveis e legenda.
 //
 // PARA ADICIONAR MAIS TELAS: coloque o print em src/landing/assets/ e
-// adicione um item aqui em SCREENS (ex.: { src: home, alt: '...', caption:
-// '...' }). O carrossel já funciona sozinho com quantas telas houver.
+// adicione um item aqui em SCREENS (ex.: { src: minhaTela, alt: '...',
+// caption: '...' }). O carrossel já funciona sozinho com quantas telas
+// houver.
 // ============================================================================
 
 const SCREENS = [
+  {
+    src: telaNovoTreino,
+    alt: 'Tela de novo treino no RepFit',
+    caption: 'Anote séries, peso e repetições em segundos',
+  },
+  {
+    src: telaEvolucao,
+    alt: 'Tela de evolução com recordes no RepFit',
+    caption: 'Recordes e gráficos da sua evolução',
+  },
+  {
+    src: telaInicio,
+    alt: 'Tela inicial do RepFit',
+    caption: 'Resumo da semana: sequência, volume e esforço',
+  },
+  {
+    src: telaMedidas,
+    alt: 'Tela de medidas corporais no RepFit',
+    caption: 'Peso e medidas registrados ao longo do tempo',
+  },
+  {
+    src: telaHistorico,
+    alt: 'Tela de histórico de treinos no RepFit',
+    caption: 'Histórico completo com busca e filtros',
+  },
+  {
+    src: telaCalendario,
+    alt: 'Calendário de treinos no RepFit',
+    caption: 'Treinos organizados no calendário',
+  },
   {
     src: shareCardTreinoConcluido,
     alt: 'Card de treino concluído compartilhado pelo RepFit',
@@ -31,7 +68,7 @@ export function AppScreensShowcase() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setIndex((i) => (i + 1) % SCREENS.length);
-    }, 3500);
+    }, 3000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -73,7 +110,7 @@ export function AppScreensShowcase() {
           />
         ))}
       </div>
-      <p className="mt-2 min-h-10 text-center text-xs font-semibold leading-relaxed text-slate-600">
+      <p className="mt-2 min-h-10 max-w-[240px] text-center text-xs font-semibold leading-relaxed text-slate-600">
         {SCREENS[index].caption}
       </p>
     </div>
