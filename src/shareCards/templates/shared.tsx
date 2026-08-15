@@ -320,12 +320,17 @@ export function ExerciseRows({ data, maxRows, compact }: { data: ShareCardData; 
 }
 
 /**
- * Selo da modalidade (academia/calistenia) — só aparece se o treino tiver
- * a modalidade salva. Azul para academia, verde para calistenia.
+ * Selo da modalidade (academia/calistenia/cardio) — só aparece se o treino
+ * tiver a modalidade salva. Azul para academia, verde para calistenia,
+ * rosa para cardio.
  */
-export function ModePill({ mode, compact }: { mode: 'academia' | 'calistenia' | null; compact?: boolean }) {
+export function ModePill({ mode, compact }: { mode: 'academia' | 'calistenia' | 'cardio' | null; compact?: boolean }) {
   if (!mode) return null;
-  const academia = mode === 'academia';
+  const isAcademia = mode === 'academia';
+  const isCardio = mode === 'cardio';
+  const bg = isAcademia ? 'rgba(56,189,248,0.14)' : isCardio ? 'rgba(251,113,133,0.14)' : 'rgba(52,211,153,0.14)';
+  const bd = isAcademia ? 'rgba(56,189,248,0.45)' : isCardio ? 'rgba(251,113,133,0.45)' : 'rgba(52,211,153,0.45)';
+  const label = isAcademia ? 'Academia' : isCardio ? 'Cardio' : 'Calistenia';
   return (
     <span
       style={{
@@ -334,8 +339,8 @@ export function ModePill({ mode, compact }: { mode: 'academia' | 'calistenia' | 
         gap: 8,
         padding: `${compact ? 8 : 10}px ${compact ? 18 : 24}px`,
         borderRadius: 999,
-        background: academia ? 'rgba(56,189,248,0.14)' : 'rgba(52,211,153,0.14)',
-        border: `1px solid ${academia ? 'rgba(56,189,248,0.45)' : 'rgba(52,211,153,0.45)'}`,
+        background: bg,
+        border: `1px solid ${bd}`,
         fontSize: compact ? 16 : 21,
         fontWeight: 800,
         color: '#fff',
@@ -344,7 +349,7 @@ export function ModePill({ mode, compact }: { mode: 'academia' | 'calistenia' | 
         whiteSpace: 'nowrap' as const,
       }}
     >
-      {academia ? 'Academia' : 'Calistenia'}
+      {label}
     </span>
   );
 }

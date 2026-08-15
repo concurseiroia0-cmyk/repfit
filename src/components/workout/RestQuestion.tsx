@@ -98,7 +98,7 @@ export function RestQuestion({ value, onChange }: RestQuestionProps) {
                 suffix="s"
                 ariaLabel="Tempo de descanso entre as séries em segundos"
                 className="h-9"
-                inputClassName="pr-8 text-xs"
+                inputClassName="text-xs"
                 inputMode="numeric"
               />
             </div>

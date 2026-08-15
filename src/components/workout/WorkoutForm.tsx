@@ -12,7 +12,13 @@ import { ExerciseCard, exerciseFitsMode } from './ExerciseCard';
 import { RestQuestion } from './RestQuestion';
 
 /** Modalidades disponíveis para filtrar as sugestões de exercícios. */
-const MODES = ['academia', 'calistenia'] as const;
+const MODES = ['academia', 'calistenia', 'cardio'] as const;
+
+const MODE_LABELS: Record<(typeof MODES)[number], string> = {
+  academia: 'Academia',
+  calistenia: 'Calistenia',
+  cardio: 'Cardio',
+};
 
 export function emptyWorkoutFormState(date = todayString()): WorkoutFormState {
   return {
@@ -67,7 +73,7 @@ export function WorkoutForm({
   const update = (patch: Partial<WorkoutFormState>) => onChange({ ...form, ...patch });
 
   // Modalidade escolhida (normaliza rascunhos antigos sem o campo).
-  const mode = form.mode === 'calistenia' ? 'calistenia' : 'academia';
+  const mode = form.mode === 'calistenia' ? 'calistenia' : form.mode === 'cardio' ? 'cardio' : 'academia';
 
   const addExercise = (prefill?: { name: string; lastWeight: number | null; lastReps: number | null }) => {
     const ex = emptyExercise();
@@ -241,7 +247,7 @@ export function WorkoutForm({
                         'border-slate-300 text-slate-600 hover:border-amber-400 hover:text-amber-600 dark:border-white/20 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-400'
                     )}
                   >
-                    {m === 'academia' ? 'Academia' : 'Calistenia'}
+                    {MODE_LABELS[m]}
                   </button>
                 );
               })}

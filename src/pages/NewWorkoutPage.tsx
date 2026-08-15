@@ -69,6 +69,8 @@ export function NewWorkoutPage() {
               name: e.name,
               effort: e.effort,
               notes: e.notes,
+              timeMin: e.timeMin != null ? String(e.timeMin) : '',
+              distanceKm: e.distanceKm != null ? String(e.distanceKm) : '',
               sets: e.sets.map((s) => ({
                 id: s.id,
                 weight: s.weight != null ? kgToInput(s.weight, settings.unit) : '',
@@ -98,6 +100,8 @@ export function NewWorkoutPage() {
               name: e.name,
               effort: e.effort,
               notes: e.notes,
+              timeMin: e.timeMin != null ? String(e.timeMin) : '',
+              distanceKm: e.distanceKm != null ? String(e.distanceKm) : '',
               sets: e.sets.map((s) => ({
                 id: s.id,
                 weight: s.weight != null ? kgToInput(s.weight, settings.unit) : '',
@@ -136,7 +140,13 @@ export function NewWorkoutPage() {
     form.name.trim() !== '' ||
     form.notes.trim() !== '' ||
     form.restSec > 0 ||
-    form.exercises.some((e) => e.name.trim() !== '' || e.sets.some((s) => s.weight.trim() !== '' || s.reps.trim() !== '')) ||
+    form.exercises.some(
+      (e) =>
+        e.name.trim() !== '' ||
+        e.sets.some((s) => s.weight.trim() !== '' || s.reps.trim() !== '') ||
+        (e.timeMin ?? '').trim() !== '' ||
+        (e.distanceKm ?? '').trim() !== ''
+    ) ||
     Boolean(photoId);
 
   useEffect(() => {
@@ -174,6 +184,9 @@ export function NewWorkoutPage() {
         sets: e.sets
           .filter((s) => s.weight.trim() !== '' || s.reps.trim() !== '')
           .map((s) => ({ id: s.id, weight: displayToKg(s.weight, settings.unit), reps: parseNum(s.reps) })),
+        // Cardio: tempo/distância em vez de séries.
+        timeMin: form.mode === 'cardio' ? parseNum(e.timeMin ?? '') : null,
+        distanceKm: form.mode === 'cardio' ? parseNum(e.distanceKm ?? '') : null,
       }))
       .filter((e) => e.name.length > 0);
     if (exercises.length === 0) {

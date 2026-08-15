@@ -12,7 +12,7 @@ import { EmptyState, SkeletonCard } from '../components/ui/Feedback';
 import { Input, Select } from '../components/ui/Field';
 import { useSettings } from '../services/settingsService';
 import { formatDayShort, formatMonthYear, toDateString } from '../utils/date';
-import { formatNumber, pluralize } from '../utils/calc';
+import { pluralize } from '../utils/calc';
 
 const PERIODS = [
   { value: 'all', label: 'Todo o período' },
@@ -155,7 +155,7 @@ export function HistoryPage() {
               </h2>
               <div className="space-y-2">
                 {list.map((w) => (
-                  <WorkoutRow key={w.id} workoutId={w.id!} date={w.date} name={w.name} type={w.type} exerciseCount={w.exercises.length} volume={w.totalVolume} effort={w.avgEffort} photoId={w.photoId} unit={settings.unit} />
+                  <WorkoutRow key={w.id} workoutId={w.id!} date={w.date} name={w.name} type={w.type} exerciseCount={w.exercises.length} effort={w.avgEffort} photoId={w.photoId} />
                 ))}
               </div>
             </section>
@@ -172,20 +172,16 @@ function WorkoutRow({
   name,
   type,
   exerciseCount,
-  volume,
   effort,
   photoId,
-  unit,
 }: {
   workoutId: number;
   date: string;
   name: string;
   type: string;
   exerciseCount: number;
-  volume: number;
   effort: number | null;
   photoId: string | null;
-  unit: 'kg' | 'lb';
 }) {
   const photoUrl = usePhotoUrl(photoId);
   return (
@@ -204,8 +200,7 @@ function WorkoutRow({
         </div>
         <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
           {pluralize(exerciseCount, 'exercício', 'exercícios')}
-          {volume > 0 && <> · {formatNumber(volume)} {unit}</>}
-          {effort != null && <> · Esforço {formatNumber(effort)}/6</>}
+          {effort != null && <> · Esforço {effort}/6</>}
         </p>
       </div>
       {photoUrl && <img src={photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}

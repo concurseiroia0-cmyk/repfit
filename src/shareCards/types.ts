@@ -75,7 +75,7 @@ export interface ShareCardData {
   workoutName: string;
   workoutType: string;
   /** Onde o treino foi feito (ausente em treinos antigos). */
-  mode: 'academia' | 'calistenia' | null;
+  mode: 'academia' | 'calistenia' | 'cardio' | null;
   dateLabel: string;
   /** Foto salva junto com o treino (IndexedDB) — vira o fundo do card. */
   photoId: number | null;

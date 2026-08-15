@@ -20,6 +20,7 @@ import { usePhotoUrl } from '../hooks/usePhotoUrl';
 import { effortLevel } from '../utils/constants';
 import { formatDate, formatDayShort, weekdayName } from '../utils/date';
 import { formatDurationShort, formatNumber, formatWeight, pluralize } from '../utils/calc';
+
 import { ModeBadge, TypeBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -181,14 +182,21 @@ export function WorkoutDetailPage() {
                   )}
                 </div>
               </div>
-              {ex.sets.length > 0 && (
-                <ul className="mt-3 flex flex-wrap gap-1.5">
-                  {ex.sets.map((s, si) => (
-                    <li key={s.id} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                      {si + 1}ª · {s.weight != null ? formatWeight(s.weight, settings.unit) : '—'} × {s.reps ?? '—'}
-                    </li>
-                  ))}
-                </ul>
+              {workout.mode === 'cardio' && ex.timeMin != null ? (
+                <p className="mt-3 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                  ⏱ {ex.timeMin} min
+                  {ex.distanceKm ? ` · ${formatNumber(ex.distanceKm)} km` : ''}
+                </p>
+              ) : (
+                ex.sets.length > 0 && (
+                  <ul className="mt-3 flex flex-wrap gap-1.5">
+                    {ex.sets.map((s, si) => (
+                      <li key={s.id} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        {si + 1}ª · {s.weight != null ? formatWeight(s.weight, settings.unit) : '—'} × {s.reps ?? '—'}
+                      </li>
+                    ))}
+                  </ul>
+                )
               )}
               {ex.notes && <p className="mt-2 text-xs italic text-slate-500 dark:text-slate-400">{ex.notes}</p>}
             </Card>

@@ -26,7 +26,7 @@ import type {
   WorkoutSetRow,
 } from '../../types/supabase';
 import { parseLocalDate } from '../../utils/date';
-import { computeAvgEffort, computeVolume } from '../../utils/calc';
+import { computeAvgEffort, computeVolume, parseNum } from '../../utils/calc';
 import { getSupabase, getCurrentUser } from './client';
 
 type Sb = SupabaseClient<Database>;
@@ -64,7 +64,7 @@ export interface CloudWorkoutPayload {
     duration_seconds: number | null;
     notes: string | null;
     effort_level: number | null;
-    mode: 'academia' | 'calistenia' | null;
+    mode: 'academia' | 'calistenia' | 'cardio' | null;
   };
   exercises: CloudExercisePayload[];
 }
@@ -84,27 +84,47 @@ export function toCloudWorkout(local: Workout): CloudWorkoutPayload {
     exercises: local.exercises
       .slice()
       .sort((a, b) => a.order - b.order)
-      .map((e) => ({
-        exercise_name: e.name,
-        order_index: e.order,
-        notes: e.notes || null,
-        effort_level: e.effort,
-        sets: e.sets
-          .slice()
-          .sort((a, b) => a.id.localeCompare(b.id))
-          .map((s, i) => ({
-            set_number: i + 1,
-            repetitions: s.reps,
-            weight: s.weight,
-            weight_unit: 'kg' as const,
-            duration_seconds: null,
-            distance: null,
-            rest_seconds: null,
-            effort_level: null,
-            completed: true,
-            notes: null,
-          })),
-      })),
+      .map((e) => {
+        // Cardio: uma única série com duração/distância (sem peso/reps).
+        const isCardio = local.mode === 'cardio' && e.timeMin != null;
+        const sets = isCardio
+          ? [
+              {
+                set_number: 1,
+                repetitions: null,
+                weight: null,
+                weight_unit: 'kg' as const,
+                duration_seconds: Math.round(e.timeMin! * 60),
+                distance: e.distanceKm ?? null,
+                rest_seconds: null,
+                effort_level: null,
+                completed: true,
+                notes: null,
+              },
+            ]
+          : e.sets
+              .slice()
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((s, i) => ({
+                set_number: i + 1,
+                repetitions: s.reps,
+                weight: s.weight,
+                weight_unit: 'kg' as const,
+                duration_seconds: null,
+                distance: null,
+                rest_seconds: null,
+                effort_level: null,
+                completed: true,
+                notes: null,
+              }));
+        return {
+          exercise_name: e.name,
+          order_index: e.order,
+          notes: e.notes || null,
+          effort_level: e.effort,
+          sets,
+        };
+      }),
   };
 }
 
@@ -246,7 +266,11 @@ export async function pullWorkouts(sb: Sb, userId: string): Promise<number> {
   await db.transaction('rw', db.workouts, db.syncMap, async () => {
     for (const cloud of pending) {
       const exercises: WorkoutExercise[] = (exercisesByWorkout.get(cloud.id) ?? []).map((we) => {
-        const sets = (setsByExercise.get(we.id) ?? []).map((s) => ({
+        const rawSets = setsByExercise.get(we.id) ?? [];
+        // Cardio na nuvem: série única com duração/distância → tempo/distância.
+        const cardioSet = rawSets.find((s) => (s.duration_seconds ?? 0) > 0);
+        const timeMin = cardioSet && cardioSet.duration_seconds != null ? cardioSet.duration_seconds / 60 : null;
+        const sets = rawSets.map((s) => ({
           id: `set-${s.id}`,
           weight: s.weight != null ? Number(s.weight) : null,
           reps: s.repetitions,
@@ -254,10 +278,12 @@ export async function pullWorkouts(sb: Sb, userId: string): Promise<number> {
         return {
           id: `ex-${we.id}`,
           name: we.exercise_name,
-          sets,
+          sets: timeMin != null && sets.length === 0 ? [] : sets,
           effort: we.effort_level,
           notes: we.notes ?? '',
           order: we.order_index,
+          timeMin,
+          distanceKm: timeMin != null ? (cardioSet?.distance ?? null) : null,
         };
       });
 
@@ -266,7 +292,7 @@ export async function pullWorkouts(sb: Sb, userId: string): Promise<number> {
         weekday: parseLocalDate(cloud.workout_date).getDay(),
         name: cloud.name,
         type: cloud.type ?? '',
-        mode: cloud.mode === 'calistenia' ? 'calistenia' : cloud.mode === 'academia' ? 'academia' : undefined,
+        mode: cloud.mode === 'calistenia' ? 'calistenia' : cloud.mode === 'cardio' ? 'cardio' : cloud.mode === 'academia' ? 'academia' : undefined,
         notes: cloud.notes ?? '',
         exercises,
         photoId: null, // fotos: fase futura (storage workout-photos)
@@ -350,6 +376,8 @@ export function draftToWorkout(form: WorkoutFormState, now: number): Workout {
             weight: s.weight.trim() === '' ? null : Number(s.weight.replace(',', '.')),
             reps: s.reps.trim() === '' ? null : Number(s.reps.replace(',', '.')),
           })),
+        timeMin: form.mode === 'cardio' ? parseNum(e.timeMin ?? '') : null,
+        distanceKm: form.mode === 'cardio' ? parseNum(e.distanceKm ?? '') : null,
         effort: e.effort,
         notes: e.notes,
         order: i,

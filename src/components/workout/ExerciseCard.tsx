@@ -1,17 +1,19 @@
 import { useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import type { ExerciseCatalogItem, ExerciseDraft, SetDraft, Unit, WorkoutExercise } from '../../types';
-import { displayToKg, formatWeight, parseNum } from '../../utils/calc';
+import { displayToKg, formatNumber, formatWeight, parseNum } from '../../utils/calc';
 import { uid } from '../../utils/misc';
 import { EffortSelector } from './EffortSelector';
 import { StepperInput } from '../ui/StepperInput';
 import { Textarea } from '../ui/Field';
 
+export type WorkoutMode = 'academia' | 'calistenia' | 'cardio';
+
 /**
  * Exercício do catálogo serve para a modalidade escolhida? Exercícios
  * criados pelo usuário (sem mode) aparecem nas duas modalidades.
  */
-export function exerciseFitsMode(c: ExerciseCatalogItem, mode: 'academia' | 'calistenia'): boolean {
+export function exerciseFitsMode(c: ExerciseCatalogItem, mode: WorkoutMode): boolean {
   if (!c.mode || c.mode === 'ambos' || c.mode === mode) return true;
   return false;
 }
@@ -25,7 +27,7 @@ interface ExerciseCardProps {
   previous?: WorkoutExercise | null;
   catalog: ExerciseCatalogItem[];
   /** Modalidade escolhida no treino (filtra o autocomplete). */
-  mode: 'academia' | 'calistenia';
+  mode: WorkoutMode;
   onChange: (next: ExerciseDraft) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
@@ -67,6 +69,8 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
     onChange({ ...exercise, name, sets });
     setOpen(false);
   }
+
+  const isCardio = mode === 'cardio';
 
   const weightStep = unit === 'kg' ? 1 : 2.5;
 
@@ -144,9 +148,16 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
       </div>
 
       {/* Referência do treino anterior (modo repetir) */}
-      {previous && previous.sets.length > 0 && (
+      {previous && (
         <p className="mt-2 rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-          Antes: {previous.sets.map((s) => `${formatWeight(s.weight, unit)} × ${s.reps ?? '—'}`).join(' · ')}
+          Antes:{' '}
+          {isCardio
+            ? previous.timeMin != null
+              ? `${previous.timeMin} min${previous.distanceKm ? ` · ${formatNumber(previous.distanceKm)} km` : ''}`
+              : '—'
+            : previous.sets.length > 0
+              ? previous.sets.map((s) => `${formatWeight(s.weight, unit)} × ${s.reps ?? '—'}`).join(' · ')
+              : '—'}
         </p>
       )}
 
@@ -155,70 +166,102 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
         <EffortSelector value={exercise.effort} onChange={(v) => update({ effort: v })} />
       </div>
 
-      {/* Séries */}
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Séries</span>
-          <div className="flex gap-1.5">
-            {exercise.sets.length > 1 && (
-              <button type="button" onClick={applyToAll} className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
-                igualar
+      {isCardio ? (
+        /* Cardio: tempo + distância (opcional) no lugar das séries */
+        <div className="mt-3">
+          <div className="mb-1.5">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Tempo</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StepperInput
+              value={exercise.timeMin ?? ''}
+              onChange={(v) => update({ timeMin: v })}
+              step={5}
+              min={0}
+              max={600}
+              suffix="min"
+              ariaLabel="Tempo do cardio em minutos"
+              className="w-[45%]"
+              inputMode="numeric"
+            />
+            <StepperInput
+              value={exercise.distanceKm ?? ''}
+              onChange={(v) => update({ distanceKm: v })}
+              step={0.5}
+              min={0}
+              max={200}
+              suffix="km"
+              ariaLabel="Distância do cardio em quilômetros"
+              className="w-[45%]"
+              inputMode="decimal"
+            />
+          </div>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Distância (km) é opcional.</p>
+        </div>
+      ) : (
+        /* Séries: peso × reps separados, sem multiplicação */
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Séries</span>
+            <div className="flex gap-1.5">
+              {exercise.sets.length > 1 && (
+                <button type="button" onClick={applyToAll} className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
+                  igualar
+                </button>
+              )}
+              <button type="button" onClick={addSet} className="flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-400/10">
+                <Plus className="h-3.5 w-3.5" /> série
               </button>
-            )}
-            <button type="button" onClick={addSet} className="flex items-center gap-0.5 rounded-lg px-2 py-1 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-400/10">
-              <Plus className="h-3.5 w-3.5" /> série
-            </button>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {exercise.sets.map((set, si) => {
+              const curKg = displayToKg(set.weight, unit);
+              const prevSet = previous?.sets?.[si];
+              const up = prevSet?.weight != null && curKg != null && curKg > prevSet.weight;
+              const down = prevSet?.weight != null && curKg != null && curKg < prevSet.weight;
+              return (
+                <div key={set.id} className="flex items-center gap-1.5">
+                  <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-400 dark:text-slate-500">{si + 1}ª</span>
+                  <StepperInput
+                    value={set.weight}
+                    onChange={(v) => updateSet(set.id, { weight: v })}
+                    step={weightStep}
+                    suffix={unit}
+                    ariaLabel={`Carga da série ${si + 1}`}
+                    className="w-[38%]"
+                    // decimal → teclado numérico com vírgula/ponto no Chrome Mobile.
+                    inputMode="decimal"
+                  />
+                  <span className="shrink-0 text-slate-400">×</span>
+                  <StepperInput
+                    value={set.reps}
+                    onChange={(v) => updateSet(set.id, { reps: v })}
+                    step={1}
+                    suffix="reps"
+                    ariaLabel={`Repetições da série ${si + 1}`}
+                    className="w-[38%]"
+                    inputMode="numeric"
+                  />
+                  {up && <ChevronUp className="h-4 w-4 shrink-0 text-emerald-500" aria-label="Carga subiu" />}
+                  {down && <ChevronDown className="h-4 w-4 shrink-0 text-rose-500" aria-label="Carga caiu" />}
+                  {!up && !down && <span className="w-4 shrink-0" />}
+                  {exercise.sets.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSet(set.id)}
+                      aria-label={`Remover série ${si + 1}`}
+                      className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-        <div className="space-y-1.5">
-          {exercise.sets.map((set, si) => {
-            const curKg = displayToKg(set.weight, unit);
-            const prevSet = previous?.sets?.[si];
-            const up = prevSet?.weight != null && curKg != null && curKg > prevSet.weight;
-            const down = prevSet?.weight != null && curKg != null && curKg < prevSet.weight;
-            return (
-              <div key={set.id} className="flex items-center gap-1.5">
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-400 dark:text-slate-500">{si + 1}ª</span>
-                <StepperInput
-                  value={set.weight}
-                  onChange={(v) => updateSet(set.id, { weight: v })}
-                  step={weightStep}
-                  suffix={unit}
-                  ariaLabel={`Carga da série ${si + 1}`}
-                  className="w-[38%]"
-                  inputClassName="pr-9"
-                  // decimal → teclado numérico com vírgula/ponto no Chrome Mobile.
-                  inputMode="decimal"
-                />
-                <span className="shrink-0 text-slate-400">×</span>
-                <StepperInput
-                  value={set.reps}
-                  onChange={(v) => updateSet(set.id, { reps: v })}
-                  step={1}
-                  suffix="reps"
-                  ariaLabel={`Repetições da série ${si + 1}`}
-                  className="w-[38%]"
-                  inputClassName="pr-11"
-                  inputMode="numeric"
-                />
-                {up && <ChevronUp className="h-4 w-4 shrink-0 text-emerald-500" aria-label="Carga subiu" />}
-                {down && <ChevronDown className="h-4 w-4 shrink-0 text-rose-500" aria-label="Carga caiu" />}
-                {!up && !down && <span className="w-4 shrink-0" />}
-                {exercise.sets.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeSet(set.id)}
-                    aria-label={`Remover série ${si + 1}`}
-                    className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       {/* Observação */}
       <div className="mt-3">

@@ -23,6 +23,9 @@ interface StepperInputProps {
  * então não existe campo de texto para o Chrome Mobile "esconder": o React
  * pinta o número a cada render e ele fica SEMPRE visível — cor explícita,
  * fundo sólido, sem depender de repintura do navegador.
+ *
+ * Layout: [ − ]  valor + unidade  [ + ] — botões com fundo próprio e bordas
+ * de separação, para o usuário ver claramente onde tocar.
  */
 export function StepperInput({
   value,
@@ -48,7 +51,11 @@ export function StepperInput({
   };
 
   const btn =
-    'flex h-11 w-9 shrink-0 items-center justify-center text-slate-500 hover:text-amber-600 active:bg-slate-100 disabled:opacity-30 disabled:hover:text-slate-500 dark:text-slate-400 dark:hover:text-amber-400 dark:active:bg-slate-800';
+    'flex h-11 w-10 shrink-0 items-center justify-center text-slate-500 transition-colors ' +
+    'hover:bg-slate-100 hover:text-amber-600 active:bg-amber-100 ' +
+    'disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-500 ' +
+    'dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-amber-300 dark:active:bg-amber-400/20 ' +
+    'dark:disabled:hover:bg-transparent dark:disabled:hover:text-slate-400';
 
   return (
     <div
@@ -57,30 +64,42 @@ export function StepperInput({
         className
       )}
     >
-      <button type="button" onClick={dec} aria-label={`Diminuir ${ariaLabel}`} className={btn} disabled={current != null && current <= min}>
-        <Minus className="h-4 w-4" />
+      <button
+        type="button"
+        onClick={dec}
+        aria-label={`Diminuir ${ariaLabel}`}
+        className={cn(btn, 'border-r border-slate-200 dark:border-white/10')}
+        disabled={current != null && current <= min}
+      >
+        <Minus className="h-4 w-4" strokeWidth={2.5} />
       </button>
-      <div className="relative flex-1">
-        {/* Valor como texto puro. role="textbox" + aria-readonly preservam a
-            acessibilidade de um campo somente leitura. */}
-        <div
-          role="textbox"
-          aria-readonly="true"
-          aria-label={ariaLabel}
-          style={{ fontSize: 16 }}
+      <div
+        role="textbox"
+        aria-readonly="true"
+        aria-label={ariaLabel}
+        style={{ fontSize: 16 }}
+        className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center gap-1 px-1"
+      >
+        <span
           className={cn(
-            'flex min-h-[44px] items-center justify-center px-1 text-center font-semibold text-slate-900 dark:text-slate-100',
+            'truncate text-center font-semibold text-slate-900 dark:text-slate-100',
             inputClassName
           )}
         >
           {value || '0'}
-        </div>
+        </span>
         {suffix && (
-          <span className="pointer-events-none absolute inset-y-0 right-1.5 flex items-center text-xs text-slate-400">{suffix}</span>
+          <span className="shrink-0 text-xs font-medium text-slate-400 dark:text-slate-400">{suffix}</span>
         )}
       </div>
-      <button type="button" onClick={inc} aria-label={`Aumentar ${ariaLabel}`} className={btn} disabled={current != null && current >= max}>
-        <Plus className="h-4 w-4" />
+      <button
+        type="button"
+        onClick={inc}
+        aria-label={`Aumentar ${ariaLabel}`}
+        className={cn(btn, 'border-l border-slate-200 dark:border-white/10')}
+        disabled={current != null && current >= max}
+      >
+        <Plus className="h-4 w-4" strokeWidth={2.5} />
       </button>
     </div>
   );

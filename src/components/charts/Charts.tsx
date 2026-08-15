@@ -103,6 +103,46 @@ export function LineChart({
   );
 }
 
+/**
+ * Mini gráfico de linha (sparkline): sem eixos nem rótulos, para cards
+ * compactos — mostra a tendência da evolução com o último ponto destacado.
+ */
+export function Sparkline({
+  data,
+  color = '#f5c518',
+  className,
+}: {
+  data: ChartPoint[];
+  color?: string;
+  className?: string;
+}) {
+  if (data.length === 0) return null;
+  const w = 240;
+  const h = 56;
+  const min = Math.min(...data.map((d) => d.value));
+  const max = Math.max(...data.map((d) => d.value));
+  const span = max - min || 1;
+  const pad = 4;
+  const x = (i: number) => (data.length === 1 ? w / 2 : pad + (i / (data.length - 1)) * (w - pad * 2));
+  const y = (v: number) => h - pad - ((v - min) / span) * (h - pad * 2);
+  const path = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(' ');
+  const last = data[data.length - 1];
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={className} role="img" aria-label="Gráfico de evolução">
+      <path d={path} fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.85} />
+      {data.map((d, i) => (
+        <circle key={i} cx={x(i)} cy={y(d.value)} r={i === data.length - 1 ? 4 : 2} fill={color} stroke="#fff" strokeWidth={1.2} />
+      ))}
+      {data.length > 1 && (
+        <text x={x(data.length - 1)} y={y(last.value) - 7} textAnchor="middle" fontSize={10} fontWeight={700} fill={color}>
+          {formatNumber(last.value)}
+        </text>
+      )}
+    </svg>
+  );
+}
+
 export function BarChart({
   data,
   unit = '',

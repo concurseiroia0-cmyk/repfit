@@ -24,7 +24,7 @@ const EXERCISE: ExerciseDraft = {
   ],
 };
 
-function render(ex: ExerciseDraft = EXERCISE): string {
+function render(ex: ExerciseDraft = EXERCISE, mode: 'academia' | 'calistenia' | 'cardio' = 'academia'): string {
   return renderToStaticMarkup(
     <ExerciseCard
       exercise={ex}
@@ -33,7 +33,7 @@ function render(ex: ExerciseDraft = EXERCISE): string {
       unit="kg"
       previous={null}
       catalog={CATALOG}
-      mode="academia"
+      mode={mode}
       onChange={() => undefined}
       onRemove={() => undefined}
       onMove={() => undefined}
@@ -71,5 +71,41 @@ describe('ExerciseCard (sem volume total multiplicado)', () => {
     expect(html).not.toContain('>100<');
     expect(html).toContain('10');
     expect(html).toContain('×');
+  });
+});
+
+describe('ExerciseCard (modo cardio)', () => {
+  const CARDIO: ExerciseDraft = {
+    id: 'c1',
+    name: 'Bicicleta',
+    effort: 3,
+    notes: '',
+    sets: [],
+    timeMin: '30',
+    distanceKm: '12,5',
+  };
+
+  it('mostra tempo e distância em vez de séries peso × reps', () => {
+    const html = render(CARDIO, 'cardio');
+    expect(html).toContain('30');
+    expect(html).toContain('12,5');
+    expect(html).toContain('min');
+    expect(html).toContain('km');
+    expect(html).not.toContain('Séries');
+    expect(html).not.toContain('reps');
+  });
+
+  it('não mostra a seção de séries no modo cardio (sem peso × reps)', () => {
+    const html = render(CARDIO, 'cardio');
+    expect(html).not.toContain('1ª');
+    expect(html).not.toContain('×');
+  });
+
+  it('modo academia continua com séries mesmo com campos de cardio presentes', () => {
+    const html = render({ ...CARDIO, sets: [{ id: 's1', weight: '40', reps: '8' }] }, 'academia');
+    expect(html).toContain('Séries');
+    expect(html).toContain('1ª');
+    expect(html).toContain('40');
+    expect(html).toContain('8');
   });
 });

@@ -21,7 +21,7 @@ import { computeRecords } from '../services/recordsService';
 import { useSettings } from '../services/settingsService';
 import { createSampleData } from '../services/sampleData';
 import { currentStreak, currentWeekStart, formatDayShort, formatMonthYearCap, toDateString, todayString, weekdayName } from '../utils/date';
-import { formatNumber, formatWeight, sumVolume } from '../utils/calc';
+import { formatNumber, formatWeight } from '../utils/calc';
 import { weeklyGoalProgress, type WeeklyGoalProgress } from '../utils/goals';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -54,9 +54,7 @@ export function HomePage() {
 
     const weekStartStr = currentWeekStart();
     const weekWorkouts = workouts.filter((w) => w.date >= weekStartStr);
-    const weekVolume = sumVolume(weekWorkouts);
     const weekCount = weekWorkouts.length;
-    const weekDuration = weekWorkouts.reduce((a, w) => a + (w.durationMin ?? 0), 0);
 
     const withEffort = workouts.filter((w) => w.avgEffort != null).slice(0, 5);
     const avgEffort = withEffort.length
@@ -67,9 +65,7 @@ export function HomePage() {
       lastWorkout: workouts[0],
       monthCount,
       streak,
-      weekVolume,
       weekCount,
-      weekDuration,
       avgEffort,
       monthLabel: formatMonthYearCap(`${monthPrefix}-01`),
       dates,
@@ -129,7 +125,7 @@ export function HomePage() {
     );
   }
 
-  const { lastWorkout, monthCount, streak, weekVolume, avgEffort, monthLabel } = stats;
+  const { lastWorkout, monthCount, streak, weekCount, avgEffort, monthLabel } = stats;
 
   if (workouts.length === 0) {
   return (
@@ -208,7 +204,6 @@ export function HomePage() {
               <h2 className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white">{lastWorkout.name}</h2>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 {formatDayShort(lastWorkout.date)} · {weekdayName(lastWorkout.date)}
-                {lastWorkout.totalVolume > 0 && <> · {formatNumber(lastWorkout.totalVolume)} {settings.unit}</>}
               </p>
             </div>
             <div className="flex items-center gap-1 text-sm font-semibold text-amber-600 dark:text-amber-400">
@@ -222,7 +217,7 @@ export function HomePage() {
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon={<Calendar className="h-5 w-5" />} label={`Treinos em ${monthLabel}`} value={String(monthCount)} />
         <StatCard icon={<Flame className="h-5 w-5" />} label="Sequência atual" value={streak > 0 ? `🔥 ${streak} dias` : '0 dias'} />
-        <StatCard icon={<Dumbbell className="h-5 w-5" />} label="Volume da semana" value={weekVolume > 0 ? `${formatNumber(weekVolume)} ${settings.unit}` : '—'} />
+        <StatCard icon={<Dumbbell className="h-5 w-5" />} label="Treinos na semana" value={String(weekCount)} />
         <StatCard icon={<Activity className="h-5 w-5" />} label="Esforço médio recente" value={avgEffort != null ? `${formatNumber(avgEffort)}/6` : '—'} />
       </div>
 
@@ -231,7 +226,7 @@ export function HomePage() {
 
       {/* Calendário (design da referência: dias em círculos, treino em dourado) */}
       <div className="mb-4">
-        <HomeCalendar workouts={workouts} unit={settings.unit} />
+        <HomeCalendar workouts={workouts} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

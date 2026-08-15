@@ -21,6 +21,10 @@ export interface WorkoutExercise {
   effort: number | null;
   notes: string;
   order: number;
+  /** Cardio: tempo em minutos (só quando o treino é modalidade cardio). */
+  timeMin?: number | null;
+  /** Cardio: distância em km, opcional. */
+  distanceKm?: number | null;
 }
 
 /** Um treino completo. */
@@ -39,7 +43,7 @@ export interface Workout {
   /** Tempo total de descanso registrado ao preencher este treino (em segundos). */
   restSec: number | null;
   /** Onde o treino foi feito. Ausente em treinos antigos (antes da modalidade existir). */
-  mode?: 'academia' | 'calistenia';
+  mode?: 'academia' | 'calistenia' | 'cardio';
   totalVolume: number;
   avgEffort: number | null;
   createdAt: number;
@@ -47,7 +51,7 @@ export interface Workout {
 }
 
 /** Modalidade de um exercício do catálogo (para filtrar sugestões). */
-export type ExerciseMode = 'academia' | 'calistenia' | 'ambos';
+export type ExerciseMode = 'academia' | 'calistenia' | 'cardio' | 'ambos';
 
 /** Item do catálogo de exercícios (sugestões/recentes/favoritos). */
 export interface ExerciseCatalogItem {
@@ -129,6 +133,10 @@ export interface ExerciseDraft {
   sets: SetDraft[];
   effort: number | null;
   notes: string;
+  /** Cardio: tempo em minutos (só quando a modalidade é cardio). */
+  timeMin?: string;
+  /** Cardio: distância em km, opcional. */
+  distanceKm?: string;
 }
 
 export interface WorkoutFormState {
@@ -138,7 +146,7 @@ export interface WorkoutFormState {
   notes: string;
   durationMin: string;
   /** Modalidade escolhida: filtra as sugestões de exercícios. */
-  mode: 'academia' | 'calistenia';
+  mode: 'academia' | 'calistenia' | 'cardio';
   /** Descanso entre séries em segundos (0 = sem resposta / não houve). */
   restSec: number;
   exercises: ExerciseDraft[];

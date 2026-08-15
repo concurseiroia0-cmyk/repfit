@@ -4,7 +4,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMont
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { Workout } from '../types';
-import { formatNumber, pluralize } from '../utils/calc';
+import { pluralize } from '../utils/calc';
 import { parseLocalDate, toDateString, todayString } from '../utils/date';
 import { ACTIVE_PILL, cn } from '../utils/misc';
 import { Button } from './ui/Button';
@@ -15,7 +15,6 @@ const WEEKDAYS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 
 interface HomeCalendarProps {
   workouts: Workout[];
-  unit: string;
 }
 
 /**
@@ -24,7 +23,7 @@ interface HomeCalendarProps {
  * (número dourado + ponto amarelo) e o dia de hoje/selecionado
  * vira um círculo amarelo com texto escuro e leve elevação.
  */
-export function HomeCalendar({ workouts, unit }: HomeCalendarProps) {
+export function HomeCalendar({ workouts }: HomeCalendarProps) {
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selected, setSelected] = useState<string>(todayString());
 
@@ -150,7 +149,6 @@ export function HomeCalendar({ workouts, unit }: HomeCalendarProps) {
                   <span className="font-bold text-slate-900 dark:text-white">{w.name}</span>
                   <span className="ml-2 text-xs text-slate-400">
                     {pluralize(w.exercises.length, 'exercício', 'exercícios')}
-                    {w.totalVolume > 0 && <> · {formatNumber(w.totalVolume)} {unit}</>}
                   </span>
                 </div>
                 {w.type && <TypeBadge type={w.type} />}

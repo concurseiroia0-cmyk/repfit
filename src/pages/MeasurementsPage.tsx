@@ -3,7 +3,6 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Minus,
-  MoveRight,
   Pencil,
   Plus,
   Ruler,
@@ -28,7 +27,8 @@ import { Card, CardHeader } from '../components/ui/Card';
 import { Field, Input } from '../components/ui/Field';
 import { ConfirmDialog } from '../components/ui/Modal';
 import { EmptyState } from '../components/ui/Feedback';
-import { LineChart, type ChartPoint } from '../components/charts/Charts';
+import { LineChart, Sparkline, type ChartPoint } from '../components/charts/Charts';
+import { StepperInput } from '../components/ui/StepperInput';
 
 export function MeasurementsPage() {
   const settings = useSettings();
@@ -36,6 +36,7 @@ export function MeasurementsPage() {
   const { push } = useToast();
   const measures = getMeasureTypes(settings);
 
+  const [formOpen, setFormOpen] = useState(false);
   const [formDate, setFormDate] = useState(todayString());
   const [values, setValues] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<{ id: number; date: string } | null>(null);
@@ -68,6 +69,17 @@ export function MeasurementsPage() {
     setEditing(null);
   }
 
+  function openNewForm() {
+    resetForm();
+    setFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function closeForm() {
+    resetForm();
+    setFormOpen(false);
+  }
+
   async function handleSave() {
     if (!formDate) {
       push('Escolha uma data.', 'error');
@@ -92,7 +104,7 @@ export function MeasurementsPage() {
       if (editing) await deleteMeasurement(editing.id);
       await saveMeasurement(formDate, parsed);
       push(editing ? 'Medição atualizada.' : 'Medição salva!', 'success');
-      resetForm();
+      closeForm();
     } catch {
       push('Erro ao salvar a medição.', 'error');
     } finally {
@@ -110,6 +122,7 @@ export function MeasurementsPage() {
       pref[m.key] = v != null ? formatNumber(m.unit === 'kg' ? kgToUnit(v, settings.unit) : v) : '';
     }
     setValues(pref);
+    setFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -137,84 +150,10 @@ export function MeasurementsPage() {
         Registre peso e medidas ao longo do tempo — tudo fica salvo neste dispositivo.
       </p>
 
-      {/* Formulário */}
-      <Card>
-        <CardHeader title={editing ? 'Editar medição' : 'Nova medição'} subtitle={editing ? `Editando ${formatDate(editing.date)}` : 'Anote seus números de hoje'} />
-        <div className="space-y-4 px-5 pb-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <Field label="Data" className="sm:w-48">
-              <Input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} aria-label="Data da medição" />
-            </Field>
-            <p className="pb-2.5 text-xs font-medium text-slate-400">
-              {formDate ? `${weekdayName(formDate)} · ${formatDate(formDate)}` : ''}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {measures.map((m) => {
-              const u = inputUnit(m.unit);
-              return (
-                <Field key={m.key} label={`${m.label} (${u})`}>
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      value={values[m.key] ?? ''}
-                      onChange={(e) => setValues((v) => ({ ...v, [m.key]: e.target.value }))}
-                      placeholder="—"
-                      aria-label={`${m.label} em ${u}`}
-                      className="pr-9 text-right font-semibold"
-                    />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                      {u}
-                    </span>
-                  </div>
-                </Field>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <Field label="Nova medida personalizada (ex.: Bíceps, Pescoço…)" className="flex-1">
-              <Input
-                type="text"
-                value={customLabel}
-                onChange={(e) => setCustomLabel(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && void handleAddCustom()}
-                placeholder="Nome da medida…"
-                aria-label="Nome da nova medida"
-              />
-            </Field>
-            <Button variant="secondary" onClick={() => void handleAddCustom()} disabled={!customLabel.trim()}>
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 dark:border-white/10">
-            <Button onClick={() => void handleSave()} disabled={saving}>
-              {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar medição'}
-            </Button>
-            {editing && (
-              <Button variant="ghost" onClick={resetForm}>
-                Cancelar
-              </Button>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      {entries.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState
-            icon={<Ruler className="h-7 w-7" />}
-            title="Nenhuma medição registrada"
-            description="Registre seu peso e medidas acima. Com o tempo, você vê aqui a evolução em gráficos e o resumo (ex.: 78 → 76 → 75 kg)."
-          />
-        </div>
-      ) : (
+      {entries.length > 0 && !formOpen && (
         <>
-          {/* Resumo por medida */}
-          <h2 className="mb-3 mt-6 text-base font-bold text-slate-900 dark:text-white">Evolução</h2>
+          {/* Campo com as medidas já registradas + gráfico de comparação */}
+          <h2 className="mb-3 text-base font-bold text-slate-900 dark:text-white">Suas medidas</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {measures
               .filter((m) => (data.get(m.key)?.latest ?? null) != null)
@@ -223,7 +162,6 @@ export function MeasurementsPage() {
                 const u = m.unit === 'kg' ? settings.unit : 'cm';
                 const latest = d.latest != null ? displayMeasureValue(m, d.latest, settings.unit) : null;
                 const delta = d.latest != null && d.prev != null ? d.latest - d.prev : null;
-                const last5 = d.points.slice(-5).map((p) => p.value);
                 return (
                   <Card key={m.key} className="p-4">
                     <div className="flex items-center justify-between">
@@ -246,24 +184,102 @@ export function MeasurementsPage() {
                     <p className="mt-1 text-2xl font-extrabold text-slate-900 dark:text-white">
                       {latest ? `${formatNumber(latest.value)} ${latest.unit}` : '—'}
                     </p>
-                    {last5.length > 0 && (
-                      <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {last5.map((v, i) => (
-                          <span key={i} className="flex items-center gap-1.5">
-                            {i > 0 && <MoveRight className="h-3 w-3 text-amber-400" />}
-                            <span className="rounded-lg bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
-                              {formatNumber(v)} {u}
-                            </span>
-                          </span>
-                        ))}
-                      </p>
-                    )}
+                    <Sparkline data={d.points} color={measureColor(m.key)} className="mt-2 h-14 w-full" />
                   </Card>
                 );
               })}
           </div>
 
+          {/* Botão da cor do projeto: abre o formulário */}
+          <Button full size="lg" className="mt-4" onClick={openNewForm}>
+            <Plus className="h-5 w-5" /> Nova medição
+          </Button>
+        </>
+      )}
+
+      {entries.length === 0 && !formOpen && (
+        <EmptyState
+          icon={<Ruler className="h-7 w-7" />}
+          title="Nenhuma medição registrada"
+          description="Registre seu peso e medidas para acompanhar a evolução em gráficos."
+          action={
+            <Button onClick={openNewForm}>
+              <Plus className="h-4 w-4" /> Nova medição
+            </Button>
+          }
+        />
+      )}
+
+      {/* Formulário (aberto pelo botão) */}
+      {formOpen && (
+        <Card>
+          <CardHeader
+            title={editing ? 'Editar medição' : 'Nova medição'}
+            subtitle={editing ? `Editando ${formatDate(editing.date)}` : 'Anote seus números de hoje'}
+          />
+          <div className="space-y-4 px-5 pb-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <Field label="Data" className="sm:w-48">
+                <Input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} aria-label="Data da medição" />
+              </Field>
+              <p className="pb-2.5 text-xs font-medium text-slate-400">
+                {formDate ? `${weekdayName(formDate)} · ${formatDate(formDate)}` : ''}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {measures.map((m) => {
+                const u = inputUnit(m.unit);
+                const step = m.unit === 'kg' ? (settings.unit === 'lb' ? 1 : 0.5) : 0.5;
+                return (
+                  <Field key={m.key} label={`${m.label} (${u})`}>
+                    <StepperInput
+                      value={values[m.key] ?? ''}
+                      onChange={(v) => setValues((old) => ({ ...old, [m.key]: v }))}
+                      step={step}
+                      min={0}
+                      max={m.unit === 'kg' ? 500 : 300}
+                      suffix={u}
+                      ariaLabel={`${m.label} em ${u}`}
+                      inputMode="decimal"
+                    />
+                  </Field>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <Field label="Nova medida personalizada (ex.: Bíceps, Pescoço…)" className="flex-1">
+                <Input
+                  type="text"
+                  value={customLabel}
+                  onChange={(e) => setCustomLabel(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && void handleAddCustom()}
+                  placeholder="Nome da medida…"
+                  aria-label="Nome da nova medida"
+                />
+              </Field>
+              <Button variant="secondary" onClick={() => void handleAddCustom()} disabled={!customLabel.trim()}>
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 dark:border-white/10">
+              <Button onClick={() => void handleSave()} disabled={saving}>
+                {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar medição'}
+              </Button>
+              <Button variant="ghost" onClick={closeForm}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {entries.length > 0 && (
+        <>
           {/* Gráficos */}
+
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {measures
               .filter((m) => (data.get(m.key)?.points.length ?? 0) >= 2)

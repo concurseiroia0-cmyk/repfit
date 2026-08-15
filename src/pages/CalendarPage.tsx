@@ -5,9 +5,8 @@ import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMont
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { workoutsLive } from '../services/workoutService';
-import { useSettings } from '../services/settingsService';
 import { longestStreakInMonth, parseLocalDate, toDateString, todayString, weekdayName } from '../utils/date';
-import { formatNumber, pluralize } from '../utils/calc';
+import { pluralize } from '../utils/calc';
 import { Dot, TypeBadge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -19,7 +18,6 @@ const WEEKDAYS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 
 export function CalendarPage() {
   const workouts = useLiveQuery(() => workoutsLive(), []);
-  const settings = useSettings();
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selected, setSelected] = useState<string>(todayString());
 
@@ -157,7 +155,6 @@ export function CalendarPage() {
                   <span className="font-bold text-slate-900 dark:text-white">{w.name}</span>
                   <span className="ml-2 text-xs text-slate-400">
                     {pluralize(w.exercises.length, 'exercício', 'exercícios')}
-                    {w.totalVolume > 0 && <> · {formatNumber(w.totalVolume)} {settings.unit}</>}
                   </span>
                 </div>
                 {w.type && <TypeBadge type={w.type} />}
