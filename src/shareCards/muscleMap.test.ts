@@ -31,9 +31,20 @@ describe('exerciseToMuscles (tabela de grupos musculares)', () => {
     expect(exerciseToMuscles('Corrida de rua')).toEqual(['quadriceps', 'posterior', 'gluteos', 'panturrilha']);
   });
 
+  it('exercícios de antebraço → antebraco', () => {
+    expect(exerciseToMuscles('Rosca Punho')).toEqual(['antebraco']);
+    expect(exerciseToMuscles('Rosca Punho Invertida')).toEqual(['antebraco']);
+    expect(exerciseToMuscles('Wrist Curl')).toEqual(['antebraco']);
+    // "Rosca Inversa" também pega o bíceps
+    expect(exerciseToMuscles('Rosca Inversa')).toEqual(['antebraco', 'biceps']);
+    // palavra-chave para exercício do usuário
+    expect(exerciseToMuscles('Treino de punho')).toEqual(['antebraco']);
+  });
+
   it('fallback pelo muscleGroup do catálogo quando nada bate', () => {
     expect(exerciseToMuscles('Meu Exercício', 'Pernas')).toEqual(['quadriceps', 'posterior', 'gluteos']);
     expect(exerciseToMuscles('Qualquer Coisa', 'Core')).toEqual(['abs', 'obliquos']);
+    expect(exerciseToMuscles('Qualquer Coisa', 'Antebraço')).toEqual(['antebraco']);
   });
 
   it('nome vazio / sem correspondência → []', () => {

@@ -28,7 +28,8 @@ export type MuscleId =
   | 'posterior'
   | 'gluteos'
   | 'panturrilha'
-  | 'tibialis';
+  | 'tibialis'
+  | 'antebraco';
 
 /** Rótulo em português de cada músculo (usado na legenda do card). */
 export const MUSCLE_LABELS: Record<MuscleId, string> = {
@@ -46,6 +47,7 @@ export const MUSCLE_LABELS: Record<MuscleId, string> = {
   gluteos: 'Glúteos',
   panturrilha: 'Panturrilha',
   tibialis: 'Canela',
+  antebraco: 'Antebraço',
 };
 
 /** Músculos que aparecem na vista FRONTAL do SVG. */
@@ -53,6 +55,7 @@ export const FRONT_MUSCLES: MuscleId[] = [
   'peito',
   'ombros',
   'biceps',
+  'antebraco',
   'trapezio',
   'abs',
   'obliquos',
@@ -65,6 +68,7 @@ export const BACK_MUSCLES: MuscleId[] = [
   'trapezio',
   'ombros',
   'triceps',
+  'antebraco',
   'lats',
   'lombar',
   'gluteos',
@@ -88,6 +92,7 @@ export const LEGEND_ORDER: MuscleId[] = [
   'gluteos',
   'panturrilha',
   'tibialis',
+  'antebraco',
 ];
 
 /** Remove acentos e normaliza para lookup (ex.: "Puxada Frontal" → "puxada frontal"). */
@@ -160,6 +165,12 @@ const EXERCISE_MUSCLES: Record<string, MuscleId[]> = {
   'rosca martelo': ['biceps'],
   'rosca scott': ['biceps'],
   'rosca': ['biceps'],
+  'rosca punho': ['antebraco'],
+  'rosca punho invertida': ['antebraco'],
+  'rosca inversa': ['antebraco', 'biceps'],
+  'wrist curl': ['antebraco'],
+  'pronacao': ['antebraco'],
+  'supinacao': ['antebraco'],
   'triceps corda': ['triceps'],
   'triceps testa': ['triceps'],
   'triceps frances': ['triceps'],
@@ -222,6 +233,11 @@ const KEYWORD_MUSCLES: { key: string; muscles: MuscleId[] }[] = [
   { key: 'elevacao frontal', muscles: ['ombros'] },
   { key: 'lateral raise', muscles: ['ombros', 'trapezio'] },
   { key: 'shoulder press', muscles: ['ombros', 'triceps'] },
+  { key: 'rosca punho', muscles: ['antebraco'] },
+  { key: 'punho', muscles: ['antebraco'] },
+  { key: 'wrist', muscles: ['antebraco'] },
+  { key: 'antebraco', muscles: ['antebraco'] },
+  { key: 'forearm', muscles: ['antebraco'] },
   { key: 'rosca', muscles: ['biceps'] },
   { key: 'curl', muscles: ['biceps'] },
   { key: 'biceps', muscles: ['biceps'] },
@@ -264,6 +280,7 @@ const GROUP_MUSCLES: Record<string, MuscleId[]> = {
   triceps: ['triceps'],
   core: ['abs', 'obliquos'],
   gluteos: ['gluteos'],
+  antebraco: ['antebraco'],
   cardio: ['quadriceps', 'panturrilha', 'gluteos'],
 };
 

@@ -104,10 +104,21 @@ const REGIONS = {
   'muscle-front-biceps.png': {
     body: frontBody,
     polys: [
-      // braço esquerdo (bíceps)
-      [[8, 104], [24, 100], [30, 118], [28, 144], [22, 154], [10, 148], [4, 130]],
+      // braço esquerdo (bíceps): do ombro ao cotovelo (~y170), como a
+      // referência (célula bíceps/tríceps = braço inteiro)
+      [[8, 96], [24, 92], [30, 118], [28, 152], [26, 170], [14, 170], [6, 158], [4, 130]],
       // braço direito (bíceps)
-      [[114, 100], [130, 104], [134, 130], [128, 148], [116, 154], [110, 144], [108, 118]],
+      [[114, 96], [130, 92], [134, 118], [132, 152], [130, 170], [116, 170], [110, 158], [108, 130]],
+    ],
+  },
+  'muscle-front-antebraco.png': {
+    body: frontBody,
+    polys: [
+      // antebraço esquerdo: do cotovelo (~y170) ao punho (~y193, antes da
+      // mão) — grupo novo seguindo a referência (célula antebraços)
+      [[2, 170], [14, 170], [12, 186], [10, 192], [5, 193], [1, 186]],
+      // antebraço direito
+      [[124, 170], [136, 170], [137, 186], [133, 193], [128, 192], [125, 186]],
     ],
   },
   'muscle-front-trapezio.png': {
@@ -155,10 +166,21 @@ const REGIONS = {
   'muscle-back-triceps.png': {
     body: backBody,
     polys: [
-      // braço esquerdo (tríceps, lado externo)
-      [[4, 104], [20, 100], [26, 120], [26, 170], [20, 190], [8, 184], [2, 150]],
-      // braço direito (tríceps, lado externo)
-      [[121, 100], [137, 104], [139, 150], [133, 184], [121, 190], [115, 170], [115, 120]],
+      // tríceps esquerdo: braço traseiro na borda (x0-16, y84-140) — do
+      // ombro ao cotovelo. ANTES a máscara ficava em espaço vazio (x20-26)
+      // e o braço direito (x78-105) nunca acendia (0 pixels).
+      [[0, 84], [16, 84], [16, 106], [12, 126], [8, 140], [2, 140], [0, 122]],
+      // tríceps direito: braço real está em x78-105 (não em x115-139)
+      [[78, 84], [105, 84], [105, 106], [102, 126], [98, 148], [82, 148], [79, 122]],
+    ],
+  },
+  'muscle-back-antebraco.png': {
+    body: backBody,
+    polys: [
+      // antebraço esquerdo (braço curto da figura: x0-6, y140-162)
+      [[0, 140], [6, 140], [6, 152], [4, 160], [2, 162], [0, 156]],
+      // antebraço direito (faixa diagonal x80-120, y148-194)
+      [[78, 146], [102, 146], [120, 170], [126, 192], [120, 194], [102, 174], [84, 160], [78, 152]],
     ],
   },
   'muscle-back-lats.png': {
