@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Workout } from '../../types';
-import { draftToWorkout, toCloudWorkout } from './sync';
+import type { BodyMeasurement, Workout } from '../../types';
+import { draftToWorkout, measurementFromCloud, toCloudMeasurement, toCloudWorkout } from './sync';
 
 function localWorkout(overrides: Partial<Workout> = {}): Workout {
   return {
@@ -78,6 +78,95 @@ describe('toCloudWorkout (mapeamento local → nuvem)', () => {
     expect(payload.workout.duration_seconds).toBeNull();
     expect(payload.workout.mode).toBeNull();
     expect(payload.workout.effort_level).toBeNull();
+  });
+});
+
+function localMeasurement(overrides: Partial<BodyMeasurement> = {}): BodyMeasurement {
+  return {
+    date: '2026-08-10',
+    createdAt: 1_700_000_000_000,
+    values: { weight: 82.5, arm: 36, waist: 88, chest: 104, thigh: 58, calf: 39 },
+    ...overrides,
+  };
+}
+
+describe('toCloudMeasurement (medição local → nuvem)', () => {
+  it('mapeia as colunas padrão e preserva o mapa completo em notes (JSON)', () => {
+    const payload = toCloudMeasurement(localMeasurement());
+    expect(payload.measured_at).toBe('2026-08-10');
+    expect(payload.weight).toBe(82.5);
+    expect(payload.arm).toBe(36);
+    expect(payload.waist).toBe(88);
+    expect(payload.chest).toBe(104);
+    expect(payload.thigh).toBe(58);
+    expect(payload.calf).toBe(39);
+    expect(JSON.parse(payload.notes ?? '')).toEqual({
+      weight: 82.5,
+      arm: 36,
+      waist: 88,
+      chest: 104,
+      thigh: 58,
+      calf: 39,
+    });
+  });
+
+  it('trata medidas personalizadas (preserva no JSON mesmo sem coluna no banco)', () => {
+    const payload = toCloudMeasurement(
+      localMeasurement({ values: { weight: 70, 'custom-abc': 25, bodyFat: 15 } })
+    );
+    expect(payload.weight).toBe(70);
+    expect(payload.body_fat_percentage).toBe(15);
+    const restored = JSON.parse(payload.notes ?? '');
+    expect(restored['custom-abc']).toBe(25);
+    expect(restored.bodyFat).toBe(15);
+  });
+});
+
+describe('measurementFromCloud (nuvem → medição local)', () => {
+  it('reconstitui o mapa completo a partir do JSON em notes', () => {
+    const values = measurementFromCloud({
+      id: 'm1',
+      user_id: 'u1',
+      measured_at: '2026-08-10T00:00:00Z',
+      weight: 82.5,
+      body_fat_percentage: null,
+      chest: null,
+      waist: null,
+      arm: null,
+      thigh: null,
+      calf: null,
+      notes: JSON.stringify({ weight: 82.5, arm: 36, 'custom-x': 12 }),
+      created_at: '2026-08-10T00:00:00Z',
+      updated_at: '2026-08-10T00:00:00Z',
+    });
+    expect(values).toEqual({ weight: 82.5, arm: 36, 'custom-x': 12 });
+  });
+
+  it('sem JSON válido, monta pelas colunas padrão', () => {
+    const values = measurementFromCloud({
+      id: 'm1',
+      user_id: 'u1',
+      measured_at: '2026-08-10T00:00:00Z',
+      weight: 70,
+      body_fat_percentage: 15,
+      chest: 100,
+      waist: 80,
+      arm: 34,
+      thigh: 55,
+      calf: 37,
+      notes: null,
+      created_at: '2026-08-10T00:00:00Z',
+      updated_at: '2026-08-10T00:00:00Z',
+    });
+    expect(values).toEqual({
+      weight: 70,
+      bodyFat: 15,
+      chest: 100,
+      waist: 80,
+      arm: 34,
+      thigh: 55,
+      calf: 37,
+    });
   });
 });
 

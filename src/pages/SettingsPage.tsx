@@ -167,7 +167,10 @@ export function SettingsPage() {
       const mins = Math.max(0, Math.round((Date.now() - lastSyncAt) / 60_000));
       const when = mins < 1 ? 'agora há pouco' : mins === 1 ? 'há 1 min' : `há ${mins} min`;
       if (lastSync?.status === 'ok') {
-        return `✓ Última sincronização ${when}: ${lastSync.pushed} enviados, ${lastSync.pulled} baixados.`;
+        const parts = [`${lastSync.pushed} treino(s) enviados`, `${lastSync.pulled} baixados`];
+        if ((lastSync.measurementsPushed ?? 0) > 0) parts.push(`${lastSync.measurementsPushed} medida(s) enviadas`);
+        if ((lastSync.measurementsPulled ?? 0) > 0) parts.push(`${lastSync.measurementsPulled} medida(s) baixadas`);
+        return `✓ Última sincronização ${when}: ${parts.join(', ')}.`;
       }
       if (lastSync?.status === 'error') {
         return `⚠️ Falha na última sincronização (${when}): ${lastSync.message}`;
@@ -544,6 +547,17 @@ export function SettingsPage() {
                 ? 'No iPhone/iPad: toque em Compartilhar → “Adicionar à Tela de Início”.'
                 : 'No computador o app instala como um programa; no celular vira um ícone na tela inicial. Escaneie o QR code para abrir no celular. Tudo continua 100% offline e privado.'}
             </p>
+            {isIOS() && (
+              <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300">
+                <p className="font-bold">Depois de instalar, conecte sua conta 👇</p>
+                <p className="mt-1">
+                  No iPhone o app instalado é um <b>espaço separado</b> do navegador (começa vazio). Para
+                  trazer seus treinos e medidas: no aparelho onde sua conta já está logada, abra{' '}
+                  <b>Configurações → Conectar aplicativo</b>, pegue o código de 6 dígitos e digite-o aqui no
+                  app instalado em <b>“Já tenho uma conta”</b> — ou entre com o Google normalmente.
+                </p>
+              </div>
+            )}
           </div>
         </Card>
 

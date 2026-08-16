@@ -18,8 +18,9 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { db } from '../../db/db';
-import type { Workout, WorkoutExercise, WorkoutFormState } from '../../types';
+import type { BodyMeasurement, Workout, WorkoutExercise, WorkoutFormState } from '../../types';
 import type {
+  BodyMeasurementRow,
   Database,
   WorkoutExerciseRow,
   WorkoutRow,
@@ -210,6 +211,112 @@ export async function pushWorkout(
 }
 
 // ---------------------------------------------------------------------------
+// Medidas corporais: local → nuvem
+// ---------------------------------------------------------------------------
+
+/**
+ * Converte uma medição local no payload do banco (espelha o tipo do app).
+ * O mapa COMPLETO de valores vai em `notes` (JSON) para preservar medidas
+ * personalizadas; as colunas padrão (peso, braço…) ficam preenchidas para
+ * compatibilidade com outras ferramentas/consultas.
+ */
+export function toCloudMeasurement(local: BodyMeasurement): {
+  measured_at: string;
+  weight: number | null;
+  body_fat_percentage: number | null;
+  chest: number | null;
+  waist: number | null;
+  arm: number | null;
+  thigh: number | null;
+  calf: number | null;
+  notes: string | null;
+} {
+  const v = local.values ?? {};
+  return {
+    measured_at: local.date, // YYYY-MM-DD (Postgres converte para timestamptz)
+    weight: v.weight ?? null,
+    body_fat_percentage: v.bodyFat ?? null,
+    chest: v.chest ?? null,
+    waist: v.waist ?? null,
+    arm: v.arm ?? null,
+    thigh: v.thigh ?? null,
+    calf: v.calf ?? null,
+    notes: JSON.stringify(v),
+  };
+}
+
+/** Reconstitui o mapa de valores a partir de uma linha da nuvem. */
+export function measurementFromCloud(cloud: BodyMeasurementRow): Record<string, number | null> {
+  // O JSON completo (inclui medidas personalizadas) tem prioridade.
+  try {
+    const parsed = JSON.parse(cloud.notes ?? '') as unknown;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, number | null>;
+    }
+  } catch {
+    // notes não é JSON → usa as colunas padrão abaixo
+  }
+  return {
+    weight: cloud.weight ?? null,
+    bodyFat: cloud.body_fat_percentage ?? null,
+    chest: cloud.chest ?? null,
+    waist: cloud.waist ?? null,
+    arm: cloud.arm ?? null,
+    thigh: cloud.thigh ?? null,
+    calf: cloud.calf ?? null,
+  };
+}
+
+/** Empurra UMA medição local para a nuvem. Retorna o cloudId. */
+export async function pushMeasurement(sb: Sb, userId: string, local: BodyMeasurement): Promise<string> {
+  const { data, error } = await sb
+    .from('body_measurements')
+    .insert({ user_id: userId, ...toCloudMeasurement(local) })
+    .select('id')
+    .single();
+  if (error || !data) {
+    throw new Error(`Falha ao enviar medição de ${local.date}: ${error?.message ?? 'sem resposta'}`);
+  }
+  if (local.id != null) {
+    await db.syncMap.put({ key: `measurement:${local.id}`, cloudId: data.id, entity: 'measurement' });
+  }
+  return data.id;
+}
+
+/** Baixa as medições da nuvem que ainda não existem localmente. */
+export async function pullMeasurements(sb: Sb, userId: string): Promise<number> {
+  const { data: cloud, error } = await sb
+    .from('body_measurements')
+    .select('*')
+    .eq('user_id', userId)
+    .order('measured_at', { ascending: false });
+  if (error) throw new Error(`Falha ao baixar medidas: ${error.message}`);
+  if (!cloud || cloud.length === 0) return 0;
+
+  const mapped = await db.syncMap.where('entity').equals('measurement').toArray();
+  const knownCloudIds = new Set(mapped.map((m) => m.cloudId));
+  const pending = cloud.filter((m) => !knownCloudIds.has(m.id));
+  if (pending.length === 0) return 0;
+
+  let imported = 0;
+  await db.transaction('rw', db.measurements, db.syncMap, async () => {
+    for (const m of pending) {
+      // Evita duplicar no mesmo dia (a nuvem pode ter mais de uma por dia).
+      const sameDay = await db.measurements.where('date').equals(m.measured_at.slice(0, 10)).first();
+      if (sameDay) continue;
+      const localId = await db.measurements.add({
+        date: m.measured_at.slice(0, 10),
+        createdAt: new Date(m.created_at).getTime(),
+        values: measurementFromCloud(m),
+      });
+      await db.syncMap.put({ key: `measurement:${localId}`, cloudId: m.id, entity: 'measurement' });
+      imported++;
+    }
+  });
+  return imported;
+}
+
+// ---------------------------------------------------------------------------
 // Pull: nuvem → local
 // ---------------------------------------------------------------------------
 
@@ -318,7 +425,13 @@ export async function pullWorkouts(sb: Sb, userId: string): Promise<number> {
 // ---------------------------------------------------------------------------
 
 export type SyncResult =
-  | { status: 'ok'; pushed: number; pulled: number }
+  | {
+      status: 'ok';
+      pushed: number;
+      pulled: number;
+      measurementsPushed: number;
+      measurementsPulled: number;
+    }
   | { status: 'skipped'; reason: 'not-configured' | 'signed-out' }
   | { status: 'error'; message: string };
 
@@ -346,7 +459,21 @@ export async function syncAll(): Promise<SyncResult> {
     }
 
     const pulled = await pullWorkouts(sb, user.id);
-    return { status: 'ok', pushed, pulled };
+
+    // Medidas corporais: empurra as locais ainda não enviadas e baixa as da nuvem.
+    const localMeasurements = await db.measurements.toArray();
+    const mappedM = await db.syncMap.where('entity').equals('measurement').toArray();
+    const mappedMKeys = new Set(mappedM.map((m) => m.key));
+    const toPushM = localMeasurements.filter((m) => m.id == null || !mappedMKeys.has(`measurement:${m.id}`));
+
+    let measurementsPushed = 0;
+    for (const m of toPushM) {
+      await pushMeasurement(sb, user.id, m);
+      measurementsPushed++;
+    }
+    const measurementsPulled = await pullMeasurements(sb, user.id);
+
+    return { status: 'ok', pushed, pulled, measurementsPushed, measurementsPulled };
   } catch (err) {
     return {
       status: 'error',

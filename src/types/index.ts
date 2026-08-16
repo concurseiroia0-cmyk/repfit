@@ -165,5 +165,5 @@ export interface SyncMapEntry {
   key: string;
   /** Id UUID da linha na nuvem. */
   cloudId: string;
-  entity: 'workout' | 'exercise' | 'photo';
+  entity: 'workout' | 'exercise' | 'photo' | 'measurement';
 }

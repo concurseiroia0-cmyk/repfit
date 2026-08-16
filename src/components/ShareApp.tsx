@@ -102,6 +102,15 @@ export function ShareAppModal({ open, onClose }: { open: boolean; onClose: () =>
           Depois de abrir no celular, use “Adicionar à Tela de Início” (iOS) ou instalar (Android) para ter o app
           instalado. Os dados ficam salvos apenas em cada dispositivo.
         </p>
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300">
+          <p className="font-bold">Quer ver seus treinos no celular? Conecte sua conta</p>
+          <p className="mt-1">
+            O app instalado começa vazio. Para trazer o histórico do navegador: no aparelho onde sua conta já
+            está logada, abra <b>Configurações → Conectar aplicativo</b>, pegue o código de 6 dígitos e digite-o
+            no celular em <b>“Já tenho uma conta”</b> — seus treinos e medidas sincronizam pela nuvem
+            automaticamente.
+          </p>
+        </div>
       </div>
     </Modal>
   );
