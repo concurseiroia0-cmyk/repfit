@@ -1,28 +1,33 @@
 /**
  * FIGURA ANATÔMICA (SVG) do template "Mapa muscular".
  *
- * Desenho em duas camadas:
- *   1. SILHUETA única do corpo (uma linha fechada contínua, com curvas
- *      suaves e proporções atléticas) na cor neutra — é ela que dá o
- *      contorno limpo da figura, sem "quebra-cabeça" entre as partes;
- *   2. MÚSCULOS sobrepostos: cada grupo é um path separado e nomeado
- *      (`data-muscle`), pintado de AMARELO quando trabalhado no treino ou
- *      da mesma cor da silhueta quando não (fica invisível, "embutido").
+ * Estilo baseado na referência anatômica (figura muscular com mapa de
+ * grupos): TODOS os músculos ficam sempre visíveis — cada grupo é um path
+ * separado e nomeado (`data-muscle`), preenchido com um cinza levemente
+ * mais claro que o corpo e contornado por uma linha escura de separação.
+ * Os músculos TRABALHADOS no treino são pintados de amarelo vivo; os demais
+ * permanecem no cinza de definição. As partes neutras (cabeça, antebraços,
+ * mãos, canelas e pés) ficam no cinza escuro do corpo.
  *
- * Assim a figura tem aparência coesa como as referências anatômicas, e o
- * destaque amarelo mostra exatamente os grupos trabalhados. Músculos
- * bilaterais são desenhados do lado esquerdo e espelhados
- * (`transform="translate(200 0) scale(-1 1)"`) — desenho simétrico e fácil
- * de manter. Sem backdrop, sem imagens: SVG puro (preview === PNG).
+ * Estrutura em camadas:
+ *   1. SILHUETA única (contorno fechado, proporções atléticas) — cinza
+ *      escuro do corpo (#202225), cobrindo cabeça/membros neutros;
+ *   2. MÚSCULOS sobrepostos — cinza de definição (inativo) ou amarelo
+ *      (ativo), com stroke escuro de separação entre os grupos.
+ *
+ * Músculos bilaterais são desenhados do lado esquerdo e espelhados
+ * (`translate(200 0) scale(-1 1)`), com o lado ORIGINAL também renderizado.
+ * Sem backdrop, sem imagens: SVG puro (preview === PNG exportado).
  */
 
 import type { CSSProperties, ReactNode } from 'react';
 import type { MuscleId } from '../muscleMap';
 import { ACCENT } from '../glassStyles';
 
-const BODY = '#333336';
-const LINE = 'rgba(0,0,0,0.35)';
-const LINE_SOFT = 'rgba(0,0,0,0.22)';
+const BODY = '#202225';
+const MUSCLE = '#33363d';
+const SEAM = 'rgba(0,0,0,0.62)';
+const SEAM_SOFT = 'rgba(0,0,0,0.4)';
 
 interface FigureProps {
   active: ReadonlySet<MuscleId>;
@@ -44,10 +49,7 @@ function Mirror({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Silhueta única do corpo (frente e costas compartilham o contorno).
- * Uma ÚNICA forma fechada (sem espelho) — evita qualquer costura no centro.
- */
+/** Silhueta única do corpo (frente e costas compartilham o contorno). */
 function BodySilhouette() {
   return (
     <path
@@ -72,9 +74,18 @@ function BodySilhouette() {
   );
 }
 
+/** Props comuns de um path de músculo (preenchimento + costura escura). */
+function muscleProps(m: MuscleId, active: ReadonlySet<MuscleId>) {
+  return {
+    fill: active.has(m) ? ACCENT : MUSCLE,
+    stroke: SEAM,
+    strokeWidth: 1.2,
+    strokeLinejoin: 'round' as const,
+  };
+}
+
 /** Vista frontal (viewBox 0 0 200 440). */
 export function FrontFigure({ active, width }: FigureProps) {
-  const on = (m: MuscleId) => (active.has(m) ? ACCENT : BODY);
   return (
     <svg viewBox="0 0 200 440" width={width} height={(width * 440) / 200} aria-hidden="true" style={{ display: 'block' }}>
       <BodySilhouette />
@@ -82,44 +93,20 @@ export function FrontFigure({ active, width }: FigureProps) {
       {/* Músculos frontais (espelhados) */}
       <Mirror>
         {/* Deltoide (ombro) */}
-        <path
-          data-muscle="ombros"
-          d="M 67,78 C 59,82 54,89 53,97 C 52,106 56,112 63,114 C 68,108 71,100 72,92 C 72,84 70,79 67,78 Z"
-          fill={on('ombros')}
-        />
+        <path data-muscle="ombros" d="M 67,78 C 59,82 54,89 53,97 C 52,106 56,112 63,114 C 68,108 71,100 72,92 C 72,84 70,79 67,78 Z" {...muscleProps('ombros', active)} />
         {/* Peitoral */}
-        <path
-          data-muscle="peito"
-          d="M 100,76 C 92,74 84,76 79,81 C 74,86 72,94 73,103 C 74,112 79,117 86,116 C 94,114 99,110 100,106 Z"
-          fill={on('peito')}
-        />
+        <path data-muscle="peito" d="M 100,76 C 92,74 84,76 79,81 C 74,86 72,94 73,103 C 74,112 79,117 86,116 C 94,114 99,110 100,106 Z" {...muscleProps('peito', active)} />
         {/* Bíceps */}
-        <path
-          data-muscle="biceps"
-          d="M 63,90 C 57,100 54,114 55,128 C 56,136 60,140 65,137 C 69,129 71,114 71,101 C 70,93 67,89 63,90 Z"
-          fill={on('biceps')}
-        />
+        <path data-muscle="biceps" d="M 63,90 C 57,100 54,114 55,128 C 56,136 60,140 65,137 C 69,129 71,114 71,101 C 70,93 67,89 63,90 Z" {...muscleProps('biceps', active)} />
         {/* Oblíquo */}
-        <path
-          data-muscle="obliquos"
-          d="M 79,110 C 76,118 74,128 74,138 C 74,150 77,160 82,166 L 88,163 L 88,112 C 85,109 82,109 79,110 Z"
-          fill={on('obliquos')}
-        />
+        <path data-muscle="obliquos" d="M 79,110 C 76,118 74,128 74,138 C 74,150 77,160 82,166 L 88,163 L 88,112 C 85,109 82,109 79,110 Z" {...muscleProps('obliquos', active)} />
         {/* Quadríceps */}
-        <path
-          data-muscle="quadriceps"
-          d="M 86,198 C 80,212 77,240 79,268 C 81,284 86,292 93,296 C 98,296 100,290 99,280 C 98,258 97,232 94,210 C 92,200 89,196 86,198 Z"
-          fill={on('quadriceps')}
-        />
+        <path data-muscle="quadriceps" d="M 86,198 C 80,212 77,240 79,268 C 81,284 86,292 93,296 C 98,296 100,290 99,280 C 98,258 97,232 94,210 C 92,200 89,196 86,198 Z" {...muscleProps('quadriceps', active)} />
         {/* Canela (tibial anterior) */}
-        <path
-          data-muscle="tibialis"
-          d="M 85,312 C 83,328 83,350 86,368 C 88,378 92,382 95,380 C 97,370 96,350 95,330 C 94,318 91,310 87,309 C 85,308 84,309 85,312 Z"
-          fill={on('tibialis')}
-        />
+        <path data-muscle="tibialis" d="M 85,312 C 83,328 83,350 86,368 C 88,378 92,382 95,380 C 97,370 96,350 95,330 C 94,318 91,310 87,309 C 85,308 84,309 85,312 Z" {...muscleProps('tibialis', active)} />
         {/* Definição do V do quadríceps (só quando ativo) */}
         {active.has('quadriceps') && (
-          <g stroke={LINE_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
+          <g stroke={SEAM_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
             <path d="M 85,214 C 82,230 81,250 83,270" />
             <path d="M 97,214 C 96,232 96,252 98,270" />
           </g>
@@ -127,29 +114,19 @@ export function FrontFigure({ active, width }: FigureProps) {
       </Mirror>
 
       {/* Trapézio (nuca/ombros) */}
-      <path
-        data-muscle="trapezio"
-        d="M 88,50 C 80,54 72,60 67,68 C 63,75 61,82 63,88 C 67,87 73,85 79,84 C 81,76 83,66 88,58 C 90,55 93,52 100,50 C 107,52 110,55 112,58 C 117,66 119,76 121,84 C 127,85 133,87 137,88 C 139,82 137,75 133,68 C 128,60 120,54 112,50 Z"
-        fill={on('trapezio')}
-      />
+      <path data-muscle="trapezio" d="M 88,50 C 80,54 72,60 67,68 C 63,75 61,82 63,88 C 67,87 73,85 79,84 C 81,76 83,66 88,58 C 90,55 93,52 100,50 C 107,52 110,55 112,58 C 117,66 119,76 121,84 C 127,85 133,87 137,88 C 139,82 137,75 133,68 C 128,60 120,54 112,50 Z" {...muscleProps('trapezio', active)} />
 
-      {/* Abdômen (six-pack) */}
-      <path
-        data-muscle="abs"
-        d="M 89,112 C 94,110 106,110 111,112 C 113,122 113,140 112,152 C 111,161 108,164 100,164 C 92,164 89,161 88,152 C 87,140 87,122 89,112 Z"
-        fill={on('abs')}
-      />
-      {active.has('abs') && (
-        <g stroke={LINE} strokeWidth="1.3" opacity="0.55">
-          <path d="M 89,124 L 111,124" />
-          <path d="M 89,137 L 111,137" />
-          <path d="M 89,150 L 111,150" />
-          <path d="M 100,112 L 100,164" />
-        </g>
-      )}
+      {/* Abdômen (six-pack) — a grade do abdômen fica SEMPRE visível */}
+      <path data-muscle="abs" d="M 89,112 C 94,110 106,110 111,112 C 113,122 113,140 112,152 C 111,161 108,164 100,164 C 92,164 89,161 88,152 C 87,140 87,122 89,112 Z" {...muscleProps('abs', active)} />
+      <g stroke={active.has('abs') ? 'rgba(0,0,0,0.6)' : SEAM_SOFT} strokeWidth="1.3" opacity={active.has('abs') ? 0.8 : 0.55}>
+        <path d="M 89,124 L 111,124" />
+        <path d="M 89,137 L 111,137" />
+        <path d="M 89,150 L 111,150" />
+        <path d="M 100,112 L 100,164" />
+      </g>
       {/* Linha do esterno (só com peito ativo) */}
       {active.has('peito') && (
-        <path d="M 100,76 L 100,106" stroke={LINE_SOFT} strokeWidth="1.2" opacity="0.9" />
+        <path d="M 100,76 L 100,106" stroke={SEAM_SOFT} strokeWidth="1.2" opacity="0.9" />
       )}
     </svg>
   );
@@ -157,7 +134,6 @@ export function FrontFigure({ active, width }: FigureProps) {
 
 /** Vista traseira (viewBox 0 0 200 440). */
 export function BackFigure({ active, width }: FigureProps) {
-  const on = (m: MuscleId) => (active.has(m) ? ACCENT : BODY);
   return (
     <svg viewBox="0 0 200 440" width={width} height={(width * 440) / 200} aria-hidden="true" style={{ display: 'block' }}>
       <BodySilhouette />
@@ -165,61 +141,37 @@ export function BackFigure({ active, width }: FigureProps) {
       {/* Músculos dorsais (espelhados) */}
       <Mirror>
         {/* Deltoide posterior */}
-        <path
-          data-muscle="ombros"
-          d="M 70,80 C 62,84 57,91 56,99 C 55,107 59,112 65,113 C 70,107 73,99 74,91 C 74,84 72,80 70,80 Z"
-          fill={on('ombros')}
-        />
+        <path data-muscle="ombros" d="M 70,80 C 62,84 57,91 56,99 C 55,107 59,112 65,113 C 70,107 73,99 74,91 C 74,84 72,80 70,80 Z" {...muscleProps('ombros', active)} />
         {/* Tríceps */}
-        <path
-          data-muscle="triceps"
-          d="M 63,92 C 57,104 54,118 56,132 C 58,138 62,140 67,137 C 71,129 73,114 73,102 C 72,95 68,91 63,92 Z"
-          fill={on('triceps')}
-        />
+        <path data-muscle="triceps" d="M 63,92 C 57,104 54,118 56,132 C 58,138 62,140 67,137 C 71,129 73,114 73,102 C 72,95 68,91 63,92 Z" {...muscleProps('triceps', active)} />
         {/* Dorsal (latíssimo) */}
-        <path
-          data-muscle="lats"
-          d="M 72,98 C 66,112 63,132 65,150 C 67,166 72,178 80,184 C 87,189 93,187 97,179 C 96,156 93,126 91,108 C 89,100 81,96 72,98 Z"
-          fill={on('lats')}
-        />
+        <path data-muscle="lats" d="M 72,98 C 66,112 63,132 65,150 C 67,166 72,178 80,184 C 87,189 93,187 97,179 C 96,156 93,126 91,108 C 89,100 81,96 72,98 Z" {...muscleProps('lats', active)} />
         {/* Glúteo */}
-        <path
-          data-muscle="gluteos"
-          d="M 100,190 C 94,188 86,189 82,195 C 78,202 78,212 84,219 C 90,224 96,223 100,219 Z"
-          fill={on('gluteos')}
-        />
+        <path data-muscle="gluteos" d="M 100,190 C 94,188 86,189 82,195 C 78,202 78,212 84,219 C 90,224 96,223 100,219 Z" {...muscleProps('gluteos', active)} />
         {/* Posterior de coxa */}
-        <path
-          data-muscle="posterior"
-          d="M 86,222 C 79,236 76,256 78,274 C 80,286 85,292 93,296 C 98,296 100,290 99,280 C 98,260 97,240 93,220 Z"
-          fill={on('posterior')}
-        />
+        <path data-muscle="posterior" d="M 86,222 C 79,236 76,256 78,274 C 80,286 85,292 93,296 C 98,296 100,290 99,280 C 98,260 97,240 93,220 Z" {...muscleProps('posterior', active)} />
         {/* Panturrilha */}
-        <path
-          data-muscle="panturrilha"
-          d="M 85,310 C 82,322 82,342 85,360 C 87,372 91,378 94,376 C 96,364 96,342 94,324 C 93,314 90,308 86,307 C 84,306 83,307 85,310 Z"
-          fill={on('panturrilha')}
-        />
+        <path data-muscle="panturrilha" d="M 85,310 C 82,322 82,342 85,360 C 87,372 91,378 94,376 C 96,364 96,342 94,324 C 93,314 90,308 86,307 C 84,306 83,307 85,310 Z" {...muscleProps('panturrilha', active)} />
         {/* Ferradura do tríceps (só quando ativo) */}
         {active.has('triceps') && (
-          <g stroke={LINE_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
+          <g stroke={SEAM_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
             <path d="M 56,114 C 59,119 63,120 66,117" />
             <path d="M 56,126 C 59,131 63,132 66,129" />
           </g>
         )}
         {/* Linha do dorsal (V das costas) */}
         {active.has('lats') && (
-          <g stroke={LINE_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
+          <g stroke={SEAM_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
             <path d="M 66,114 C 64,134 65,156 72,176" />
           </g>
         )}
         {/* Dobra inferior do glúteo */}
         {active.has('gluteos') && (
-          <path d="M 79,207 C 86,212 93,212 100,209" stroke={LINE_SOFT} strokeWidth="1.2" fill="none" opacity="0.9" />
+          <path d="M 79,207 C 86,212 93,212 100,209" stroke={SEAM_SOFT} strokeWidth="1.2" fill="none" opacity="0.9" />
         )}
         {/* Definição do posterior de coxa */}
         {active.has('posterior') && (
-          <g stroke={LINE_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
+          <g stroke={SEAM_SOFT} strokeWidth="1.2" fill="none" opacity="0.9">
             <path d="M 86,234 C 82,248 81,264 83,282" />
             <path d="M 97,232 C 95,248 95,264 97,284" />
           </g>
@@ -227,13 +179,9 @@ export function BackFigure({ active, width }: FigureProps) {
       </Mirror>
 
       {/* Trapézio (escudo das costas) */}
-      <path
-        data-muscle="trapezio"
-        d="M 100,48 C 90,50 81,56 76,64 C 72,71 71,78 74,84 C 77,89 81,90 85,88 C 88,102 90,118 91,132 L 109,132 C 110,118 112,102 115,88 C 119,90 123,89 126,84 C 129,78 128,71 124,64 C 119,56 110,50 100,48 Z"
-        fill={on('trapezio')}
-      />
+      <path data-muscle="trapezio" d="M 100,48 C 90,50 81,56 76,64 C 72,71 71,78 74,84 C 77,89 81,90 85,88 C 88,102 90,118 91,132 L 109,132 C 110,118 112,102 115,88 C 119,90 123,89 126,84 C 129,78 128,71 124,64 C 119,56 110,50 100,48 Z" {...muscleProps('trapezio', active)} />
       {active.has('trapezio') && (
-        <g stroke={LINE} strokeWidth="1.3" opacity="0.55">
+        <g stroke={SEAM} strokeWidth="1.3" opacity="0.6">
           <path d="M 80,64 C 88,70 112,70 120,64" />
           <path d="M 84,86 C 92,92 108,92 116,86" />
           <path d="M 87,108 C 94,112 106,112 113,108" />
@@ -241,13 +189,9 @@ export function BackFigure({ active, width }: FigureProps) {
       )}
 
       {/* Lombar (coluna central) */}
-      <path
-        data-muscle="lombar"
-        d="M 94,140 L 106,140 L 106,190 C 103,193 97,193 94,190 Z"
-        fill={on('lombar')}
-      />
+      <path data-muscle="lombar" d="M 94,140 L 106,140 L 106,190 C 103,193 97,193 94,190 Z" {...muscleProps('lombar', active)} />
       {active.has('lombar') && (
-        <g stroke={LINE_SOFT} strokeWidth="1.2" opacity="0.9">
+        <g stroke={SEAM_SOFT} strokeWidth="1.2" opacity="0.9">
           <path d="M 94,152 L 106,152" />
           <path d="M 94,164 L 106,164" />
           <path d="M 94,176 L 106,176" />
