@@ -19,12 +19,10 @@
  *  · o card sai como PNG em alta resolução (prévia === PNG).
  */
 
-import { ACCENT } from '../glassStyles';
 import { fmtBig, fmtInt } from '../formatShareStats';
 import type { ShareTemplateProps } from '../types';
 import type { MuscleId } from '../muscleMap';
 import { ShareCardFrame } from './shared';
-import { Barbell } from './CardShell';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -167,40 +165,26 @@ function StatsColumn({
   );
 }
 
-/** Cabeçalho: a logo da marca (squircle amarelo com haltere) no topo. */
-function BrandHeader({ logoUrl, size }: { logoUrl: string | null; size: number }) {
+/** Wordmark "REPFIT" no topo — mesmo estilo da marca da referência (FITFOLIO):
+ * fonte geométrica em negrito, caixa alta, espaçada. A fonte Montserrat está
+ * embutida no app (src/assets/fonts) e entra no PNG exportado. */
+function BrandWordmark({ size }: { size: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-      {logoUrl ? (
-        <img
-          src={logoUrl}
-          alt=""
-          draggable={false}
-          style={{
-            width: size,
-            height: size,
-            objectFit: 'contain',
-            borderRadius: size * 0.28,
-            background: ACCENT,
-            boxShadow: '0 6px 30px rgba(245,197,24,0.28)',
-          }}
-        />
-      ) : (
-        <span
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size * 0.28,
-            background: ACCENT,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 6px 30px rgba(245,197,24,0.28)',
-          }}
-        >
-          <Barbell size={size * 0.58} />
-        </span>
-      )}
+    <div
+      style={{
+        fontFamily: "'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontWeight: 800,
+        fontSize: size,
+        lineHeight: 1,
+        color: '#fff',
+        // Espaçamento largo como o logo da referência (FITFOLIO).
+        letterSpacing: '0.3em',
+        textAlign: 'center',
+        textShadow: '0 6px 30px rgba(0,0,0,0.35)',
+        pointerEvents: 'none',
+      }}
+    >
+      REPFIT
     </div>
   );
 }
@@ -212,7 +196,7 @@ function BrandHeader({ logoUrl, size }: { logoUrl: string | null; size: number }
  * direita, coluna central para os dados); músculos em amarelo do app.
  */
 export function MuscleMapTemplate(props: ShareTemplateProps) {
-  const { data, format, custom, logoUrl, photo } = props;
+  const { data, format, custom, photo } = props;
   const active = new Set<MuscleId>(data.muscles ?? []);
 
   // Escala a partir da referência (652px de largura → largura do card, 1080).
@@ -225,7 +209,8 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
   const numSize = Math.round(31 * scale);
   const labelSize = Math.round(13 * scale);
   const statGap = Math.round(46 * scale);
-  const logoSize = tall ? 96 : 74;
+  // Wordmark "REPFIT" (estilo FITFOLIO): cap height ~24px na referência 652px.
+  const wordmarkSize = Math.round(26 * scale);
 
   const hasVolume = custom.showVolume && data.totals.volumeKg != null && data.totals.volumeKg > 0;
   const stats = [
@@ -238,24 +223,12 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
   return (
     <ShareCardFrame
       {...props}
-      // Fundo: preto puro (referência) — com foto, ela entra escurecida.
-      darken={
-        photo
-          ? { background: 'linear-gradient(180deg, rgba(0,0,0,0.62), rgba(0,0,0,0.74))' }
-          : { background: 'linear-gradient(180deg, #000, #000)' }
-      }
-      watermark={false}
+      // Sem foto: preto puro como a referência. Com foto: transparente como os
+      // outros templates — só o overlay do slider escurece (nenhuma camada extra).
+      darken={photo ? undefined : { background: 'linear-gradient(180deg, #000, #000)' }}
       footer={null}
     >
-      {/* Camadas de fundo: preto (ou véu sobre a foto) + brilho radial sutil */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: photo ? 'rgba(0,0,0,0.32)' : '#000',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* Brilho radial sutil ao centro (por cima do fundo ou da foto) */}
       <div
         style={{
           position: 'absolute',
@@ -278,8 +251,8 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
           padding: `${tall ? 96 : 72}px 0 0`,
         }}
       >
-        {/* Logo da marca no topo (elemento separado e editável) */}
-        <BrandHeader logoUrl={logoUrl} size={logoSize} />
+        {/* Wordmark "REPFIT" (estilo FITFOLIO) no topo */}
+        <BrandWordmark size={wordmarkSize} />
 
         {/* Personagens da referência + coluna central de dados */}
         <div style={{ position: 'relative', flex: 1, width: '100%', minHeight: 0 }}>

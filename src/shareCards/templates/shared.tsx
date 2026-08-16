@@ -115,7 +115,6 @@ export function ShareCardFrame({
   children,
   darken,
   footer,
-  watermark = true,
 }: {
   format: ShareFormat;
   photo: SharePhoto | null;
@@ -126,8 +125,6 @@ export function ShareCardFrame({
   darken?: CSSProperties;
   /** Rodapé personalizado (ex.: marca centralizada). Padrão: canto inferior direito. */
   footer?: ReactNode;
-  /** Marca d'água central (logo 5%) atrás do conteúdo. Desligue para cards limpos. */
-  watermark?: boolean;
 }) {
   return (
     <div
@@ -154,34 +151,9 @@ export function ShareCardFrame({
         />
       )}
       {darken && <div style={{ position: 'absolute', inset: 0, ...darken, pointerEvents: 'none' }} />}
-      {watermark && <BrandWatermark logoUrl={logoUrl} format={format} />}
       {children}
       {footer === undefined && <BrandFooterAbs logoUrl={logoUrl} format={format} />}
       {footer !== undefined && footer !== null && footer}
-    </div>
-  );
-}
-
-/**
- * Marca d'água: a logo da marca em transparência baixa, centralizada atrás
- * do conteúdo — aparece em todos os templates (só se a logo estiver
- * carregada; a prévia é idêntica ao PNG exportado).
- */
-export function BrandWatermark({ logoUrl, format }: { logoUrl: string | null; format: ShareFormat }) {
-  if (!logoUrl) return null;
-  const size = Math.min(format.width, format.height) * 0.5;
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        pointerEvents: 'none',
-      }}
-    >
-      <img src={logoUrl} alt="" draggable={false} style={{ width: size, height: size, objectFit: 'contain', opacity: 0.05 }} />
     </div>
   );
 }

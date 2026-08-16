@@ -29,6 +29,7 @@ import { ShareCardCanvas } from './ShareCardCanvas';
 import { PhotoLayer } from './templates/shared';
 import { clampNum, maxPan, pickPhotoFile, processPhotoFile, workoutPhotoToSharePhoto } from './photo';
 import { resolveBrandLogo } from './brandLogo';
+import { ensureBrandFont } from './brandFont';
 import { DEFAULT_CUSTOMIZATION, getFormat, SHARE_FORMATS, SHARE_TEMPLATES } from './types';
 import type {
   ShareCardData,
@@ -103,6 +104,7 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
   // Carrega os dados reais do treino (IndexedDB) + a logo da marca ao abrir.
   useEffect(() => {
     if (!open) return;
+    ensureBrandFont(); // fonte do wordmark REPFIT (estilo FITFOLIO)
     let alive = true;
     setLoading(true);
     setError(null);
