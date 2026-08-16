@@ -31,26 +31,53 @@ const BASE = import.meta.env.BASE_URL;
 /** Assets transparentes recortados da referência (corpo + camadas de músculo). */
 const ASSETS = {
   frontBody: `${BASE}share/muscle-front-body.png`,
-  frontQuads: `${BASE}share/muscle-front-quads.png`,
-  frontCalves: `${BASE}share/muscle-front-calves.png`,
   backBody: `${BASE}share/muscle-back-body.png`,
-  backGlutes: `${BASE}share/muscle-back-glutes.png`,
-  backCalves: `${BASE}share/muscle-back-calves.png`,
+  front: {
+    peito: `${BASE}share/muscle-front-peito.png`,
+    ombros: `${BASE}share/muscle-front-ombros.png`,
+    biceps: `${BASE}share/muscle-front-biceps.png`,
+    trapezio: `${BASE}share/muscle-front-trapezio.png`,
+    abs: `${BASE}share/muscle-front-abs.png`,
+    obliquos: `${BASE}share/muscle-front-obliquos.png`,
+    quadriceps: `${BASE}share/muscle-front-quads.png`,
+    tibialis: `${BASE}share/muscle-front-calves.png`,
+  },
+  back: {
+    trapezio: `${BASE}share/muscle-back-trapezio.png`,
+    ombros: `${BASE}share/muscle-back-ombros.png`,
+    triceps: `${BASE}share/muscle-back-triceps.png`,
+    lats: `${BASE}share/muscle-back-lats.png`,
+    lombar: `${BASE}share/muscle-back-lombar.png`,
+    gluteos: `${BASE}share/muscle-back-glutes.png`,
+    posterior: `${BASE}share/muscle-back-glutes.png`,
+    panturrilha: `${BASE}share/muscle-back-calves.png`,
+  },
 } as const;
 
 /** Proporção largura/altura dos assets recortados (frente e costas). */
 const FRONT_RATIO = 138 / 401;
 const BACK_RATIO = 141 / 401;
 
-/** Músculo → camada de destaque em cada vista (a referência destaca as pernas). */
+/** Músculo → camada de destaque em cada vista (todos os grupos desenhados). */
 const FRONT_LAYERS: [MuscleId, string][] = [
-  ['quadriceps', ASSETS.frontQuads],
-  ['tibialis', ASSETS.frontCalves],
+  ['peito', ASSETS.front.peito],
+  ['ombros', ASSETS.front.ombros],
+  ['biceps', ASSETS.front.biceps],
+  ['trapezio', ASSETS.front.trapezio],
+  ['abs', ASSETS.front.abs],
+  ['obliquos', ASSETS.front.obliquos],
+  ['quadriceps', ASSETS.front.quadriceps],
+  ['tibialis', ASSETS.front.tibialis],
 ];
 const BACK_LAYERS: [MuscleId, string][] = [
-  ['gluteos', ASSETS.backGlutes],
-  ['posterior', ASSETS.backGlutes],
-  ['panturrilha', ASSETS.backCalves],
+  ['trapezio', ASSETS.back.trapezio],
+  ['ombros', ASSETS.back.ombros],
+  ['triceps', ASSETS.back.triceps],
+  ['lats', ASSETS.back.lats],
+  ['lombar', ASSETS.back.lombar],
+  ['gluteos', ASSETS.back.gluteos],
+  ['posterior', ASSETS.back.posterior],
+  ['panturrilha', ASSETS.back.panturrilha],
 ];
 
 /** Camadas de destaque ativas para um conjunto de músculos (sem duplicatas). */

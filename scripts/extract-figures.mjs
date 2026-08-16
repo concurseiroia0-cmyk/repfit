@@ -36,10 +36,16 @@ const BANDS = {
 };
 
 // Recolorir vermelho → amarelo do app (#F5C518), preservando a sombra (luminância).
+// IMPORTANTE: clamp em 255 — sem ele, valores > 255 fazem wrap no Buffer do
+// PNG.js (261 → 5) e geram pixels VERDES no meio do amarelo.
 function redToYellow(r, g, b) {
   const l = lum(r, g, b);
   const f = Math.min(1.12, Math.max(0.32, l / 95));
-  return [Math.round(245 * f), Math.round(197 * f), Math.round(24 * f)];
+  return [
+    Math.min(255, Math.round(245 * f)),
+    Math.min(255, Math.round(197 * f)),
+    Math.min(255, Math.round(24 * f)),
+  ];
 }
 
 function alphaFor(r, g, b) {
