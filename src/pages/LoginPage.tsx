@@ -11,6 +11,23 @@ import { Logo } from '../components/Logo';
 // Se não estiver definido, o botão "Entrar com Google" funciona normalmente.
 const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
 
+/**
+ * Detecta navegador EMBUTIDO (webview do WhatsApp/Instagram/Facebook etc.).
+ * Nesses ambientes o Google costuma bloquear/limitar o login OAuth — a
+ * orientação é abrir o link no Chrome/Safari, onde o seletor de contas
+ * aparece com 1 toque.
+ */
+function detectInAppBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || navigator.vendor || '';
+  const social = /FBAN|FBAV|Instagram|Line|KakaoTalk|MicroMessenger|DingTalk|Snapchat/i.test(ua);
+  const androidWebview = /(; wv\b|wv=)/i.test(ua);
+  const iosWebview =
+    typeof (window as unknown as { webkit?: unknown }).webkit !== 'undefined' &&
+    !/Safari/i.test(ua);
+  return social || androidWebview || iosWebview;
+}
+
 function GoogleG({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
@@ -39,6 +56,7 @@ export function LoginPage() {
   const { user, loading, configured, signIn, signOut } = useSupabaseAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inAppBrowser] = useState(detectInAppBrowser);
   const oneTapAttempted = useRef(false);
 
   // Login concluído (One Tap/redirect) → vai para o app. A sessão fica SALVA
@@ -118,6 +136,17 @@ export function LoginPage() {
             qualquer dispositivo.
           </p>
 
+          {inAppBrowser && (
+            <div className="mb-4 mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4 text-left text-sm text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300">
+              <p className="font-bold">Você está em um navegador embutido</p>
+              <p className="mt-1 text-xs leading-relaxed">
+                Apps como WhatsApp e Instagram podem bloquear o login do Google. Toque nos{' '}
+                <b>⋮</b> (ou <b>compartilhar</b>) e escolha <b>Abrir no Chrome</b> — aí o Google
+                mostra o seletor de contas e você entra com 1 toque.
+              </p>
+            </div>
+          )}
+
           <div className="mt-6 flex flex-col gap-2">
             {!configured ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
@@ -179,6 +208,11 @@ export function LoginPage() {
                 {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
                 <p className="text-xs text-slate-400">
                   Sem conta? O Google cria o seu perfil automaticamente no primeiro acesso.
+                </p>
+                <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+                  No celular, o Google só mostra o seletor de contas quando há uma conta Google
+                  salva no navegador. Se pedir e-mail/senha, é o próprio Google exigindo — entre
+                  com uma conta que já está salva no celular e o próximo acesso volta a ser 1 toque.
                 </p>
               </>
             )}

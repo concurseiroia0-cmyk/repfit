@@ -115,6 +115,7 @@ export function ShareCardFrame({
   children,
   darken,
   footer,
+  watermark = true,
 }: {
   format: ShareFormat;
   photo: SharePhoto | null;
@@ -125,6 +126,8 @@ export function ShareCardFrame({
   darken?: CSSProperties;
   /** Rodapé personalizado (ex.: marca centralizada). Padrão: canto inferior direito. */
   footer?: ReactNode;
+  /** Marca d'água central (logo 5%) atrás do conteúdo. Desligue para cards limpos. */
+  watermark?: boolean;
 }) {
   return (
     <div
@@ -151,9 +154,10 @@ export function ShareCardFrame({
         />
       )}
       {darken && <div style={{ position: 'absolute', inset: 0, ...darken, pointerEvents: 'none' }} />}
-      <BrandWatermark logoUrl={logoUrl} format={format} />
+      {watermark && <BrandWatermark logoUrl={logoUrl} format={format} />}
       {children}
-      {footer ?? <BrandFooterAbs logoUrl={logoUrl} format={format} />}
+      {footer === undefined && <BrandFooterAbs logoUrl={logoUrl} format={format} />}
+      {footer !== undefined && footer !== null && footer}
     </div>
   );
 }

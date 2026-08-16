@@ -11,10 +11,9 @@
 
 import { ACCENT, SUB, TEXT, TABULAR } from '../glassStyles';
 import { fmtBig, fmtInt, safe } from '../formatShareStats';
-import type { ShareCardData, ShareFormat, ShareTemplateProps } from '../types';
+import type { ShareTemplateProps } from '../types';
 import { MUSCLE_LABELS, type MuscleId } from '../muscleMap';
 import { AvatarCircle, ModePill, RecordStrip, ShareCardFrame } from './shared';
-import { Barbell } from './CardShell';
 import { FrontFigure, BackFigure, MuscleStats } from './MuscleFigure';
 
 /** Legenda compacta dos grupos trabalhados (ex.: "Peito · Ombros · Tríceps"). */
@@ -64,7 +63,7 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
   const compact = format.height <= 1200;
 
   const active = new Set<MuscleId>(data.muscles ?? []);
-  const figureW = compact ? Math.round(format.width * 0.16) : Math.round(format.width * 0.17);
+  const figureW = compact ? Math.round(format.width * 0.18) : Math.round(format.width * 0.19);
   const statsGap = compact ? 12 : 18;
 
   // Stats: exercícios, volume (ou duração), recordes.
@@ -82,6 +81,9 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
     <ShareCardFrame
       {...props}
       darken={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.04) 46%, rgba(0,0,0,0.3) 100%)' }}
+      // Card limpo: sem marca d'água nem rodapé da marca (só as figuras e stats).
+      watermark={false}
+      footer={null}
     >
       <div
         style={{
@@ -129,7 +131,7 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
           {safe(data.workoutName)}
         </h1>
 
-        {/* Figuras + stats no meio */}
+        {/* Figuras + stats no meio (com brilho sutil atrás) */}
         <div
           style={{
             flex: 1,
@@ -139,10 +141,24 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
             gap: statsGap,
             width: '100%',
             minHeight: 0,
+            position: 'relative',
           }}
         >
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: figureW * 3.4,
+              height: figureW * 3.4,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(245,197,24,0.12), rgba(245,197,24,0) 65%)',
+              pointerEvents: 'none',
+            }}
+          />
           <FrontFigure active={active} width={figureW} />
-          <MuscleStats stats={stats} accent={ACCENT} style={{ flexShrink: 0, gap: compact ? 18 : 30 }} />
+          <MuscleStats stats={stats} accent={ACCENT} style={{ flexShrink: 0, gap: compact ? 18 : 30, position: 'relative' }} />
           <BackFigure active={active} width={figureW} />
         </div>
 
@@ -185,40 +201,7 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
           </div>
         )}
 
-        {/* Marca discreta no rodapé */}
-        <BrandSubtle logoUrl={logoUrl} format={format} />
       </div>
     </ShareCardFrame>
-  );
-}
-
-/** Marca pequena e discreta no rodapé (visível, mas sem competir com os dados). */
-function BrandSubtle({ logoUrl, format }: { logoUrl: string | null; format: ShareFormat }) {
-  const bottom = format.height >= 1700 ? 34 : format.height <= 1200 ? 20 : 26;
-  const size = format.height >= 1700 ? 30 : 24;
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        opacity: 0.55,
-        pointerEvents: 'none',
-      }}
-    >
-      {logoUrl ? (
-        <img src={logoUrl} alt="" style={{ height: size, width: size, objectFit: 'contain', borderRadius: 6, display: 'block' }} />
-      ) : (
-        <Barbell size={size * 0.9} />
-      )}
-      <span style={{ fontSize: size * 0.8, fontWeight: 700, color: '#fff', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-        RepFit
-      </span>
-    </div>
   );
 }

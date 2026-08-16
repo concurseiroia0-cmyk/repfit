@@ -190,8 +190,9 @@ describe('templates renderizados (smoke test)', () => {
     }
   });
 
-  it('com logo carregada: a marca d\'água (logo embutida) aparece em todos os templates', () => {
+  it('com logo carregada: a marca d\'água (logo embutida) aparece nos templates (exceto Mapa muscular)', () => {
     const LOGO_URL = 'data:image/png;base64,AAAA'; // só um marcador
+    const WITHOUT_LOGO: ShareTemplateId[] = ['muscleMap']; // card limpo, sem marca
     for (const tpl of ALL_TEMPLATES) {
       const html = renderToStaticMarkup(
         <ShareCardCanvas
@@ -205,8 +206,14 @@ describe('templates renderizados (smoke test)', () => {
           logoUrl={LOGO_URL}
         />
       );
-      // O dataURL da logo só existe no card por causa da marca d'água.
-      expect(html, `template ${tpl} deve ter a marca d'água`).toContain(LOGO_URL);
+      if (WITHOUT_LOGO.includes(tpl)) {
+        // O Mapa muscular é um card LIMPO: nenhuma marca d'água nem rodapé.
+        expect(html, `template ${tpl} não pode ter a marca d'água`).not.toContain(LOGO_URL);
+        expect(html, `template ${tpl} não pode ter o rodapé da marca`).not.toContain('RepFit');
+      } else {
+        // O dataURL da logo só existe no card por causa da marca d'água.
+        expect(html, `template ${tpl} deve ter a marca d'água`).toContain(LOGO_URL);
+      }
     }
   });
 
