@@ -221,41 +221,44 @@ export function ExerciseCard({ exercise, index, total, unit, previous, catalog, 
               const up = prevSet?.weight != null && curKg != null && curKg > prevSet.weight;
               const down = prevSet?.weight != null && curKg != null && curKg < prevSet.weight;
               return (
-                <div key={set.id} className="flex items-center gap-1.5">
-                  <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-400 dark:text-slate-500">{si + 1}ª</span>
+                <div key={set.id} className="flex items-start gap-1.5">
+                  <span className="mt-3.5 w-5 shrink-0 text-center text-xs font-bold text-slate-400 dark:text-slate-500">{si + 1}ª</span>
+                  {/* Peso: só o número no meio, nome "peso kg/lb" em rótulo abaixo — como na referência */}
                   <StepperInput
                     value={set.weight}
                     onChange={(v) => updateSet(set.id, { weight: v })}
                     step={weightStep}
-                    suffix={unit}
+                    label={unit === 'lb' ? 'peso lb' : 'peso kg'}
                     ariaLabel={`Carga da série ${si + 1}`}
-                    className="w-[38%]"
+                    className="flex-1"
                     // decimal → teclado numérico com vírgula/ponto no Chrome Mobile.
                     inputMode="decimal"
                   />
-                  <span className="shrink-0 text-slate-400">×</span>
+                  <span className="mt-3.5 shrink-0 text-slate-400">×</span>
+                  {/* Repetições: número + rótulo "repetições" abaixo */}
                   <StepperInput
                     value={set.reps}
                     onChange={(v) => updateSet(set.id, { reps: v })}
                     step={1}
-                    suffix="reps"
+                    label="repetições"
                     ariaLabel={`Repetições da série ${si + 1}`}
-                    className="w-[38%]"
+                    className="flex-1"
                     inputMode="numeric"
                   />
-                  {up && <ChevronUp className="h-4 w-4 shrink-0 text-emerald-500" aria-label="Carga subiu" />}
-                  {down && <ChevronDown className="h-4 w-4 shrink-0 text-rose-500" aria-label="Carga caiu" />}
-                  {!up && !down && <span className="w-4 shrink-0" />}
-                  {exercise.sets.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeSet(set.id)}
-                      aria-label={`Remover série ${si + 1}`}
-                      className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+                  <div className="mt-3.5 flex shrink-0 items-center gap-0.5">
+                    {up && <ChevronUp className="h-4 w-4 text-emerald-500" aria-label="Carga subiu" />}
+                    {down && <ChevronDown className="h-4 w-4 text-rose-500" aria-label="Carga caiu" />}
+                    {exercise.sets.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeSet(set.id)}
+                        aria-label={`Remover série ${si + 1}`}
+                        className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

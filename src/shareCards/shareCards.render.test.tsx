@@ -95,9 +95,20 @@ describe('templates renderizados (smoke test)', () => {
   it('renderiza os 5 templates com o conteúdo do treino', () => {
     for (const tpl of ALL_TEMPLATES) {
       const html = render(tpl, 0.25);
-      expect(html, `template ${tpl} deve renderizar`).toContain('Peito Forte');
-      expect(html, `template ${tpl} deve ter a data`).toContain('12 AGO 2026');
-      expect(html, `template ${tpl} deve ter o selo de modalidade`).toContain('Academia');
+      if (tpl === 'muscleMap') {
+        // Réplica da referência FITFOLIO: stats centrais + personagens da
+        // imagem (sem nome/data/modalidade — o card segue o modelo anexado).
+        expect(html, 'muscleMap deve ter os 4 stats').toContain('Exercícios');
+        expect(html, 'muscleMap deve ter o volume').toContain('Vol.');
+        expect(html, 'muscleMap deve ter recordes').toContain('Recordes');
+        expect(html, 'muscleMap deve ter a duração').toContain('Duração');
+        expect(html, 'muscleMap usa o personagem frontal da referência').toContain('muscle-front-body.png');
+        expect(html, 'muscleMap usa o personagem traseiro da referência').toContain('muscle-back-body.png');
+      } else {
+        expect(html, `template ${tpl} deve renderizar`).toContain('Peito Forte');
+        expect(html, `template ${tpl} deve ter a data`).toContain('12 AGO 2026');
+        expect(html, `template ${tpl} deve ter o selo de modalidade`).toContain('Academia');
+      }
     }
   });
 
@@ -138,7 +149,12 @@ describe('templates renderizados (smoke test)', () => {
             logoUrl={null}
           />
         );
-        expect(html, `${tpl}@${fmt.id}`).toContain('Peito Forte');
+        if (tpl === 'muscleMap') {
+          expect(html, `muscleMap@${fmt.id}`).toContain('muscle-front-body.png');
+          expect(html, `muscleMap@${fmt.id}`).toContain('muscle-back-body.png');
+        } else {
+          expect(html, `${tpl}@${fmt.id}`).toContain('Peito Forte');
+        }
         expect(html, `${tpl}@${fmt.id}`).toContain(`width:${fmt.width}px;height:${fmt.height}px`);
       }
     }
@@ -149,6 +165,11 @@ describe('templates renderizados (smoke test)', () => {
       const html = render(tpl, 0.25, PHOTO);
       expect(html, `template ${tpl} deve embutir a foto`).toContain(PHOTO.url);
     }
+    // Mapa muscular: a foto entra escurecida, mas os personagens da referência
+    // continuam no card (camadas por cima da foto).
+    const muscleHtml = render('muscleMap', 0.25, PHOTO);
+    expect(muscleHtml).toContain(PHOTO.url);
+    expect(muscleHtml).toContain('muscle-front-body.png');
   });
 
   it('o overlay do slider CHEGA ao card (nenhum template pode sobrescrever com valor fixo)', () => {

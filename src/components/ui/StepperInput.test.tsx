@@ -37,4 +37,17 @@ describe('StepperInput (número sempre visível)', () => {
     );
     expect(html).toContain('>0<');
   });
+
+  it('com label: o nome do campo fica ABAIXO do controle (referência do fluxo de treino)', () => {
+    const html = renderToStaticMarkup(
+      <StepperInput value="5" onChange={() => undefined} label="peso kg" ariaLabel="Carga da série 1" />
+    );
+    // O controle (botões −/+) vem antes do rótulo no markup.
+    expect(html).toContain('Diminuir');
+    expect(html).toContain('Aumentar');
+    expect(html).toContain('5');
+    expect(html).toContain('peso kg');
+    // O rótulo fica DEPOIS do box (fora dos botões) e não dentro do número.
+    expect(html.indexOf('Aumentar')).toBeLessThan(html.indexOf('peso kg'));
+  });
 });
