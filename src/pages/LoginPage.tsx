@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Cloud, Loader2, ShieldCheck, WifiOff } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Cloud, KeyRound, Loader2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
 import { signInWithGoogleIdToken } from '../services/supabase/client';
 import { loadGoogleIdentity, renderOneTap } from '../services/supabase/oneTap';
+import { redeemDeviceLinkCode } from '../services/supabase/deviceLink';
 import { Button } from '../components/ui/Button';
 import { Logo } from '../components/Logo';
 
@@ -57,6 +58,10 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inAppBrowser] = useState(detectInAppBrowser);
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkCode, setLinkCode] = useState('');
+  const [linking, setLinking] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const oneTapAttempted = useRef(false);
 
   // Login concluído (One Tap/redirect) → vai para o app. A sessão fica SALVA
@@ -111,6 +116,26 @@ export function LoginPage() {
     const { error: err } = await signOut();
     setBusy(false);
     if (err) setError(err.message);
+  }
+
+  async function handleLinkConnect() {
+    const digits = linkCode.replace(/\D/g, '');
+    if (digits.length !== 6) {
+      setLinkError('Digite o código de 6 dígitos.');
+      return;
+    }
+    setLinking(true);
+    setLinkError(null);
+    const result = await redeemDeviceLinkCode(digits);
+    setLinking(false);
+    if (!result.ok || !result.url) {
+      // Mensagem genérica — não revela se o código existe ou não.
+      setLinkError('Código inválido ou expirado.');
+      return;
+    }
+    // Abre o magic link do Supabase: cria a sessão REAL da mesma conta e o
+    // GoTrue redireciona de volta para /auth/callback já autenticado.
+    window.location.assign(result.url);
   }
 
   return (
@@ -214,6 +239,58 @@ export function LoginPage() {
                   salva no navegador. Se pedir e-mail/senha, é o próprio Google exigindo — entre
                   com uma conta que já está salva no celular e o próximo acesso volta a ser 1 toque.
                 </p>
+
+                {/* Vinculação de dispositivo: PWA → mesma conta do navegador */}
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-white/10 dark:bg-slate-800/30">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLinkMode((v) => !v);
+                      setLinkError(null);
+                    }}
+                    className="flex w-full items-center justify-center gap-1.5 text-sm font-bold text-slate-600 transition-colors hover:text-amber-600 dark:text-slate-300 dark:hover:text-amber-400"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Já tenho uma conta — conectar com código
+                  </button>
+
+                  {linkMode && (
+                    <div className="mt-3 space-y-3 border-t border-slate-200 pt-3 dark:border-white/10">
+                      <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        Abra o app no <b>navegador onde sua conta já está conectada</b>,
+                        toque em <b>Conectar aplicativo</b> (Configurações) e digite aqui o código
+                        de 6 dígitos gerado.
+                      </p>
+                      <input
+                        value={linkCode}
+                        onChange={(e) => setLinkCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        onKeyDown={(e) => e.key === 'Enter' && !linking && void handleLinkConnect()}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        placeholder="——— ———"
+                        aria-label="Código de conexão de 6 dígitos"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-center font-mono text-2xl font-extrabold tracking-[0.35em] text-slate-900 outline-none transition-colors placeholder:text-slate-300 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 dark:border-white/15 dark:bg-black/30 dark:text-white dark:placeholder:text-slate-600"
+                      />
+                      <Button
+                        className="w-full"
+                        onClick={() => void handleLinkConnect()}
+                        disabled={linking}
+                      >
+                        {linking ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" /> Conectando…
+                          </>
+                        ) : (
+                          'Conectar minha conta'
+                        )}
+                      </Button>
+                      {linkError && (
+                        <p className="text-center text-xs font-medium text-rose-500">{linkError}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>

@@ -58,6 +58,7 @@ import { Card, CardHeader } from '../components/ui/Card';
 import { ConfirmDialog, Modal } from '../components/ui/Modal';
 import { Field, Input, Select } from '../components/ui/Field';
 import { AvatarPicker } from '../components/ui/AvatarPicker';
+import { DeviceLinkCard } from '../components/DeviceLink/DeviceLinkCard';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { EmptyState } from '../components/ui/Feedback';
 
@@ -822,6 +823,9 @@ export function SettingsPage() {
                 <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                   A sincronização também acontece automaticamente ao entrar e quando a internet volta.
                 </p>
+                <div className="border-t border-slate-100 pt-3 dark:border-white/10">
+                  <DeviceLinkCard />
+                </div>
               </>
             ) : (
               <div className="flex flex-col gap-3">

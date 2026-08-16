@@ -24,3 +24,8 @@ verify_jwt = true
 # o JWT é validado manualmente no código — o e-mail vem do token, nunca do corpo.
 [functions.reprocess-pending]
 verify_jwt = false
+
+# Vinculação de dispositivo (browser ↔ PWA): o 'redeem' é PÚBLICO (o PWA ainda
+# não tem sessão). O 'generate' valida o JWT manualmente no código.
+[functions.device-link]
+verify_jwt = false

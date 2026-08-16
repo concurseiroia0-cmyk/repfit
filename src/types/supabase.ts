@@ -600,6 +600,49 @@ export type Database = {
           },
         ];
       };
+      // ------------------------------------------------------ device_link_codes
+      device_link_codes: {
+        Row: {
+          id: string;
+          user_id: string;
+          /** SHA-256 do código + pepper — nunca o código em texto puro */
+          code_hash: string;
+          expires_at: string;
+          used_at: string | null;
+          revoked_at: string | null;
+          attempts: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          code_hash: string;
+          expires_at: string;
+          used_at?: string | null;
+          revoked_at?: string | null;
+          attempts?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          code_hash?: string;
+          expires_at?: string;
+          used_at?: string | null;
+          revoked_at?: string | null;
+          attempts?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'device_link_codes_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -610,6 +653,13 @@ export type Database = {
       handle_new_user: {
         Args: Record<PropertyKey, never>;
         Returns: 'trigger';
+      };
+      claim_device_link_code: {
+        Args: {
+          p_code_hash: string;
+          p_max_attempts: number;
+        };
+        Returns: string;
       };
     };
     Enums: Record<string, never>;
