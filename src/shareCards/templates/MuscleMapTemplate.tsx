@@ -169,26 +169,24 @@ function StatsColumn({
   );
 }
 
-/** Wordmark "REPFIT" no topo — mesmo estilo da marca da referência (FITFOLIO):
- * fonte geométrica em negrito, caixa alta, espaçada. A fonte Montserrat está
- * embutida no app (src/assets/fonts) e entra no PNG exportado. */
+/** Wordmark "RepFit" no topo — fonte Hammersmith One (pedida pelo usuário),
+ * embutida no app (public/fonts) e incluída no PNG exportado. */
 function BrandWordmark({ size }: { size: number }) {
   return (
     <div
       style={{
-        fontFamily: "'Montserrat', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        fontWeight: 800,
+        fontFamily: "'Hammersmith One', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontWeight: 400,
         fontSize: size,
         lineHeight: 1,
         color: '#fff',
-        // Espaçamento largo como o logo da referência (FITFOLIO).
-        letterSpacing: '0.3em',
+        letterSpacing: '0.22em',
         textAlign: 'center',
         textShadow: '0 6px 30px rgba(0,0,0,0.35)',
         pointerEvents: 'none',
       }}
     >
-      REPFIT
+      RepFit
     </div>
   );
 }
@@ -213,7 +211,7 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
   const numSize = Math.round(31 * scale);
   const labelSize = Math.round(13 * scale);
   const statGap = Math.round(46 * scale);
-  // Wordmark "REPFIT" (estilo FITFOLIO): cap height ~24px na referência 652px.
+  // Wordmark "RepFit": cap height ~24px na referência 652px.
   const wordmarkSize = Math.round(26 * scale);
 
   const hasVolume = custom.showVolume && data.totals.volumeKg != null && data.totals.volumeKg > 0;
@@ -255,7 +253,7 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
           padding: `${tall ? 96 : 72}px 0 0`,
         }}
       >
-        {/* Wordmark "REPFIT" (estilo FITFOLIO) no topo */}
+        {/* Wordmark "RepFit" (Hammersmith One) no topo */}
         <BrandWordmark size={wordmarkSize} />
 
         {/* Personagens da referência + coluna central de dados */}

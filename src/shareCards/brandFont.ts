@@ -1,5 +1,5 @@
 /**
- * Fonte do wordmark "REPFIT" dos cards (estilo do logo FITFOLIO da referência).
+ * Fonte do wordmark "RepFit" do card de mapa muscular (Hammersmith One).
  *
  * A fonte fica em public/fonts (copiada para a raiz do build) e o @font-face é
  * injetado via JS com import.meta.env.BASE_URL — resolve certo em dev (/) e em
@@ -16,6 +16,6 @@ export function ensureBrandFont(): void {
   injected = true;
   const style = document.createElement('style');
   style.setAttribute('data-repfit-font', '');
-  style.textContent = `@font-face{font-family:'Montserrat';font-style:normal;font-weight:700 800;font-display:swap;src:url(${BASE}fonts/montserrat-bold.woff2) format('woff2')}`;
+  style.textContent = `@font-face{font-family:'Hammersmith One';font-style:normal;font-weight:400;font-display:swap;src:url(${BASE}fonts/hammersmith-one.woff2) format('woff2')}`;
   document.head.appendChild(style);
 }

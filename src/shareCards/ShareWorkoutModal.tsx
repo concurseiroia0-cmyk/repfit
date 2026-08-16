@@ -104,7 +104,7 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
   // Carrega os dados reais do treino (IndexedDB) + a logo da marca ao abrir.
   useEffect(() => {
     if (!open) return;
-    ensureBrandFont(); // fonte do wordmark REPFIT (estilo FITFOLIO)
+    ensureBrandFont(); // fonte do wordmark RepFit (Hammersmith One)
     let alive = true;
     setLoading(true);
     setError(null);

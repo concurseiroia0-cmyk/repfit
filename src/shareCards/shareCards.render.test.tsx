@@ -211,10 +211,10 @@ describe('templates renderizados (smoke test)', () => {
     }
   });
 
-  it('com logo carregada: a marca aparece em todos os templates (Mapa muscular usa o wordmark REPFIT no cabeçalho)', () => {
+  it('com logo carregada: a marca aparece em todos os templates (Mapa muscular usa o wordmark RepFit no cabeçalho)', () => {
     const LOGO_URL = 'data:image/png;base64,AAAA'; // só um marcador
     for (const tpl of ALL_TEMPLATES) {
-      if (tpl === 'muscleMap') continue; // usa o wordmark "REPFIT" (estilo FITFOLIO)
+      if (tpl === 'muscleMap') continue; // usa o wordmark "RepFit" (Hammersmith One)
       const html = renderToStaticMarkup(
         <ShareCardCanvas
           data={makeData()}
@@ -229,8 +229,8 @@ describe('templates renderizados (smoke test)', () => {
       );
       expect(html, `template ${tpl} deve ter a logo da marca`).toContain(LOGO_URL);
     }
-    // O Mapa muscular usa o wordmark "REPFIT" no topo (como o FITFOLIO na
-    // referência) e mantém o card limpo, sem rodapé com o texto "RepFit".
+    // O Mapa muscular usa o wordmark "RepFit" no topo (Hammersmith One) e
+    // mantém o card limpo, sem a logo da marca no cabeçalho.
     const muscleHtml = renderToStaticMarkup(
       <ShareCardCanvas
         data={makeData()}
@@ -243,8 +243,8 @@ describe('templates renderizados (smoke test)', () => {
         logoUrl={LOGO_URL}
       />
     );
-    expect(muscleHtml, 'wordmark REPFIT no cabeçalho').toContain('REPFIT');
-    expect(muscleHtml).not.toContain('RepFit');
+    expect(muscleHtml, 'wordmark RepFit no cabeçalho').toContain('RepFit');
+    expect(muscleHtml).not.toContain(LOGO_URL);
   });
 
   it('sem logo: nenhuma marca d\'água no card', () => {
