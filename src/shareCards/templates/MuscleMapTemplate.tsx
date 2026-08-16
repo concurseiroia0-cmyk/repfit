@@ -1,19 +1,25 @@
 /**
- * TEMPLATE — MAPA MUSCULAR (card anatômico)
+ * TEMPLATE — MAPA MUSCULAR (card anatômico premium)
  *
- * Figuras frontal e traseira em SVG, com os músculos trabalhados no treino
- * pintados na cor primária (ACCENT) e o restante em cinza escuro. As
- * estatísticas ficam ENTRE as duas figuras (estilo app de musculação).
+ * Estilo infográfico profissional (referência FITFOLIO):
+ *   · fundo preto puro com um brilho radial dourado sutil ao centro;
+ *   · logo da marca no topo (cabeçalho, não marca d'água);
+ *   · duas figuras anatômicas (frente à esquerda, costas à direita) com os
+ *     músculos trabalhados pintados na cor primária (ACCENT — amarelo do app);
+ *   · coluna central com 4 estatísticas empilhadas (EXERCÍCIOS · VOLUME KG ·
+ *     RECORDE · DURAÇÃO) — número branco grande + rótulo amarelo espaçado;
+ *   · paleta mínima: preto, branco, cinza e amarelo do projeto.
  *
  * Dados: `data.muscles` (calculados por selectWorkoutShareData via
  * muscleMap.ts). Preview === PNG: SVG puro + camadas, sem backdrop-filter.
  */
 
-import { ACCENT, SUB, TEXT, TABULAR } from '../glassStyles';
+import { ACCENT, SUB, TABULAR } from '../glassStyles';
 import { fmtBig, fmtInt, safe } from '../formatShareStats';
 import type { ShareTemplateProps } from '../types';
 import { MUSCLE_LABELS, type MuscleId } from '../muscleMap';
 import { AvatarCircle, ModePill, RecordStrip, ShareCardFrame } from './shared';
+import { Barbell } from './CardShell';
 import { FrontFigure, BackFigure, MuscleStats } from './MuscleFigure';
 
 /** Legenda compacta dos grupos trabalhados (ex.: "Peito · Ombros · Tríceps"). */
@@ -53,9 +59,58 @@ export function MuscleLegend({ muscles }: { muscles: MuscleId[] }) {
 }
 
 /**
- * Card do mapa muscular. Layout vertical responsivo:
- * topo (nome + data + modalidade) → figuras com stats no meio →
- * legenda + recorde → avatar/nome → marca discreta.
+ * Cabeçalho do card: a logo da marca (squircle amarelo com haltere) no topo,
+ * centralizada — como no infográfico de referência. Sem texto, sem marca
+ * d'água: é o logotipo do app compondo o design.
+ */
+function BrandHeader({ logoUrl, size }: { logoUrl: string | null; size: number }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+      }}
+    >
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt=""
+          draggable={false}
+          style={{
+            width: size,
+            height: size,
+            objectFit: 'contain',
+            borderRadius: size * 0.28,
+            background: ACCENT,
+            boxShadow: '0 6px 30px rgba(245,197,24,0.28)',
+          }}
+        />
+      ) : (
+        <span
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size * 0.28,
+            background: ACCENT,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 6px 30px rgba(245,197,24,0.28)',
+          }}
+        >
+          <Barbell size={size * 0.58} />
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Card do mapa muscular — layout vertical simétrico:
+ * logo → data/modalidade → nome → [figura | 4 stats | figura] →
+ * legenda → recorde → avatar/nome → esforço.
  */
 export function MuscleMapTemplate(props: ShareTemplateProps) {
   const { data, format, custom, logoUrl } = props;
@@ -63,40 +118,61 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
   const compact = format.height <= 1200;
 
   const active = new Set<MuscleId>(data.muscles ?? []);
-  const figureW = compact ? Math.round(format.width * 0.18) : Math.round(format.width * 0.19);
-  const statsGap = compact ? 12 : 18;
+  const figureW = compact ? Math.round(format.width * 0.185) : Math.round(format.width * 0.2);
+  const statsGap = compact ? 16 : 24;
 
-  // Stats: exercícios, volume (ou duração), recordes.
+  const hasVolume = custom.showVolume && data.totals.volumeKg != null && data.totals.volumeKg > 0;
   const stats: { value: string; label: string }[] = [
     { value: fmtInt(data.totals.exercises), label: 'Exercícios' },
+    { value: hasVolume ? fmtBig(data.totals.volumeKg ?? 0) : '—', label: data.unit === 'lb' ? 'Volume lb' : 'Volume kg' },
+    { value: custom.showRecord && data.record ? '🏆' : '—', label: 'Recorde' },
+    { value: data.totals.durationMin != null ? fmtInt(data.totals.durationMin) : '—', label: 'Duração' },
   ];
-  if (custom.showVolume && data.totals.volumeKg != null && data.totals.volumeKg > 0) {
-    stats.push({ value: fmtBig(data.totals.volumeKg), label: data.unit === 'lb' ? 'Volume lb' : 'Volume kg' });
-  } else if (data.totals.durationMin != null) {
-    stats.push({ value: fmtInt(data.totals.durationMin), label: 'Duração' });
-  }
-  stats.push({ value: data.record ? '🏆' : '—', label: 'Recorde' });
 
   return (
     <ShareCardFrame
       {...props}
-      darken={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.04) 46%, rgba(0,0,0,0.3) 100%)' }}
-      // Card limpo: sem marca d'água nem rodapé da marca (só as figuras e stats).
+      // Fundo: preto puro (a foto do usuário não compete com o infográfico).
+      darken={{ background: 'linear-gradient(180deg, #000, #000)' }}
       watermark={false}
       footer={null}
     >
+      {/* Camadas de fundo: preto puro + brilho radial dourado ao centro */}
+      <div style={{ position: 'absolute', inset: 0, background: '#000', pointerEvents: 'none' }} />
       <div
         style={{
           position: 'absolute',
           inset: 0,
+          background: 'radial-gradient(58% 52% at 50% 55%, rgba(245,197,24,0.13), rgba(245,197,24,0) 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: `${tall ? 64 : compact ? 34 : 44}px ${compact ? 34 : 48}px 0`,
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: `${tall ? 56 : compact ? 28 : 38}px ${compact ? 30 : 44}px 0`,
         }}
       >
-        {/* Topo: modalidade + data */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {/* Logo da marca no topo */}
+        <BrandHeader logoUrl={logoUrl} size={compact ? 54 : 62} />
+
+        {/* Data + modalidade */}
+        <div
+          style={{
+            marginTop: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}
+        >
           {data.mode && <ModePill mode={data.mode} compact={compact} />}
           <span
             style={{
@@ -114,24 +190,24 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
         {/* Nome do treino */}
         <h1
           style={{
-            margin: '14px 0 0',
-            fontSize: tall ? 52 : compact ? 34 : 44,
+            margin: '10px 0 0',
+            fontSize: tall ? 44 : compact ? 28 : 38,
             fontWeight: 900,
             lineHeight: 1.08,
-            color: TEXT,
+            color: '#fff',
             textAlign: 'center',
             maxWidth: '82%',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            textShadow: '0 6px 40px rgba(0,0,0,0.55)',
+            textShadow: '0 6px 40px rgba(0,0,0,0.6)',
           }}
         >
           {safe(data.workoutName)}
         </h1>
 
-        {/* Figuras + stats no meio (com brilho sutil atrás) */}
+        {/* Figuras + coluna de estatísticas */}
         <div
           style={{
             flex: 1,
@@ -141,24 +217,10 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
             gap: statsGap,
             width: '100%',
             minHeight: 0,
-            position: 'relative',
           }}
         >
-          <div
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: figureW * 3.4,
-              height: figureW * 3.4,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(245,197,24,0.12), rgba(245,197,24,0) 65%)',
-              pointerEvents: 'none',
-            }}
-          />
           <FrontFigure active={active} width={figureW} />
-          <MuscleStats stats={stats} accent={ACCENT} style={{ flexShrink: 0, gap: compact ? 18 : 30, position: 'relative' }} />
+          <MuscleStats stats={stats} accent={ACCENT} style={{ flexShrink: 0, gap: compact ? 20 : 30 }} />
           <BackFigure active={active} width={figureW} />
         </div>
 
@@ -200,7 +262,6 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
             <span style={{ color: ACCENT, fontWeight: 900, ...TABULAR }}>{fmtInt(data.averageEffort)}/6</span>
           </div>
         )}
-
       </div>
     </ShareCardFrame>
   );

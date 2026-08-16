@@ -170,6 +170,8 @@ export function SettingsPage() {
         const parts = [`${lastSync.pushed} treino(s) enviados`, `${lastSync.pulled} baixados`];
         if ((lastSync.measurementsPushed ?? 0) > 0) parts.push(`${lastSync.measurementsPushed} medida(s) enviadas`);
         if ((lastSync.measurementsPulled ?? 0) > 0) parts.push(`${lastSync.measurementsPulled} medida(s) baixadas`);
+        if ((lastSync.catalogPushed ?? 0) > 0) parts.push(`${lastSync.catalogPushed} exercício(s) enviados`);
+        if ((lastSync.catalogPulled ?? 0) > 0) parts.push(`${lastSync.catalogPulled} exercício(s) baixados`);
         return `✓ Última sincronização ${when}: ${parts.join(', ')}.`;
       }
       if (lastSync?.status === 'error') {

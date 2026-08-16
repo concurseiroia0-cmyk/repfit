@@ -18,7 +18,15 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { db } from '../../db/db';
-import type { BodyMeasurement, Workout, WorkoutExercise, WorkoutFormState } from '../../types';
+import type {
+  BodyMeasurement,
+  ExerciseCatalogItem,
+  Settings,
+  Workout,
+  WorkoutExercise,
+  WorkoutFormState,
+} from '../../types';
+import { getSettings, saveSettings } from '../settingsService';
 import type {
   BodyMeasurementRow,
   Database,
@@ -317,6 +325,127 @@ export async function pullMeasurements(sb: Sb, userId: string): Promise<number> 
 }
 
 // ---------------------------------------------------------------------------
+// Catálogo de exercícios personalizados + perfil (nome/foto)
+// ---------------------------------------------------------------------------
+
+/** Item criado pelo usuário = sem `mode` (o seed sempre define a modalidade). */
+export function isCustomCatalogItem(item: ExerciseCatalogItem): boolean {
+  return item.mode == null;
+}
+
+/** Payload de perfil para a nuvem (só campos preenchidos localmente). */
+export function toCloudProfileUpdate(settings: Settings): { full_name?: string; avatar_url?: string } {
+  const update: { full_name?: string; avatar_url?: string } = {};
+  const name = (settings.username ?? '').trim();
+  if (name) update.full_name = name;
+  if (settings.avatarDataUrl) update.avatar_url = settings.avatarDataUrl;
+  return update;
+}
+
+/** O que preencher no LOCAL a partir da nuvem (só quando o local está vazio). */
+export function profilePullPatch(
+  settings: Settings,
+  profile: { full_name: string | null; avatar_url: string | null }
+): Partial<Settings> {
+  const patch: Partial<Settings> = {};
+  if (!(settings.username ?? '').trim() && profile.full_name) patch.username = profile.full_name;
+  if (!settings.avatarDataUrl && profile.avatar_url && profile.avatar_url.startsWith('data:image/')) {
+    patch.avatarDataUrl = profile.avatar_url;
+  }
+  return patch;
+}
+
+/**
+ * Sincroniza o catálogo personalizado: empurra os exercícios CRIADOS pelo
+ * usuário (sem `mode`) e baixa os exercícios personalizados da nuvem que
+ * ainda não existem localmente (dedup por nome, sem duplicar o seed padrão).
+ */
+export async function syncCatalog(sb: Sb, userId: string): Promise<{ pushed: number; pulled: number }> {
+  const local = await db.exerciseCatalog.toArray();
+  const mapped = await db.syncMap.where('entity').equals('exercise').toArray();
+  const mappedKeys = new Set(mapped.map((m) => m.key));
+
+  // Push: exercícios criados pelo usuário ainda não enviados.
+  const toPush = local.filter(
+    (c) => isCustomCatalogItem(c) && (c.id == null || !mappedKeys.has(`exercise:${c.id}`))
+  );
+  let pushed = 0;
+  for (const item of toPush) {
+    // Não duplica: usa o exercício existente com o mesmo nome (global ou do usuário).
+    const { data: found } = await sb
+      .from('exercises')
+      .select('id')
+      .ilike('name', item.name)
+      .limit(1)
+      .maybeSingle();
+    let cloudId: string;
+    if (found) {
+      cloudId = found.id;
+    } else {
+      const { data: created, error } = await sb
+        .from('exercises')
+        .insert({ name: item.name, muscle_group: item.muscleGroup || 'Outros', created_by: userId })
+        .select('id')
+        .single();
+      if (error || !created) {
+        throw new Error(`Falha ao enviar exercício "${item.name}": ${error?.message ?? 'sem resposta'}`);
+      }
+      cloudId = created.id;
+    }
+    if (item.id != null) {
+      await db.syncMap.put({ key: `exercise:${item.id}`, cloudId, entity: 'exercise' });
+    }
+    pushed++;
+  }
+
+  // Pull: exercícios personalizados do usuário que ainda não existem localmente.
+  const { data: cloud, error } = await sb.from('exercises').select('*').eq('created_by', userId);
+  if (error) throw new Error(`Falha ao baixar exercícios: ${error.message}`);
+  const localNames = new Set(local.map((c) => c.name.trim().toLowerCase()));
+  let pulled = 0;
+  for (const ex of cloud ?? []) {
+    if (localNames.has(ex.name.trim().toLowerCase())) continue;
+    const localId = await db.exerciseCatalog.add({
+      name: ex.name,
+      muscleGroup: ex.muscle_group ?? 'Outros',
+      favorite: false,
+      lastWeight: null,
+      lastReps: null,
+      timesUsed: 0,
+    });
+    await db.syncMap.put({ key: `exercise:${localId}`, cloudId: ex.id, entity: 'exercise' });
+    localNames.add(ex.name.trim().toLowerCase());
+    pulled++;
+  }
+  return { pushed, pulled };
+}
+
+/**
+ * Sincroniza o perfil (nome e foto): envia o nome/avatar local para a nuvem e
+ * preenche o local apenas se estiver vazio (o que foi definido em um aparelho
+ * aparece no outro; nunca sobrescreve o que o usuário já preencheu aqui).
+ */
+export async function syncProfile(sb: Sb, userId: string): Promise<void> {
+  const settings = await getSettings();
+  const update = toCloudProfileUpdate(settings);
+  if (Object.keys(update).length > 0) {
+    const { error } = await sb.from('profiles').upsert({ id: userId, ...update }, { onConflict: 'id' });
+    if (error) throw new Error(`Falha ao salvar perfil: ${error.message}`);
+  }
+
+  const { data: profile, error: pError } = await sb
+    .from('profiles')
+    .select('full_name, avatar_url')
+    .eq('id', userId)
+    .maybeSingle();
+  if (pError) throw new Error(`Falha ao ler perfil: ${pError.message}`);
+  if (profile) {
+    const patch = profilePullPatch(settings, profile);
+    if (Object.keys(patch).length > 0) await saveSettings(patch);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Pull: nuvem → local
 // ---------------------------------------------------------------------------
 
@@ -431,6 +560,8 @@ export type SyncResult =
       pulled: number;
       measurementsPushed: number;
       measurementsPulled: number;
+      catalogPushed: number;
+      catalogPulled: number;
     }
   | { status: 'skipped'; reason: 'not-configured' | 'signed-out' }
   | { status: 'error'; message: string };
@@ -473,7 +604,19 @@ export async function syncAll(): Promise<SyncResult> {
     }
     const measurementsPulled = await pullMeasurements(sb, user.id);
 
-    return { status: 'ok', pushed, pulled, measurementsPushed, measurementsPulled };
+    // Catálogo personalizado + perfil (nome/foto) — dados seguem a conta.
+    const catalog = await syncCatalog(sb, user.id);
+    await syncProfile(sb, user.id);
+
+    return {
+      status: 'ok',
+      pushed,
+      pulled,
+      measurementsPushed,
+      measurementsPulled,
+      catalogPushed: catalog.pushed,
+      catalogPulled: catalog.pulled,
+    };
   } catch (err) {
     return {
       status: 'error',

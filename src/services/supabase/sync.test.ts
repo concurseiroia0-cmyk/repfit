@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { BodyMeasurement, Workout } from '../../types';
-import { draftToWorkout, measurementFromCloud, toCloudMeasurement, toCloudWorkout } from './sync';
+import {
+  draftToWorkout,
+  isCustomCatalogItem,
+  measurementFromCloud,
+  profilePullPatch,
+  toCloudMeasurement,
+  toCloudProfileUpdate,
+  toCloudWorkout,
+} from './sync';
 
 function localWorkout(overrides: Partial<Workout> = {}): Workout {
   return {
@@ -167,6 +175,54 @@ describe('measurementFromCloud (nuvem → medição local)', () => {
       thigh: 55,
       calf: 37,
     });
+  });
+});
+
+describe('isCustomCatalogItem (identifica exercício criado pelo usuário)', () => {
+  it('sem mode = criado pelo usuário (vai para a nuvem)', () => {
+    expect(isCustomCatalogItem({ name: 'Meu Exercício', muscleGroup: 'Outros', favorite: false, lastWeight: null, lastReps: null, timesUsed: 0 })).toBe(true);
+  });
+
+  it('com mode = item do seed padrão (não é sincronizado como personalizado)', () => {
+    expect(isCustomCatalogItem({ name: 'Supino Reto', muscleGroup: 'Peito', mode: 'academia', favorite: false, lastWeight: null, lastReps: null, timesUsed: 0 })).toBe(false);
+  });
+});
+
+describe('toCloudProfileUpdate (perfil local → nuvem)', () => {
+  it('envia só campos preenchidos localmente', () => {
+    const update = toCloudProfileUpdate({ username: 'Julio', avatarDataUrl: 'data:image/jpeg;base64,AAA' } as never);
+    expect(update).toEqual({ full_name: 'Julio', avatar_url: 'data:image/jpeg;base64,AAA' });
+  });
+
+  it('não envia nome vazio nem avatar ausente', () => {
+    const update = toCloudProfileUpdate({ username: '   ', avatarDataUrl: undefined } as never);
+    expect(update).toEqual({});
+  });
+});
+
+describe('profilePullPatch (nuvem → local, só preenche o que está vazio)', () => {
+  it('preenche nome/avatar quando o local está vazio', () => {
+    const patch = profilePullPatch({ username: '', avatarDataUrl: undefined } as never, {
+      full_name: 'Julio',
+      avatar_url: 'data:image/jpeg;base64,BBB',
+    });
+    expect(patch).toEqual({ username: 'Julio', avatarDataUrl: 'data:image/jpeg;base64,BBB' });
+  });
+
+  it('não sobrescreve o que já existe localmente', () => {
+    const patch = profilePullPatch({ username: 'Local', avatarDataUrl: 'data:image/jpeg;base64,CCC' } as never, {
+      full_name: 'Nuvem',
+      avatar_url: 'data:image/jpeg;base64,DDD',
+    });
+    expect(patch).toEqual({});
+  });
+
+  it('ignora avatar que não seja dataURL local (ex.: foto do Google)', () => {
+    const patch = profilePullPatch({ username: '', avatarDataUrl: undefined } as never, {
+      full_name: null,
+      avatar_url: 'https://lh3.googleusercontent.com/foto',
+    });
+    expect(patch).toEqual({});
   });
 });
 

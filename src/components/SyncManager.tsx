@@ -40,13 +40,17 @@ export function SyncManager() {
           result.pushed +
           result.pulled +
           result.measurementsPushed +
-          result.measurementsPulled;
+          result.measurementsPulled +
+          result.catalogPushed +
+          result.catalogPulled;
         if (total === 0) return;
         const parts: string[] = [];
         if (result.pushed > 0) parts.push(`${result.pushed} treino(s) enviados`);
         if (result.pulled > 0) parts.push(`${result.pulled} treino(s) baixados`);
         if (result.measurementsPushed > 0) parts.push(`${result.measurementsPushed} medida(s) enviadas`);
         if (result.measurementsPulled > 0) parts.push(`${result.measurementsPulled} medida(s) baixadas`);
+        if (result.catalogPushed > 0) parts.push(`${result.catalogPushed} exercício(s) enviados`);
+        if (result.catalogPulled > 0) parts.push(`${result.catalogPulled} exercício(s) baixados`);
         push(`Sincronizado: ${parts.join(', ')}.`, 'success');
       });
     };
