@@ -3,7 +3,7 @@
  *
  * Reconstruído a partir da IMAGEM DE REFERÊNCIA (não da figura antiga):
  *  · fundo preto puro (com a foto do usuário escurecida quando houver);
- *  · logo da marca no topo — elemento separado e editável (logoUrl);
+ *  · wordmark "RepFit" no topo da coluna central de dados (Hammersmith One);
  *  · personagens FRONTAL e TRASEIRO recortados da própria referência como
  *    assets PNG transparentes (public/share/muscle-*.png), mantendo o mesmo
  *    desenho, anatomia, pose, contornos e cores — posicionados nas mesmas
@@ -119,22 +119,27 @@ function Figure({
 }
 
 /**
- * Coluna central de dados (réplica da referência): número branco GRANDE em
- * cima, rótulo branco menor abaixo, blocos espaçados uniformemente.
+ * Coluna central de dados (réplica da referência): o wordmark "RepFit" no
+ * topo da coluna, seguido dos blocos número branco GRANDE + rótulo abaixo,
+ * espaçados uniformemente — como na posição pedida (foto: RepFit como
+ * primeiro item da coluna, entre as duas figuras).
  */
 function StatsColumn({
   stats,
+  header,
   numSize,
   labelSize,
   gap,
 }: {
   stats: { value: string; label: string }[];
+  header?: React.ReactNode;
   numSize: number;
   labelSize: number;
   gap: number;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap }}>
+      {header}
       {stats.map((s) => (
         <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div
@@ -253,10 +258,8 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
           padding: `${tall ? 96 : 72}px 0 0`,
         }}
       >
-        {/* Wordmark "RepFit" (Hammersmith One) no topo */}
-        <BrandWordmark size={wordmarkSize} />
-
-        {/* Personagens da referência + coluna central de dados */}
+      {/* Personagens da referência + coluna central de dados (o wordmark
+          "RepFit" fica NO TOPO DA COLUNA central, entre as duas figuras) */}
         <div style={{ position: 'relative', flex: 1, width: '100%', minHeight: 0 }}>
           <div
             style={{
@@ -269,7 +272,13 @@ export function MuscleMapTemplate(props: ShareTemplateProps) {
             <Figure body={ASSETS.frontBody} layers={activeLayers(FRONT_LAYERS, active)} width={figW} ratio={FRONT_RATIO} />
           </div>
           <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-            <StatsColumn stats={stats} numSize={numSize} labelSize={labelSize} gap={statGap} />
+            <StatsColumn
+              stats={stats}
+              header={<BrandWordmark size={wordmarkSize} />}
+              numSize={numSize}
+              labelSize={labelSize}
+              gap={statGap}
+            />
           </div>
           <div
             style={{
