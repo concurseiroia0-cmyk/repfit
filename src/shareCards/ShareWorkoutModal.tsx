@@ -94,6 +94,7 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
   const [exporting, setExporting] = useState(false);
   const [done, setDone] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [templateLoading, setTemplateLoading] = useState(false);
 
   const format = getFormat(formatId);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -495,7 +496,13 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
                       key={t.id}
                       type="button"
                       title={t.hint}
-                      onClick={() => setTemplate(t.id)}
+                      onClick={() => {
+                        if (template === t.id) return;
+                        setTemplateLoading(true);
+                        setTemplate(t.id);
+                        // Mostra a animação por ~800ms para dar tempo do canvas renderizar.
+                        window.setTimeout(() => setTemplateLoading(false), 800);
+                      }}
                       className={cn(
                         'flex shrink-0 flex-col items-center gap-1.5 rounded-2xl border-2 p-1.5 transition-all duration-150',
                         active
@@ -590,7 +597,7 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
             {/* Prévia */}
             <div
               ref={previewRef}
-              className="flex h-[420px] items-center justify-center overflow-hidden rounded-2xl bg-slate-200/60 p-3 dark:bg-black/50"
+              className="relative flex h-[420px] items-center justify-center overflow-hidden rounded-2xl bg-slate-200/60 p-3 dark:bg-black/50"
             >
               {loading ? (
                 <div className="flex flex-col items-center gap-2 text-sm text-slate-400">
@@ -600,17 +607,25 @@ export function ShareWorkoutModal({ open, onClose, workoutId, workoutDate }: Sha
               ) : error ? (
                 <div className="text-center text-sm text-rose-500">{error}</div>
               ) : data ? (
-                <ShareCardCanvas
-                  ref={canvasRef}
-                  data={data}
-                  template={template}
-                  format={format}
-                  scale={previewScale}
-                  photo={photo}
-                  custom={custom}
-                  overlay={overlay}
-                  logoUrl={logoUrl}
-                />
+                <>
+                  <ShareCardCanvas
+                    ref={canvasRef}
+                    data={data}
+                    template={template}
+                    format={format}
+                    scale={previewScale}
+                    photo={photo}
+                    custom={custom}
+                    overlay={overlay}
+                    logoUrl={logoUrl}
+                  />
+                  {templateLoading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-black/50 backdrop-blur-sm">
+                      <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
+                      <span className="text-sm font-semibold text-white">Processando template…</span>
+                    </div>
+                  )}
+                </>
               ) : null}
             </div>
 

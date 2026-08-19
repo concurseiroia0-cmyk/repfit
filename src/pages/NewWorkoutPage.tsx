@@ -169,7 +169,8 @@ export function NewWorkoutPage() {
     push('Rascunho descartado.');
   }
 
-  async function handleSubmit() {
+  /** Salva o treino. Se keepOpen=true, reseta o formulário para um novo treino. */
+  async function handleSubmit(keepOpen = false) {
     if (!form.name.trim()) {
       push('Dê um nome ao treino.', 'error');
       return;
@@ -226,7 +227,20 @@ export function NewWorkoutPage() {
       }
       // Não abre o compartilhamento automaticamente — quem quiser compartilha
       // pelo botão "Compartilhar treino" na tela de detalhe.
-      navigate(`/treino/${saved.id}`);
+      if (keepOpen) {
+        // Salvar e novo treino: mantém na página com formulário vazio.
+        push(isEdit ? 'Treino atualizado!' : 'Treino salvo! Pode começar o próximo.', 'success');
+        setForm(emptyWorkoutFormState(dataParam || todayString()));
+        setPhotoId(null);
+        setPrevious(null);
+        setDraftRestored(false);
+        clearDraft();
+        await clearDraftPhotos();
+        // Rolagem automática para o topo do formulário.
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        navigate(`/treino/${saved.id}`);
+      }
     } catch {
       push('Erro ao salvar o treino. Tente novamente.', 'error');
     } finally {
@@ -263,7 +277,8 @@ export function NewWorkoutPage() {
         previous={previous}
         submitLabel={isEdit ? 'Salvar alterações' : 'Salvar treino'}
         saving={saving}
-        onSubmit={handleSubmit}
+        onSubmit={() => handleSubmit(false)}
+        onSubmitAndNew={isEdit ? undefined : () => handleSubmit(true)}
         draftBanner={
           draftRestored && !isEdit && !repetirId
             ? 'Um rascunho seu foi restaurado automaticamente.'

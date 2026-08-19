@@ -35,6 +35,24 @@ export function Modal({
     };
   }, [open, onClose]);
 
+  // Safety net: se o modal fechar via unmount (ex.: navegação), garante que
+  // o body volta ao normal. O useEffect acima já faz isso, mas este listener
+  // cobre o caso raro de o React desmontar sem rodar o cleanup a tempo.
+  useEffect(() => {
+    if (!open) return;
+    const onBeforeUnload = () => {
+      document.body.style.overflow = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      // Garantia extra: se o body ainda estiver com overflow hidden, restaura.
+      if (document.body.style.overflow === 'hidden') {
+        document.body.style.overflow = '';
+      }
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const sizes = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl' };

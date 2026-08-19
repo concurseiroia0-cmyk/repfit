@@ -53,6 +53,8 @@ interface WorkoutFormProps {
   submitLabel: string;
   saving: boolean;
   onSubmit: () => void;
+  /** Salvar e já abrir formulário para o próximo treino. */
+  onSubmitAndNew?: () => void;
   /** Mensagem exibida quando o form foi iniciado de um rascunho. */
   draftBanner?: string | null;
   onDiscardDraft?: () => void;
@@ -67,6 +69,7 @@ export function WorkoutForm({
   submitLabel,
   saving,
   onSubmit,
+  onSubmitAndNew,
   draftBanner,
   onDiscardDraft,
 }: WorkoutFormProps) {
@@ -304,9 +307,16 @@ export function WorkoutForm({
         </div>
       </Card>
 
-      <Button full size="lg" onClick={onSubmit} disabled={saving}>
-        {saving ? 'Salvando…' : submitLabel}
-      </Button>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button full size="lg" onClick={() => onSubmit()} disabled={saving} className="flex-1">
+          {saving ? 'Salvando…' : submitLabel}
+        </Button>
+        {onSubmitAndNew && (
+          <Button full size="lg" variant="secondary" onClick={() => onSubmitAndNew()} disabled={saving} className="flex-1">
+            {saving ? 'Salvando…' : 'Salvar e novo treino'}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
