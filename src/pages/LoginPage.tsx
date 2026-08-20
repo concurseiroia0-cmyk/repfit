@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Cloud, KeyRound, Loader2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
 import { signInWithGoogleIdToken } from '../services/supabase/client';
@@ -55,6 +55,8 @@ function GoogleG({ className }: { className?: string }) {
 export function LoginPage() {
   const navigate = useNavigate();
   const { user, loading, configured, signIn, signOut } = useSupabaseAuth();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inAppBrowser] = useState(detectInAppBrowser);
@@ -67,7 +69,7 @@ export function LoginPage() {
   // Login concluído (One Tap/redirect) → vai para o app. A sessão fica SALVA
   // no dispositivo (localStorage + auto-refresh): na próxima visita não pede de novo.
   useEffect(() => {
-    if (user && !loading) navigate('/', { replace: true });
+    if (user && !loading) navigate(redirectTo, { replace: true });
   }, [user, loading, navigate]);
 
   // One Tap (desktop): com contas Google salvas, mostra o seletor rápido.

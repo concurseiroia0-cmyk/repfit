@@ -29,3 +29,7 @@ verify_jwt = false
 # não tem sessão). O 'generate' valida o JWT manualmente no código.
 [functions.device-link]
 verify_jwt = false
+
+# Ativacao de trial de 15 dias (exige JWT — so usuarios autenticados podem ativar).
+[functions.activate-trial]
+verify_jwt = true

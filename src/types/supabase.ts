@@ -26,6 +26,9 @@ export type Database = {
           email: string | null;
           avatar_url: string | null;
           created_at: string;
+          trial_activated_at: string | null;
+          trial_expires_at: string | null;
+          trial_status: string;
           updated_at: string;
         };
         Insert: {
@@ -35,6 +38,9 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          trial_activated_at?: string | null;
+          trial_expires_at?: string | null;
+          trial_status?: string;
         };
         Update: {
           id?: string;
@@ -43,6 +49,9 @@ export type Database = {
           avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
+          trial_activated_at?: string | null;
+          trial_expires_at?: string | null;
+          trial_status?: string;
         };
         Relationships: [
           {

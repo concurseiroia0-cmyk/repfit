@@ -1,16 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Lock, RefreshCw } from 'lucide-react';
 import type { SubscriptionRow } from '../types/supabase';
 import { getSubscriptionAccessInfo } from '../utils/subscription';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
+import { getSupabase } from '../services/supabase/client';
 import { Button } from '../components/ui/Button';
 import { Logo } from '../components/Logo';
 
 export function PaywallPage({ subscription }: { subscription: SubscriptionRow | null }) {
   const navigate = useNavigate();
   const auth = useSupabaseAuth();
+  const [trialExpired, setTrialExpired] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!auth.user) return;
+    const sb = getSupabase();
+    if (!sb) return;
+    void (async () => {
+      const { data } = await sb.from("profiles").select("trial_status").eq("id", auth.user!.id).maybeSingle();
+      if (data?.trial_status === "expired" || data?.trial_status === "active") setTrialExpired(true);
+    })();
+  }, [auth.user]);
 
   const info = getSubscriptionAccessInfo(subscription);
 
@@ -36,7 +48,7 @@ export function PaywallPage({ subscription }: { subscription: SubscriptionRow | 
           <Logo className="h-full w-full rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]" />
         </div>
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          <span className="text-amber-500 dark:text-amber-400">Assinatura</span> necessária
+          {trialExpired ? (<>Seu <span className="text-amber-500 dark:text-amber-400">periodo gratis</span> terminou</>) : (<><span className="text-amber-500 dark:text-amber-400">Assinatura</span> necessaria</>)}
         </h1>
 
         <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-left dark:border-white/10 dark:bg-[#161616]">
@@ -54,6 +66,11 @@ export function PaywallPage({ subscription }: { subscription: SubscriptionRow | 
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Sua conta ainda não possui um plano ativo. Assine um plano para sincronizar seus
                 treinos na nuvem.
+              </p>
+            )}
+            {trialExpired && (
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                Seu periodo gratis de 15 dias terminou. Escolha um plano para continuar usando o RepFit.
               </p>
             )}
           </div>

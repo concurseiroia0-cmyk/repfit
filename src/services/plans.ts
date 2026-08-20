@@ -29,9 +29,9 @@ export interface Plan {
 export const PLANS: Plan[] = [
   {
     id: 'mensal',
-    name: 'RepFit Mensal',
+    name: 'Mensal',
     tagline: 'Perfeito para começar',
-    price: 'R$ 49,90',
+    price: 'R$ 24,90',
     period: '/mês',
     features: [
       'Treinos ilimitados',
@@ -43,9 +43,9 @@ export const PLANS: Plan[] = [
   },
   {
     id: 'trimestral',
-    name: 'RepFit Trimestral',
+    name: 'Trimestral',
     tagline: 'Economize 13%',
-    price: 'R$ 129,90',
+    price: 'R$ 67,90',
     period: '/3 meses',
     monthlyEquivalent: 'R$ 43,30/mês',
     features: [
@@ -57,10 +57,10 @@ export const PLANS: Plan[] = [
   },
   {
     id: 'anual',
-    name: 'RepFit Pro',
+    name: 'Semestral',
     tagline: 'Melhor custo-benefício',
-    price: 'R$ 399,90',
-    period: '/ano',
+    price: 'R$ 119,90',
+    period: '/6 meses',
     monthlyEquivalent: 'R$ 33,32/mês',
     popular: true,
     features: [
@@ -81,5 +81,5 @@ export function checkoutUrlFor(planId: string): string | undefined {
   const specific = (import.meta.env[key] as string | undefined)?.trim();
   if (specific) return specific;
   const fallback = (import.meta.env.VITE_CHECKOUT_URL as string | undefined)?.trim();
-  return fallback || undefined;
+  return fallback || 'https://pay.kirvano.com/cae35583-ecaa-4b51-973c-0c2873f4e85a';
 }

@@ -16,8 +16,9 @@ import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { PlansPage } from './pages/PlansPage';
-import { SalesPage } from './landing';
+import { SalesPage, TrialLandingPage } from './landing';
 import { AdminPage } from './pages/AdminPage';
+import { TrialActivatedPage } from './pages/TrialActivatedPage';
 import { SyncManager } from './components/SyncManager';
 import { SubscriptionGate } from './components/SubscriptionGate';
 import { useSettings } from './services/settingsService';
@@ -64,6 +65,9 @@ export default function App() {
           <Route path="/planos" element={<PlansPage />} />
           {/* Página de vendas pública (divulgação/oferta) */}
           <Route path="/oferta" element={<SalesPage />} />
+          <Route path="/trial/gratis" element={<TrialLandingPage />} />
+          {/* Pagina de trial 15 dias gratis */}
+          <Route path="/trial" element={<TrialActivatedPage />} />
           <Route
             element={
               <SubscriptionGate>
