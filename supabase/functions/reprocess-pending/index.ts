@@ -20,8 +20,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { reprocessPendingEventsForUser } from '../_shared/processor.ts';
 
+const APP_ORIGIN = Deno.env.get('SUPABASE_URL')?.includes('ybhiyi')
+  ? 'https://concurseiroia0-cmyk.github.io'
+  : '*';
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': APP_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };

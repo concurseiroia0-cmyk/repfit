@@ -73,8 +73,16 @@ Deno.serve(async (req) => {
   } catch {
     return json({ ok: false, error: 'JSON inválido' }, 400);
   }
+  // Validação de tamanho: previne payloads excessivamente grandes.
+  const rawBody = JSON.stringify(body);
+  if (rawBody.length > 2048) {
+    return json({ ok: false, error: 'Payload excede 2 KB' }, 413);
+  }
 
   const action = String(body.action ?? '');
+  if (action.length > 30) {
+    return json({ ok: false, error: 'Ação inválida' }, 400);
+  }
 
   // Cliente com service_role — só existe DENTRO da edge function.
   const supabase = createClient(

@@ -22,6 +22,11 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return json({ ok: false, status: 'invalid', error: 'Método não permitido' }, 405);
   }
+  // Validação de tamanho: previne payloads excessivamente grandes.
+  const contentLength = Number(req.headers.get('content-length') ?? '0');
+  if (contentLength > 65536) {
+    return json({ ok: false, status: 'invalid', error: 'Payload excede 64 KB' }, 413);
+  }
 
   // 1) Validação de segurança (antes de qualquer processamento).
   const secret = extractSecretFromHeaders(req.headers);

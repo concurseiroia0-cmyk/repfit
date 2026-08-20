@@ -27,8 +27,11 @@ import {
 import { getOwnerEmails } from '../_shared/owners.ts';
 import type { Gateway } from '../_shared/types.ts';
 
+const APP_ORIGIN = Deno.env.get('SUPABASE_URL')?.includes('ybhiyi')
+  ? 'https://concurseiroia0-cmyk.github.io'
+  : '*';
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': APP_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -170,7 +173,15 @@ Deno.serve(async (req) => {
   } catch {
     return json({ ok: false, error: 'JSON inválido' }, 400);
   }
+  // Validação de tamanho: previne payloads excessivamente grandes.
+  const rawBody = JSON.stringify(body);
+  if (rawBody.length > 8192) {
+    return json({ ok: false, error: 'Payload excede 8 KB' }, 413);
+  }
   const action = String(body.action ?? '');
+  if (action.length > 50) {
+    return json({ ok: false, error: 'Ação inválida' }, 400);
+  }
   const adminEmail = (user.email ?? '').toLowerCase();
 
   try {
