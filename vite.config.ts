@@ -27,9 +27,11 @@ function writeBuildStamp() {
 }
 
 export default defineConfig(({ mode }) => ({
-  // Em produção (build e preview) o app é servido de https://<usuario>.github.io/repfit/
-  // (GitHub Pages). No dev mantém a raiz (/).
-  base: mode === 'production' ? '/repfit/' : '/',
+  // Em produção o base depende de onde o app está hospedado:
+  // • Domínio customizado (repfit.inosaas.com.br) → '/'
+  // • GitHub Pages sem domínio (concurseiroia0-cmyk.github.io/repfit/) → '/repfit/'
+  // Defina BASE_PATH=/repfit/ no workflow de deploy se não usar domínio customizado.
+  base: mode === 'production' ? (process.env.BASE_PATH || '/') : '/',
   plugins: [
     {
       name: 'repfit-build-stamp',
@@ -67,7 +69,7 @@ export default defineConfig(({ mode }) => ({
         lang: 'pt-BR',
         // Caminhos relativos: resolvem contra a URL do manifest (ex.: /repfit/manifest.webmanifest).
         start_url: './',
-        scope: './',
+        scope: (process.env.BASE_PATH || '/'),
         display: 'standalone',
         theme_color: '#0a0a0b',
         background_color: '#0a0a0b',
@@ -79,7 +81,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
-        navigateFallback: '/repfit/index.html',
+        navigateFallback: (process.env.BASE_PATH || '/') + 'index.html',
         cleanupOutdatedCaches: true,
         // Acelera a primeira navegação quando há internet.
         navigationPreload: true,
