@@ -69,7 +69,7 @@ export function PlansPage() {
             onClick={() => navigate('/oferta')}
             className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-amber-600 transition-colors hover:text-amber-500 dark:text-amber-400"
           >
-            🔥 Ver oferta promocional por R$ 27,90
+            🔥 Ver oferta promocional por R$ 24,90
           </button>
         </div>
 

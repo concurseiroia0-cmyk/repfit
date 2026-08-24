@@ -23,8 +23,8 @@ import {
 
 export const PRODUCT = 'RepFit';
 export const PRICE_ORIGINAL = 'R$ 39,90';
-export const PRICE_PROMO = 'R$ 27,90';
-export const SAVINGS = 'R$ 12,00';
+export const PRICE_PROMO = 'R$ 24,90';
+export const SAVINGS = 'R$ 15,00';
 export const WARRANTY = '7 dias';
 
 export interface Testimonial {
