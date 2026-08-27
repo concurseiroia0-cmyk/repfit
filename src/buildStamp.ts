@@ -1,1 +1,4 @@
-export const BUILD_STAMP="2026-08-27T20:25:58.324Z";
+// Gerado automaticamente pelo vite.config.ts — não edite.
+// Versão do build, exibida no modal de compartilhar para confirmar
+// que o app está com o código mais recente.
+export const APP_VERSION = "1.0.0+20260827-1739";
