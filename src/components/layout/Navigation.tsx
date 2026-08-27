@@ -38,7 +38,7 @@ function Brand() {
 export function Sidebar() {
   const pwa = usePwaInstall();
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-slate-200 bg-white px-4 py-6 dark:border-white/10 dark:bg-[#161616] lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-slate-200 bg-white px-4 py-6 dark:border-white/10 dark:bg-[#161616] sidebar-desktop-only">
       <div className="px-2">
         <Brand />
       </div>
@@ -147,7 +147,7 @@ function AnimatedBottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="safe-bottom fixed inset-x-3 bottom-3 z-40 lg:hidden"
+      className="safe-bottom fixed inset-x-3 bottom-3 z-40 nav-touch-only"
     >
       <div
         ref={containerRef}

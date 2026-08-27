@@ -43,6 +43,28 @@
   }
 }
 
+/* Sidebar: só em desktop de verdade (ponteiro fino + hover).
+   Não depende de viewport width — zoom não afeta. */
+.sidebar-desktop-only {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sidebar-desktop-only {
+    display: flex;
+  }
+}
+
+/* Bottom nav: só em touch (ponteiro grosseiro ou sem hover).
+   Não depende de viewport width — zoom não afeta. */
+.nav-touch-only {
+  display: none;
+}
+@media (hover: none), (pointer: coarse) {
+  .nav-touch-only {
+    display: flex;
+  }
+}
+
 /*
  * StepperInput (peso/repetições): o valor é texto puro numa <div> (nunca um
  * <input>), com cor explícita em cada tema — o Chrome Android não tem como
