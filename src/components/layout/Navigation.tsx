@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Calendar,
   History,
@@ -73,37 +74,133 @@ export function Sidebar() {
   );
 }
 
+/**
+ * BottomNav com interatividade iOS 26 — pill deslizante animado que segue
+ * a aba ativa com spring easing, squish no ícone e glow sutil.
+ */
 export function BottomNav() {
-  // Esconde a barra enquanto o teclado está aberto no celular: com o teclado
-  // aberto ela sobe para cima do conteúdo (interactive-widget=resizes-content)
-  // e cobre o que está sendo digitado.
   const keyboardOpen = useKeyboardOpen();
   if (keyboardOpen) return null;
+
+  return <AnimatedBottomNav />;
+}
+
+/* ── Componente animado (iOS 26 style) ──────────────────────────────── */
+
+interface PillStyle {
+  left: number;
+  width: number;
+  ready: boolean;
+}
+
+function AnimatedBottomNav() {
+  const location = useLocation();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
+  const [pill, setPill] = useState<PillStyle>({ left: 0, width: 0, ready: false });
+  const [squish, setSquish] = useState(false);
+
+  // Determina qual aba está ativa baseado na URL
+  const getActiveIndex = useCallback(() => {
+    const idx = NAV_ITEMS.findIndex((item) =>
+      item.end
+        ? location.pathname === item.to
+        : location.pathname.startsWith(item.to)
+    );
+    return idx >= 0 ? idx : 0;
+  }, [location.pathname]);
+
+  const activeIndex = getActiveIndex();
+  const activeItem = NAV_ITEMS[activeIndex];
+
+  // Mede posição da aba ativa e move o pill
+  const measure = useCallback(() => {
+    const el = tabRefs.current.get(activeItem?.to ?? '');
+    if (!el) return;
+
+    const { offsetLeft, offsetWidth } = el;
+    setPill((prev) => {
+      // Se mudou de aba, dispara squish
+      if (prev.ready && prev.left !== offsetLeft) {
+        setSquish(true);
+        setTimeout(() => setSquish(false), 300);
+      }
+      return { left: offsetLeft, width: offsetWidth, ready: true };
+    });
+  }, [activeItem]);
+
+  useEffect(() => {
+    measure();
+  }, [measure]);
+
+  // Re-medir no resize (orientação, zoom etc.)
+  useEffect(() => {
+    const onResize = () => measure();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [measure]);
+
+  // Re-medir quando as tabs terminam de renderizar (fonte carregada etc.)
+  useEffect(() => {
+    const timer = setTimeout(measure, 150);
+    return () => clearTimeout(timer);
+  }, [measure]);
 
   return (
     <nav
       aria-label="Navegação principal"
       className="safe-bottom fixed inset-x-3 bottom-3 z-40 lg:hidden"
     >
-      <div className="mx-auto flex max-w-lg items-stretch overflow-x-auto rounded-full border border-slate-200 bg-white/95 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur dark:border-white/10 dark:bg-[#161616]/95 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              cn(
-                'flex min-w-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-full px-2.5 py-2 text-[10px] font-semibold transition-all duration-150',
+      <div
+        ref={containerRef}
+        className="relative mx-auto flex max-w-lg items-stretch overflow-x-auto rounded-full border border-slate-200 bg-white/95 p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur dark:border-white/10 dark:bg-[#161616]/95 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {/* ── Pill deslizante (iOS 26) ── */}
+        <div
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute top-1 bottom-1 z-0 rounded-full',
+            'bg-amber-400 shadow-[0_2px_12px_rgba(245,197,24,0.35)]',
+            'transition-[left,width,transform] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+            pill.ready ? 'opacity-100' : 'opacity-0',
+            squish && 'scale-x-[1.15]'
+          )}
+          style={{
+            left: pill.left,
+            width: pill.width,
+          }}
+        />
+
+        {/* ── Itens da navegação ── */}
+        {NAV_ITEMS.map((item, i) => {
+          const isActive = i === activeIndex;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              ref={(el) => {
+                if (el) tabRefs.current.set(item.to, el);
+              }}
+              className={cn(
+                'relative z-10 flex min-w-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-full px-2.5 py-2 text-[10px] font-semibold',
+                'transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
                 isActive
-                  ? ACTIVE_PILL
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-200'
-              )
-            }
-          >
-            <item.icon className="h-5 w-5" />
-            <span className="leading-none">{item.label}</span>
-          </NavLink>
-        ))}
+                  ? 'text-black dark:text-white'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              )}
+            >
+              <item.icon
+                className={cn(
+                  'h-5 w-5 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                  isActive && squish && 'scale-110'
+                )}
+                strokeWidth={isActive ? 2.5 : 2}
+              />
+              <span className="leading-none">{item.label}</span>
+            </NavLink>
+          );
+        })}
       </div>
     </nav>
   );

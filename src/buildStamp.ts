@@ -1,1 +1,1 @@
-export const APP_VERSION = "1.0.0+20260820-1423";
+export const BUILD_STAMP="2026-08-27T20:25:58.324Z";
