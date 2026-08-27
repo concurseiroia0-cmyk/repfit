@@ -1,7 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Calendar,
   History,
   Home,
   PlusCircle,
@@ -19,7 +18,6 @@ export const NAV_ITEMS = [
   { to: '/', label: 'Início', icon: Home, end: true },
   { to: '/novo', label: 'Novo treino', icon: PlusCircle },
   { to: '/historico', label: 'Histórico', icon: History },
-  { to: '/calendario', label: 'Calendário', icon: Calendar },
   { to: '/medidas', label: 'Medidas', icon: Ruler },
   { to: '/evolucao', label: 'Evolução', icon: TrendingUp },
   { to: '/configuracoes', label: 'Configurações', icon: Settings },
