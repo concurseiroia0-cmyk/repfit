@@ -1,0 +1,11 @@
+# Permite rastreamento geral e específico do Google AdSense.
+User-agent: *
+Allow: /
+
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+Sitemap: https://repfit.inosaas.com.br/sitemap.xml

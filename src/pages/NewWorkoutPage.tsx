@@ -12,6 +12,7 @@ import { clearDraft, clearDraftPhotos, loadDraft, saveDraft } from '../services/
 import { relinkPhoto } from '../services/photoService';
 import { useSettings } from '../services/settingsService';
 import { getWorkout, saveWorkout, workoutFromTemplate } from '../services/workoutService';
+import { mostrarVinhetaAposTreino } from '../services/adsService';
 import type { RecordEntry } from '../services/recordsService';
 
 function kgToInput(kg: number, unit: Unit): string {
@@ -216,6 +217,8 @@ export function NewWorkoutPage() {
       };
       const { workout: saved, newRecords } = await saveWorkout(workout);
       await relinkPhoto(photoId, String(saved.id));
+      // Anúncio (vinheta) do AdSense após cada treino salvo — só em domínio verificado.
+      mostrarVinhetaAposTreino();
       if (!isEdit) {
         clearDraft();
         await clearDraftPhotos();
