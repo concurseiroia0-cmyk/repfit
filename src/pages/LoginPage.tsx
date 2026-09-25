@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, CheckCircle2, Cloud, KeyRound, Loader2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
 import { signInWithGoogleIdToken } from '../services/supabase/client';
@@ -53,6 +54,7 @@ function GoogleG({ className }: { className?: string }) {
 }
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, loading, configured, signIn, signOut } = useSupabaseAuth();
   const [searchParams] = useSearchParams();
@@ -149,35 +151,30 @@ export function LoginPage() {
             onClick={() => navigate('/')}
             className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o app
+            <ArrowLeft className="h-3.5 w-3.5" /> {t('Voltar para o app')}
           </button>
 
           <div className="repfit-logo-pop mx-auto h-20 w-20">
             <Logo className="h-full w-full rounded-3xl shadow-[0_0_40px_rgba(251,191,36,0.4)]" />
           </div>
           <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Entre no <span className="text-amber-500 dark:text-amber-400">RepFit</span>
+            {t('Entre no')} <span className="text-amber-500 dark:text-amber-400">RepFit</span>
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            Faça login com o Google para <b>sincronizar seus treinos na nuvem</b> e acessá-los de
-            qualquer dispositivo.
+            {t('Faça login com o Google para <b>sincronizar seus treinos na nuvem</b> e acessá-los de qualquer dispositivo.')}
           </p>
 
           {inAppBrowser && (
             <div className="mb-4 mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4 text-left text-sm text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300">
-              <p className="font-bold">Você está em um navegador embutido</p>
-              <p className="mt-1 text-xs leading-relaxed">
-                Apps como WhatsApp e Instagram podem bloquear o login do Google. Toque nos{' '}
-                <b>⋮</b> (ou <b>compartilhar</b>) e escolha <b>Abrir no Chrome</b> — aí o Google
-                mostra o seletor de contas e você entra com 1 toque.
-              </p>
+              <p className="font-bold">{t('Você está em um navegador embutido')}</p>
+              <p className="mt-1 text-xs leading-relaxed">{t('Apps como WhatsApp e Instagram podem bloquear o login do Google. Toque nos <b>⋮</b> (ou <b>compartilhar</b>) e escolha <b>Abrir no Chrome</b> — aí o Google mostra o seletor de contas e você entra com 1 toque.')}</p>
             </div>
           )}
 
           <div className="mt-6 flex flex-col gap-2">
             {!configured ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
-                <p className="font-bold">Supabase ainda não configurado</p>
+                <p className="font-bold">{t('Supabase ainda não configurado')}</p>
                 <p className="mt-1 text-xs leading-relaxed">
                   Copie <code>.env.example</code> para <code>.env</code> e preencha{' '}
                   <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (Settings →
@@ -186,7 +183,7 @@ export function LoginPage() {
               </div>
             ) : loading ? (
               <Button size="lg" disabled>
-                <Loader2 className="h-5 w-5 animate-spin" /> Verificando sessão…
+                <Loader2 className="h-5 w-5 animate-spin" /> {t('Verificando sessão…')}
               </Button>
             ) : user ? (
               <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-[#161616]">
@@ -205,18 +202,15 @@ export function LoginPage() {
                   )}
                   <div className="min-w-0 text-left">
                     <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                      {user.fullName ?? 'Usuário'}
+                      {user.fullName ?? t('Usuário')}
                     </p>
                     <p className="truncate text-xs text-slate-400">{user.email}</p>
                   </div>
                   <CheckCircle2 className="ml-auto h-5 w-5 shrink-0 text-emerald-500" />
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Logado. Seus treinos locais são enviados para a nuvem automaticamente quando houver
-                  internet.
-                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t('Logado. Seus treinos locais são enviados para a nuvem automaticamente quando houver internet.')}</p>
                 <Button variant="secondary" size="sm" onClick={() => void handleSignOut()} disabled={busy}>
-                  Sair da conta
+                  {t('Sair da conta')}
                 </Button>
               </div>
             ) : (
@@ -228,14 +222,12 @@ export function LoginPage() {
                     </>
                   ) : (
                     <>
-                      <GoogleG className="h-5 w-5" /> Entrar com Google
+                      <GoogleG className="h-5 w-5" /> {t('Entrar com Google')}
                     </>
                   )}
                 </Button>
                 {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
-                <p className="text-xs text-slate-400">
-                  Sem conta? O Google cria o seu perfil automaticamente no primeiro acesso.
-                </p>
+                <p className="text-xs text-slate-400">{t('Sem conta? O Google cria o seu perfil automaticamente no primeiro acesso.')}</p>
                 <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">
                   No celular, o Google só mostra o seletor de contas quando há uma conta Google
                   salva no navegador. Se pedir e-mail/senha, é o próprio Google exigindo — entre
@@ -253,7 +245,7 @@ export function LoginPage() {
                     className="flex w-full items-center justify-center gap-1.5 text-sm font-bold text-slate-600 transition-colors hover:text-amber-600 dark:text-slate-300 dark:hover:text-amber-400"
                   >
                     <KeyRound className="h-4 w-4" />
-                    Já tenho uma conta — conectar com código
+                    {t('Já tenho uma conta — conectar com código')}
                   </button>
 
                   {linkMode && (
@@ -281,10 +273,10 @@ export function LoginPage() {
                       >
                         {linking ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin" /> Conectando…
+                            <Loader2 className="h-4 w-4 animate-spin" /> {t('Conectando…')}
                           </>
                         ) : (
-                          'Conectar minha conta'
+                          t('Conectar minha conta')
                         )}
                       </Button>
                       {linkError && (
@@ -298,8 +290,7 @@ export function LoginPage() {
           </div>
 
           <p className="mx-auto mt-6 max-w-sm text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-            Você entra uma única vez com o Google — o login fica <b>salvo neste dispositivo</b> e não
-            será pedido de novo nas próximas visitas.
+            {t('Você entra uma única vez com o Google — o login fica <b>salvo neste dispositivo</b> e não será pedido de novo nas próximas visitas.')}
           </p>
 
           <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left">
@@ -307,19 +298,19 @@ export function LoginPage() {
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400">
                 <Cloud className="h-4 w-4" />
               </span>
-              Treinos, medidas e fotos sincronizados na nuvem
+              {t('Treinos, medidas e fotos sincronizados na nuvem')}
             </li>
             <li className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 dark:border-white/10 dark:bg-[#161616] dark:text-slate-200">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400">
                 <WifiOff className="h-4 w-4" />
               </span>
-              Continua funcionando 100% offline
+              {t('Continua funcionando 100% offline')}
             </li>
             <li className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 dark:border-white/10 dark:bg-[#161616] dark:text-slate-200">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400">
                 <ShieldCheck className="h-4 w-4" />
               </span>
-              Cada usuário só vê os próprios dados (RLS no banco)
+              {t('Cada usuário só vê os próprios dados (RLS no banco)')}
             </li>
           </ul>
 

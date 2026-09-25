@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
@@ -12,6 +13,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
  * quando há uma versão nova — não mostra "pronto para funcionar offline".
  */
 export function PwaUpdateBanner() {
+  const { t } = useTranslation();
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -30,13 +32,13 @@ export function PwaUpdateBanner() {
         <span className="shrink-0 text-amber-400">
           <RefreshCw className="h-5 w-5" />
         </span>
-        <span className="font-semibold text-slate-100">Nova versão disponível</span>
+        <span className="font-semibold text-slate-100">{t('Nova versão disponível')}</span>
         <button
           type="button"
           onClick={() => void updateServiceWorker()}
           className="shrink-0 rounded-full bg-amber-400 px-3.5 py-1.5 text-xs font-bold text-black transition-transform duration-150 hover:-translate-y-0.5"
         >
-          Recarregar
+          {t('Recarregar')}
         </button>
       </div>
     </div>

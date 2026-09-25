@@ -13,13 +13,13 @@ export function OfferSection({ onCheckout }: { onCheckout: () => void }) {
           </span>
         </div>
         <div className="mt-5 text-center">
-          <p className="text-sm font-semibold text-slate-400">
-            <span className="line-through">De {PRICE_ORIGINAL}</span> por apenas
+          <p className="text-sm font-semibold text-slate-500">
+            O {PRODUCT} é <b>grátis</b> — com anúncios. Quer treinar sem interrupções?
           </p>
           <p className="mt-1 text-5xl font-black tracking-tight text-slate-900">{PRICE_PROMO}</p>
-          <p className="mt-2 text-xs font-medium text-slate-500">acesso completo ao {PRODUCT} · pelo seu celular</p>
+          <p className="mt-2 text-xs font-medium text-slate-500">{PRODUCT} Premium · sem anúncios · pelo seu celular</p>
           <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-700">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Economize {SAVINGS}
+            <CheckCircle2 className="h-3.5 w-3.5" /> App completo liberado para todos
           </span>
         </div>
         <CtaButton className="mt-6" onClick={onCheckout} />

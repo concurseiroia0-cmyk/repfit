@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { ThumbsDown, ThumbsUp } from 'lucide-react';
 import { formatSeconds } from '../../utils/calc';
 import { ACTIVE_PILL, cn } from '../../utils/misc';
@@ -20,6 +21,7 @@ interface RestQuestionProps {
  * o usuário responder.
  */
 export function RestQuestion({ value, onChange }: RestQuestionProps) {
+  const { t } = useTranslation();
   const answered = value > 0;
   const no = value === -1;
 
@@ -42,7 +44,7 @@ export function RestQuestion({ value, onChange }: RestQuestionProps) {
               'border-slate-300 text-slate-600 hover:border-amber-400 hover:text-amber-600 dark:border-white/20 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-400'
           )}
         >
-          <ThumbsUp className="h-4 w-4" /> Sim
+          <ThumbsUp className="h-4 w-4" /> {t('Sim')}
         </button>
         <button
           type="button"
@@ -56,17 +58,17 @@ export function RestQuestion({ value, onChange }: RestQuestionProps) {
               'border-slate-300 text-slate-600 hover:border-amber-400 hover:text-amber-600 dark:border-white/20 dark:text-slate-300 dark:hover:border-amber-400 dark:hover:text-amber-400'
           )}
         >
-          <ThumbsDown className="h-4 w-4" /> Não
+          <ThumbsDown className="h-4 w-4" /> {t('Não')}
         </button>
       </div>
       <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-        Opcional — você pode deixar sem responder.
+        {t('Opcional — você pode deixar sem responder.')}
       </p>
 
       {answered && (
         <div className="mt-3">
           <p className="mb-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Tempo entre as séries
+            {t('Tempo entre as séries')}
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
             {PRESETS.map((p) => (
@@ -96,7 +98,7 @@ export function RestQuestion({ value, onChange }: RestQuestionProps) {
                 min={MIN_SEC}
                 max={MAX_SEC}
                 suffix="s"
-                ariaLabel="Tempo de descanso entre as séries em segundos"
+                ariaLabel={t('Tempo de descanso entre as séries em segundos')}
                 className="h-9"
                 inputClassName="text-xs"
                 inputMode="numeric"

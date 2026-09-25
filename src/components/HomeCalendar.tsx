@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { Workout } from '../types';
+import { dateLocale } from '../i18n/useLang';
 import { pluralize } from '../utils/calc';
 import { parseLocalDate, toDateString, todayString } from '../utils/date';
 import { ACTIVE_PILL, cn } from '../utils/misc';
@@ -24,6 +25,7 @@ interface HomeCalendarProps {
  * vira um círculo amarelo com texto escuro e leve elevação.
  */
 export function HomeCalendar({ workouts }: HomeCalendarProps) {
+  const { t } = useTranslation();
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selected, setSelected] = useState<string>(todayString());
 
@@ -50,24 +52,24 @@ export function HomeCalendar({ workouts }: HomeCalendarProps) {
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-          <Calendar className="h-5 w-5 text-amber-400" /> Calendário
+          <Calendar className="h-5 w-5 text-amber-400" /> {t('Calendário')}
         </h2>
         <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={() => setMonth((m) => addMonths(m, -1))}
-            aria-label="Mês anterior"
+            aria-label={t('Mês anterior')}
             className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="min-w-[112px] text-center text-sm font-extrabold capitalize text-slate-900 dark:text-white">
-            {format(month, 'MMMM yyyy', { locale: ptBR })}
+            {format(month, 'MMMM yyyy', { locale: dateLocale() })}
           </span>
           <button
             type="button"
             onClick={() => setMonth((m) => addMonths(m, 1))}
-            aria-label="Próximo mês"
+            aria-label={t('Próximo mês')}
             className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <ChevronRight className="h-4 w-4" />
@@ -126,14 +128,14 @@ export function HomeCalendar({ workouts }: HomeCalendarProps) {
       {/* Dia selecionado */}
       <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-          {format(parseLocalDate(selected), 'eeee, d MMMM', { locale: ptBR })}
+          {format(parseLocalDate(selected), 'eeee, d MMMM', { locale: dateLocale() })}
         </p>
         {selectedWorkouts.length === 0 ? (
           <div className="flex flex-col gap-2 rounded-xl bg-slate-50 px-3.5 py-3 dark:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Nenhum treino neste dia.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('Nenhum treino neste dia.')}</p>
             <Link to={`/novo?data=${selected}`}>
               <Button variant="secondary" size="sm">
-                <Plus className="h-4 w-4" /> Treino neste dia
+                <Plus className="h-4 w-4" /> {t('Treino neste dia')}
               </Button>
             </Link>
           </div>
@@ -148,7 +150,7 @@ export function HomeCalendar({ workouts }: HomeCalendarProps) {
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white">{w.name}</span>
                   <span className="ml-2 text-xs text-slate-400">
-                    {pluralize(w.exercises.length, 'exercício', 'exercícios')}
+                    {t('{{n}} exercício(s)', { n: w.exercises.length })}
                   </span>
                 </div>
                 {w.type && <TypeBadge type={w.type} />}

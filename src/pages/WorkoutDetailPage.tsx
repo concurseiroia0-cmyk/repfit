@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useTranslation } from 'react-i18next';
 import {
   Activity,
   ArrowLeft,
@@ -17,7 +18,7 @@ import {
 import { getWorkout, deleteWorkout } from '../services/workoutService';
 import { useSettings } from '../services/settingsService';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
-import { effortLevel } from '../utils/constants';
+import { effortLevel, tr } from '../utils/constants';
 import { formatDate, formatDayShort, weekdayName } from '../utils/date';
 import { formatDurationShort, formatNumber, formatWeight, pluralize } from '../utils/calc';
 
@@ -32,6 +33,7 @@ import { ShareWorkoutModal } from '../shareCards/ShareWorkoutModal';
 
 export function WorkoutDetailPage() {
   const { id } = useParams();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { push } = useToast();
   const settings = useSettings();
@@ -54,10 +56,10 @@ export function WorkoutDetailPage() {
     setDeleting(true);
     try {
       await deleteWorkout(workout.id);
-      push('Treino excluído.', 'info');
+      push(t('Treino excluído.'), 'info');
       navigate('/historico');
     } catch {
-      push('Erro ao excluir o treino.', 'error');
+      push(t('Erro ao excluir o treino.'), 'error');
       setDeleting(false);
     }
   }
@@ -75,11 +77,11 @@ export function WorkoutDetailPage() {
     return (
       <EmptyState
         icon={<Dumbbell className="h-7 w-7" />}
-        title="Treino não encontrado"
-        description="Ele pode ter sido excluído."
+        title={t('Treino não encontrado')}
+        description={t('Ele pode ter sido excluído.')}
         action={
           <Link to="/historico">
-            <Button variant="secondary">Voltar ao histórico</Button>
+            <Button variant="secondary">{t('Voltar ao histórico')}</Button>
           </Link>
         }
       />
@@ -94,7 +96,7 @@ export function WorkoutDetailPage() {
         to="/historico"
         className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400"
       >
-        <ArrowLeft className="h-4 w-4" /> Histórico
+        <ArrowLeft className="h-4 w-4" /> {t('Histórico')}
       </Link>
 
       {/* Cabeçalho */}
@@ -109,13 +111,13 @@ export function WorkoutDetailPage() {
         <h1 className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-white">{workout.name}</h1>
 
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <Meta icon={<ListChecks className="h-4 w-4" />} label="Exercícios" value={pluralize(workout.exercises.length, 'exercício', 'exercícios')} />
-          <Meta icon={<Dumbbell className="h-4 w-4" />} label="Volume total" value={workout.totalVolume > 0 ? `${formatNumber(workout.totalVolume)} ${settings.unit}` : '—'} />
-          <Meta icon={<Activity className="h-4 w-4" />} label="Esforço médio" value={effort ? `${formatNumber(workout.avgEffort!)}/6 · ${effort.label}` : '—'} />
-          <Meta icon={<Timer className="h-4 w-4" />} label="Duração" value={workout.durationMin != null ? `${workout.durationMin} min` : '—'} />
+          <Meta icon={<ListChecks className="h-4 w-4" />} label={t('Exercícios')} value={t('{{n}} exercício(s)', { n: workout.exercises.length })} />
+          <Meta icon={<Dumbbell className="h-4 w-4" />} label={t('Volume total')} value={workout.totalVolume > 0 ? `${formatNumber(workout.totalVolume)} ${settings.unit}` : '—'} />
+          <Meta icon={<Activity className="h-4 w-4" />} label={t('Esforço médio')} value={effort ? `${formatNumber(workout.avgEffort!)}/6 · ${tr(effort.label)}` : '—'} />
+          <Meta icon={<Timer className="h-4 w-4" />} label={t('Duração')} value={workout.durationMin != null ? `${workout.durationMin} min` : '—'} />
           <Meta
             icon={<Hourglass className="h-4 w-4" />}
-            label="Descanso total"
+            label={t('Descanso total')}
             value={workout.restSec ? formatDurationShort(workout.restSec) : '—'}
           />
         </div>
@@ -123,19 +125,19 @@ export function WorkoutDetailPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <Link to={`/editar/${workout.id}`}>
             <Button variant="secondary" size="sm">
-              <Pencil className="h-4 w-4" /> Editar
+              <Pencil className="h-4 w-4" /> {t('Editar')}
             </Button>
           </Link>
           <Link to={`/novo?repetir=${workout.id}`}>
             <Button variant="secondary" size="sm">
-              <Repeat className="h-4 w-4" /> Repetir treino
+              <Repeat className="h-4 w-4" /> {t('Repetir treino')}
             </Button>
           </Link>
           <Button variant="primary" size="sm" onClick={() => setShareOpen(true)}>
-            <Share2 className="h-4 w-4" /> Compartilhar treino
+            <Share2 className="h-4 w-4" /> {t('Compartilhar treino')}
           </Button>
           <Button variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10" onClick={() => setConfirmOpen(true)}>
-            <Trash2 className="h-4 w-4" /> Excluir
+            <Trash2 className="h-4 w-4" /> {t('Excluir')}
           </Button>
         </div>
       </Card>
@@ -152,7 +154,7 @@ export function WorkoutDetailPage() {
       {/* Observação geral */}
       {workout.notes && (
         <Card className="mb-4 p-5">
-          <h2 className="mb-1 text-sm font-bold text-slate-900 dark:text-white">Observação</h2>
+          <h2 className="mb-1 text-sm font-bold text-slate-900 dark:text-white">{t('Observação')}</h2>
           <p className="whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">{workout.notes}</p>
         </Card>
       )}
@@ -175,7 +177,7 @@ export function WorkoutDetailPage() {
                     <span
                       className="rounded-full px-2 py-0.5 text-white"
                       style={{ backgroundColor: exEffort.color }}
-                      title={`${exEffort.value} — ${exEffort.label} (${exEffort.desc})`}
+                      title={`${exEffort.value} — ${tr(exEffort.label)} (${tr(exEffort.desc)})`}
                     >
                       {exEffort.value}/6
                     </span>
@@ -206,21 +208,21 @@ export function WorkoutDetailPage() {
 
       {/* Rodapé */}
       <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
-        <Flame className="h-3.5 w-3.5" /> Registrado em {formatDate(workout.date)}
+        <Flame className="h-3.5 w-3.5" /> {t('Registrado em {{data}}', { data: formatDate(workout.date) })}
       </p>
 
       <ConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
-        title="Excluir treino?"
-        message={`Tem certeza que deseja excluir "${workout.name}"? Essa ação não pode ser desfeita.`}
-        confirmLabel="Excluir"
+        title={t('Excluir treino?')}
+        message={t('Tem certeza que deseja excluir "{{nome}}"? Essa ação não pode ser desfeita.', { nome: workout.name })}
+        confirmLabel={t('Excluir')}
         danger
         loading={deleting}
       />
 
-      <Modal open={fullscreen} onClose={() => setFullscreen(false)} title="Foto do treino" size="lg">
+      <Modal open={fullscreen} onClose={() => setFullscreen(false)} title={t('Foto do treino')} size="lg">
         <img src={photoUrl ?? undefined} alt={`Foto do treino ${workout.name}`} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
       </Modal>
 

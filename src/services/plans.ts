@@ -1,6 +1,9 @@
 // ============================================================================
-// Planos do RepFit (tela /planos e botões de assinatura).
+// Planos do RepFit Premium (tela /planos).
 // ----------------------------------------------------------------------------
+// MODELO GRATUITO: o app é 100% liberado para todos os usuários logados.
+// O plano pago (Premium) serve para REMOVER OS ANÚNCIOS e apoiar o projeto.
+//
 // Os preços exibidos aqui são os preços de tabela. A cobrança acontece na
 // plataforma de pagamento (Kirvano/GGCheckout) — o acesso é liberado pelo
 // WEBHOOK, nunca manualmente.
@@ -34,7 +37,7 @@ export const PLANS: Plan[] = [
     price: 'R$ 24,90',
     period: '/mês',
     features: [
-      'Treinos ilimitados',
+      'Zero anúncios — treine sem interrupções',
       'Sincronização na nuvem (backup seguro)',
       'Histórico e recordes pessoais',
       'Medidas corporais e evolução',
@@ -47,7 +50,7 @@ export const PLANS: Plan[] = [
     tagline: 'Economize 13%',
     price: 'R$ 67,90',
     period: '/3 meses',
-    monthlyEquivalent: 'R$ 43,30/mês',
+    monthlyEquivalent: 'R$ 22,63/mês',
     features: [
       'Tudo do plano mensal',
       'Equivale a 3 meses por menos',
@@ -61,7 +64,7 @@ export const PLANS: Plan[] = [
     tagline: 'Melhor custo-benefício',
     price: 'R$ 119,90',
     period: '/6 meses',
-    monthlyEquivalent: 'R$ 33,32/mês',
+    monthlyEquivalent: 'R$ 19,98/mês',
     popular: true,
     features: [
       'Tudo dos outros planos',

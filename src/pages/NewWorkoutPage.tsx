@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useTranslation } from 'react-i18next';
 import { db } from '../db/db';
 import type { Unit, Workout, WorkoutExercise } from '../types';
 import { WorkoutForm, emptyWorkoutFormState } from '../components/workout/WorkoutForm';
@@ -13,6 +14,8 @@ import { relinkPhoto } from '../services/photoService';
 import { useSettings } from '../services/settingsService';
 import { getWorkout, saveWorkout, workoutFromTemplate } from '../services/workoutService';
 import { mostrarVinhetaAposTreino } from '../services/adsService';
+import { useIsPremium } from '../services/supabase/useIsPremium';
+import { tr } from '../utils/constants';
 import type { RecordEntry } from '../services/recordsService';
 
 function kgToInput(kg: number, unit: Unit): string {
@@ -20,25 +23,32 @@ function kgToInput(kg: number, unit: Unit): string {
   return v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 }
 
-function recordMessage(r: RecordEntry): string {
-  const suffix = r.unit === 'kg' ? ' kg' : r.unit === 'reps' ? ' reps' : r.unit === 'dias' ? ' dias' : '';
+function recordMessage(t: (k: string, o?: Record<string, unknown>) => string, r: RecordEntry): string {
+  const suffix = r.unit === 'kg' ? ' kg' : r.unit === 'reps' ? ` ${t('reps')}` : r.unit === 'dias' ? ` ${t('dias')}` : '';
   const sub = r.sublabel ? `${r.sublabel}: ` : '';
-  return `🎉 Novo recorde! ${sub}${r.label} — ${formatNumber(r.value)}${suffix}`;
+  return `🎉 ${t('Novo recorde! {{sub}}{{label}} — {{valor}}', { sub, label: tr(r.label), valor: formatNumber(r.value) })}${suffix}`;
 }
 
 export function NewWorkoutPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { push } = useToast();
   const settings = useSettings();
+  const { isPremium } = useIsPremium();
   const catalog = useLiveQuery(() => db.exerciseCatalog.orderBy('name').toArray(), []) ?? [];
 
   const isEdit = Boolean(id);
   const repetirId = searchParams.get('repetir');
   const dataParam = searchParams.get('data');
 
-  const [form, setForm] = useState(() => emptyWorkoutFormState(dataParam || todayString()));
+  // Modalidade padrão: a preferida escolhida no onboarding (fallback: academia).
+  const defaultMode = settings.onboardingMode ?? 'academia';
+  const [form, setForm] = useState(() => ({
+    ...emptyWorkoutFormState(dataParam || todayString()),
+    mode: settings.onboardingMode ?? 'academia',
+  }));
   const [photoId, setPhotoId] = useState<string | null>(null);
   const [previous, setPrevious] = useState<WorkoutExercise[] | null>(null);
   const [ready, setReady] = useState(false);
@@ -82,7 +92,7 @@ export function NewWorkoutPage() {
           setPrevious(src.exercises);
           setRepeatSourceDate(src.date);
         } else {
-          push('Treino de origem não encontrado.', 'error');
+          push(t('Treino de origem não encontrado.'), 'error');
         }
       } else if (isEdit && id) {
         const w = await getWorkout(Number(id));
@@ -112,7 +122,7 @@ export function NewWorkoutPage() {
           });
           setPhotoId(w.photoId ? String(w.photoId) : null);
         } else {
-          push('Treino não encontrado.', 'error');
+          push(t('Treino não encontrado.'), 'error');
           navigate('/historico', { replace: true });
         }
       } else {
@@ -167,13 +177,13 @@ export function NewWorkoutPage() {
     setForm(emptyWorkoutFormState());
     setPhotoId(null);
     setDraftRestored(false);
-    push('Rascunho descartado.');
+    push(t('Rascunho descartado.'));
   }
 
   /** Salva o treino. Se keepOpen=true, reseta o formulário para um novo treino. */
   async function handleSubmit(keepOpen = false) {
     if (!form.name.trim()) {
-      push('Dê um nome ao treino.', 'error');
+      push(t('Dê um nome ao treino.'), 'error');
       return;
     }
     const exercises = form.exercises
@@ -217,23 +227,24 @@ export function NewWorkoutPage() {
       };
       const { workout: saved, newRecords } = await saveWorkout(workout);
       await relinkPhoto(photoId, String(saved.id));
-      // Anúncio (vinheta) do AdSense após cada treino salvo — só em domínio verificado.
-      mostrarVinhetaAposTreino();
+      // Anúncio (vinheta) do AdSense após cada treino salvo — só em domínio
+      // verificado e para usuários gratuitos (premium não vê anúncios).
+      if (!isPremium) mostrarVinhetaAposTreino();
       if (!isEdit) {
         clearDraft();
         await clearDraftPhotos();
       }
       if (newRecords.length > 0) {
-        newRecords.slice(0, 3).forEach((r) => push(recordMessage(r), 'success'));
+        newRecords.slice(0, 3).forEach((r) => push(recordMessage(t, r), 'success'));
       } else {
-        push(isEdit ? 'Treino atualizado!' : 'Treino salvo!', 'success');
+        push(isEdit ? t('Treino atualizado!') : t('Treino salvo!'), 'success');
       }
       // Não abre o compartilhamento automaticamente — quem quiser compartilha
       // pelo botão "Compartilhar treino" na tela de detalhe.
       if (keepOpen) {
         // Salvar e novo treino: mantém na página com formulário vazio.
-        push(isEdit ? 'Treino atualizado!' : 'Treino salvo! Pode começar o próximo.', 'success');
-        setForm(emptyWorkoutFormState(dataParam || todayString()));
+        push(isEdit ? t('Treino atualizado!') : t('Treino salvo! Pode começar o próximo.'), 'success');
+        setForm({ ...emptyWorkoutFormState(dataParam || todayString()), mode: defaultMode });
         setPhotoId(null);
         setPrevious(null);
         setDraftRestored(false);
@@ -245,7 +256,7 @@ export function NewWorkoutPage() {
         navigate(`/treino/${saved.id}`);
       }
     } catch {
-      push('Erro ao salvar o treino. Tente novamente.', 'error');
+      push(t('Erro ao salvar o treino. Tente novamente.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -264,12 +275,12 @@ export function NewWorkoutPage() {
     <div>
       <div className="mb-4">
         <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-          {isEdit ? 'Editar treino' : repetirId ? 'Repetir treino' : 'Novo treino'}
+          {isEdit ? t('Editar treino') : repetirId ? t('Repetir treino') : t('Novo treino')}
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {repetirId
-            ? 'Valores do treino anterior já preenchidos — ajuste o que mudou.'
-            : 'Rápido de preencher. Seu rascunho é salvo automaticamente.'}
+            ? t('Valores do treino anterior já preenchidos — ajuste o que mudou.')
+            : t('Rápido de preencher. Seu rascunho é salvo automaticamente.')}
         </p>
       </div>
       <WorkoutForm
@@ -278,7 +289,7 @@ export function NewWorkoutPage() {
         unit={settings.unit}
         catalog={catalog}
         previous={previous}
-        submitLabel={isEdit ? 'Salvar alterações' : 'Salvar treino'}
+        submitLabel={isEdit ? t('Salvar alterações') : t('Salvar treino')}
         saving={saving}
         onSubmit={() => handleSubmit(false)}
         onSubmitAndNew={isEdit ? undefined : () => handleSubmit(true)}
@@ -286,7 +297,7 @@ export function NewWorkoutPage() {
           draftRestored && !isEdit && !repetirId
             ? 'Um rascunho seu foi restaurado automaticamente.'
             : repetirId
-              ? `Treino de ${formatDayShort(repeatSourceDate ?? todayString())} como base.`
+              ? t('Treino de {{data}} como base.', { data: formatDayShort(repeatSourceDate ?? todayString()) })
               : null
         }
         onDiscardDraft={draftRestored && !isEdit && !repetirId ? discardDraft : undefined}

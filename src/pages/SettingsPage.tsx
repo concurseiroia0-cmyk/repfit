@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useTranslation } from 'react-i18next';
 import {
   BadgeCheck,
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   Download,
   HardDrive,
   Info,
+  Languages,
   LogIn,
   LogOut,
   Mars,
@@ -61,8 +63,11 @@ import { AvatarPicker } from '../components/ui/AvatarPicker';
 import { DeviceLinkCard } from '../components/DeviceLink/DeviceLinkCard';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { EmptyState } from '../components/ui/Feedback';
+import { changeLang, currentLang, type Lang } from '../i18n';
+import { useIsPremium } from '../services/supabase/useIsPremium';
 
 export function SettingsPage() {
+  const { t } = useTranslation();
   const settings = useSettings();
   const { push } = useToast();
   const catalog = useLiveQuery(() => db.exerciseCatalog.orderBy('name').toArray(), []) ?? [];
@@ -100,6 +105,8 @@ export function SettingsPage() {
   const pwa = usePwaInstall();
   const auth = useSupabaseAuth();
   const navigate = useNavigate();
+  const { isPremium } = useIsPremium();
+  const [langState, setLangState] = useState<Lang>(currentLang());
   const isOwner = auth.user != null && OWNER_EMAILS.includes((auth.user.email ?? '').toLowerCase());
   const { subscription: mySubscription, loading: subLoading } = useSubscription(auth.user?.id ?? null);
   const subInfo = mySubscription ? getSubscriptionAccessInfo(mySubscription) : null;
@@ -137,9 +144,9 @@ export function SettingsPage() {
     const status = await ensurePersistentStorage();
     setPersist(status);
     setPersistBusy(false);
-    if (status === 'persisted') push('Proteção de dados ativada! O navegador não vai mais limpar seus dados.', 'success');
-    else if (status === 'denied') push('O navegador negou a permissão. Tente novamente em Configurações.', 'error');
-    else push('Este navegador não oferece essa proteção.', 'info');
+    if (status === 'persisted') push(t('Proteção de dados ativada! O navegador não vai mais limpar seus dados.'), 'success');
+    else if (status === 'denied') push(t('O navegador negou a permissão. Tente novamente em Configurações.'), 'error');
+    else push(t('Este navegador não oferece essa proteção.'), 'info');
   }
 
   async function handleSync() {
@@ -185,25 +192,25 @@ export function SettingsPage() {
 
   async function saveUsername() {
     await saveSettings({ username: username.trim() });
-    push('Nome salvo.');
+    push(t('Nome salvo.'));
   }
 
   async function saveAvatar(dataUrl: string | null) {
     setAvatar(dataUrl);
     await saveSettings({ avatarDataUrl: dataUrl ?? undefined });
-    push(dataUrl ? 'Foto de perfil salva.' : 'Foto de perfil removida.');
+    push(dataUrl ? t('Foto de perfil salva.') : t('Foto de perfil removida.'));
   }
 
   async function saveGoal() {
     const target = parseNum(goalTarget);
     if (goalEnabled && (target == null || target <= 0)) {
-      push('Informe um valor para a meta.', 'error');
+      push(t('Informe um valor para a meta.'), 'error');
       return;
     }
     await saveSettings({
       weeklyGoal: goalEnabled && target != null && target > 0 ? { type: goalType, target } : undefined,
     });
-    push(goalEnabled ? 'Meta da semana salva!' : 'Meta da semana removida.');
+    push(goalEnabled ? t('Meta da semana salva!') : t('Meta da semana removida.'));
   }
 
   async function saveProfile() {
@@ -214,7 +221,7 @@ export function SettingsPage() {
       heightCm: profileHeight.trim() ? parseNum(profileHeight) : null,
       weightKg: w != null && w > 0 ? Math.round(unitToKg(w, settings.unit) * 10) / 10 : null,
     });
-    push('Perfil atualizado!', 'success');
+    push(t('Perfil atualizado!'), 'success');
   }
 
   function addCatalogItem() {
@@ -224,9 +231,9 @@ export function SettingsPage() {
       .add({ name, muscleGroup: newGroup, favorite: false, lastWeight: null, lastReps: null, timesUsed: 0 })
       .then(() => {
         setNewName('');
-        push('Exercício adicionado ao catálogo.');
+        push(t('Exercício adicionado ao catálogo.'));
       })
-      .catch(() => push('Esse exercício já existe no catálogo.', 'error'));
+      .catch(() => push(t('Esse exercício já existe no catálogo.'), 'error'));
   }
 
   async function toggleFavorite(id: number, favorite: boolean) {
@@ -241,8 +248,8 @@ export function SettingsPage() {
 
   function handleExport() {
     void exportAllData()
-      .then(() => push('Backup exportado!', 'success'))
-      .catch(() => push('Erro ao exportar.', 'error'));
+      .then(() => push(t('Backup exportado!'), 'success'))
+      .catch(() => push(t('Erro ao exportar.'), 'error'));
   }
 
   function handleFile(file: File | undefined | null) {
@@ -262,10 +269,10 @@ export function SettingsPage() {
         setImportText(text);
         setImportOpen(true);
       } catch {
-        push('Arquivo inválido: não parece ser um backup do RepFit.', 'error');
+        push(t('Arquivo inválido: não parece ser um backup do RepFit.'), 'error');
       }
     };
-    reader.onerror = () => push('Não foi possível ler o arquivo.', 'error');
+    reader.onerror = () => push(t('Não foi possível ler o arquivo.'), 'error');
     reader.readAsText(file);
   }
 
@@ -275,13 +282,13 @@ export function SettingsPage() {
     try {
       // Segurança: baixa um backup automático antes de substituir qualquer dado.
       await exportAllData();
-      push('Backup automático baixado antes da importação.', 'success');
+      push(t('Backup automático baixado antes da importação.'), 'success');
       const res = await importAllData(importText);
-      push(`Importação concluída: ${res.workouts} treinos, ${res.photos} fotos.`, 'success');
+      push(t('Importação concluída: {{treinos}} treinos, {{fotos}} fotos.', { treinos: res.workouts, fotos: res.photos }), 'success');
       setImportOpen(false);
       setImportText(null);
     } catch (e) {
-      push(e instanceof Error ? e.message : 'Erro ao importar (a importação foi cancelada).', 'error');
+      push(e instanceof Error ? e.message : t('Erro ao importar (a importação foi cancelada).'), 'error');
     } finally {
       setImporting(false);
     }
@@ -292,14 +299,14 @@ export function SettingsPage() {
     try {
       // Segurança: baixa um backup automático antes de apagar qualquer coisa.
       await exportAllData();
-      push('Backup automático baixado antes da exclusão.', 'success');
+      push(t('Backup automático baixado antes da exclusão.'), 'success');
       await clearAllData();
       await seedCatalogIfEmpty(); // volta o catálogo de sugestões padrão
-      push('Todos os dados foram excluídos.', 'info');
+      push(t('Todos os dados foram excluídos.'), 'info');
       setDeleteAllOpen(false);
       setDeleteText('');
     } catch {
-      push('A exclusão foi cancelada (falha ao criar o backup de segurança).', 'error');
+      push(t('A exclusão foi cancelada (falha ao criar o backup de segurança).'), 'error');
     } finally {
       setDeletingAll(false);
     }
@@ -309,9 +316,9 @@ export function SettingsPage() {
     setCreatingSample(true);
     try {
       const n = await createSampleData();
-      push(`${n} treinos de exemplo criados.`, 'success');
+      push(t('{{n}} treinos de exemplo criados.', { n }), 'success');
     } catch {
-      push('Erro ao criar dados de exemplo.', 'error');
+      push(t('Erro ao criar dados de exemplo.'), 'error');
     } finally {
       setCreatingSample(false);
       setSampleOpen(false);
@@ -321,51 +328,51 @@ export function SettingsPage() {
   const filteredCatalog = catalog.filter((c) => c.name.toLowerCase().includes(catQuery.trim().toLowerCase()));
 
   const SEX_OPTIONS: { value: Sex; label: string; icon: React.ReactNode }[] = [
-    { value: 'masculino', label: 'Masculino', icon: <Mars className="h-4 w-4" /> },
-    { value: 'feminino', label: 'Feminino', icon: <Venus className="h-4 w-4" /> },
-    { value: 'outro', label: 'Outro', icon: <UserRound className="h-4 w-4" /> },
+    { value: 'masculino', label: t('Masculino'), icon: <Mars className="h-4 w-4" /> },
+    { value: 'feminino', label: t('Feminino'), icon: <Venus className="h-4 w-4" /> },
+    { value: 'outro', label: t('Outro'), icon: <UserRound className="h-4 w-4" /> },
   ];
 
   const hasProfile = Boolean(settings.sex || settings.age != null || settings.heightCm != null || settings.weightKg != null);
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-extrabold text-slate-900 dark:text-white">Configurações</h1>
+      <h1 className="mb-4 text-xl font-extrabold text-slate-900 dark:text-white">{t('Configurações')}</h1>
 
       <div className="space-y-4">
         {/* Perfil */}
         <Card>
-          <CardHeader title="Perfil" subtitle="Usado na saudação da tela inicial e nos cards" />
+          <CardHeader title={t('Perfil')} subtitle={t('Usado na saudação da tela inicial e nos cards')} />
           <div className="px-5 pb-5">
             <AvatarPicker value={avatar} onChange={(v) => void saveAvatar(v)} size={84} />
           </div>
           <div className="flex flex-col gap-2 px-5 pb-5 sm:flex-row">
-            <Field label="Seu nome" className="flex-1">
+            <Field label={t('Seu nome')} className="flex-1">
               <div className="relative">
                 <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Como quer ser chamado?"
+                  placeholder={t('Como quer ser chamado?')}
                   className="pl-10"
                   onBlur={() => void saveUsername()}
                 />
               </div>
             </Field>
             <div className="flex items-end">
-              <Button onClick={() => void saveUsername()}>Salvar</Button>
+              <Button onClick={() => void saveUsername()}>{t('Salvar')}</Button>
             </div>
           </div>
 
           <div className="border-t border-slate-100 px-5 pb-5 pt-4 dark:border-white/10">
             <p className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-              <Ruler className="h-3.5 w-3.5" /> Dados do corpo
-              {hasProfile && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">preenchido</span>}
+              <Ruler className="h-3.5 w-3.5" /> {t('Dados do corpo')}
+              {hasProfile && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">{t('preenchido')}</span>}
             </p>
             <div className="space-y-4">
               <div>
-                <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">Sexo</span>
+                <span className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('Sexo')}</span>
                 <div className="grid grid-cols-3 gap-2">
                   {SEX_OPTIONS.map((o) => {
                     const active = profileSex === o.value;
@@ -391,7 +398,7 @@ export function SettingsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <Field label="Idade" hint="Opcional">
+                <Field label={t('Idade')} hint={t('Opcional')}>
                   <StepperInput
                     value={profileAge}
                     onChange={setProfileAge}
@@ -403,7 +410,7 @@ export function SettingsPage() {
                     ariaLabel="Idade"
                   />
                 </Field>
-                <Field label="Altura" hint="Opcional">
+                <Field label={t('Altura')} hint={t('Opcional')}>
                   <StepperInput
                     value={profileHeight}
                     onChange={setProfileHeight}
@@ -428,14 +435,14 @@ export function SettingsPage() {
                   />
                 </Field>
               </div>
-              <Button onClick={() => void saveProfile()}>Salvar perfil</Button>
+              <Button onClick={() => void saveProfile()}>{t('Salvar perfil')}</Button>
             </div>
           </div>
         </Card>
 
         {/* Metas semanais */}
         <Card>
-          <CardHeader title="Metas semanais" subtitle="Barra de progresso na tela inicial" />
+          <CardHeader title={t('Metas semanais')} subtitle={t('Barra de progresso na tela inicial')} />
           <div className="space-y-4 px-5 pb-5">
             <label className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
               <input
@@ -444,17 +451,17 @@ export function SettingsPage() {
                 onChange={(e) => setGoalEnabled(e.target.checked)}
                 className="h-4 w-4 accent-amber-400"
               />
-              Ativar meta da semana
+              {t('Ativar meta da semana')}
             </label>
 
             {goalEnabled ? (
               <>
-                <Field label="Tipo de meta">
+                <Field label={t('Tipo de meta')}>
                   <SegmentedControl
                     options={[
-                      { value: 'frequency', label: 'Frequência' },
-                      { value: 'volume', label: 'Volume' },
-                      { value: 'duration', label: 'Duração' },
+                      { value: 'frequency', label: t('Frequência') },
+                      { value: 'volume', label: t('Volume') },
+                      { value: 'duration', label: t('Duração') },
                     ]}
                     value={goalType}
                     onChange={setGoalType}
@@ -464,10 +471,10 @@ export function SettingsPage() {
                 <Field
                   label={
                     goalType === 'frequency'
-                      ? 'Treinos por semana'
+                      ? t('Treinos por semana')
                       : goalType === 'volume'
-                        ? `Volume semanal (${settings.unit})`
-                        : 'Minutos por semana'
+                        ? `${t('Volume semanal')} (${settings.unit})`
+                        : t('Minutos por semana')
                   }
                 >
                   <StepperInput
@@ -482,7 +489,7 @@ export function SettingsPage() {
                   />
                 </Field>
                 <div className="flex items-center gap-2">
-                  <Button onClick={() => void saveGoal()}>Salvar meta</Button>
+                  <Button onClick={() => void saveGoal()}>{t('Salvar meta')}</Button>
                 </div>
               </>
             ) : (
@@ -496,29 +503,43 @@ export function SettingsPage() {
 
         {/* Aparência + unidade */}
         <Card>
-          <CardHeader title="Aparência e unidades" />
+          <CardHeader title={t('Aparência e unidades')} />
           <div className="space-y-4 px-5 pb-5">
-            <Field label="Tema">
+            <Field label={t('Tema')}>
               <SegmentedControl
                 options={[
-                  { value: 'auto', label: 'Automático', icon: <Monitor className="h-4 w-4" /> },
-                  { value: 'light', label: 'Claro', icon: <Sun className="h-4 w-4" /> },
-                  { value: 'dark', label: 'Escuro', icon: <Moon className="h-4 w-4" /> },
+                  { value: 'auto', label: t('Automático'), icon: <Monitor className="h-4 w-4" /> },
+                  { value: 'light', label: t('Claro'), icon: <Sun className="h-4 w-4" /> },
+                  { value: 'dark', label: t('Escuro'), icon: <Moon className="h-4 w-4" /> },
                 ]}
                 value={settings.theme}
                 onChange={(v) => void saveSettings({ theme: v })}
-                ariaLabel="Tema do app"
+                ariaLabel={t('Tema do app')}
               />
             </Field>
-            <Field label="Unidade de peso">
+            <Field label={t('Unidade de peso')}>
               <SegmentedControl
                 options={[
-                  { value: 'kg', label: 'Quilogramas (kg)' },
-                  { value: 'lb', label: 'Libras (lb)' },
+                  { value: 'kg', label: t('Quilogramas (kg)') },
+                  { value: 'lb', label: t('Libras (lb)') },
                 ]}
                 value={settings.unit}
                 onChange={(v) => void saveSettings({ unit: v })}
-                ariaLabel="Unidade de peso"
+                ariaLabel={t('Unidade de peso')}
+              />
+            </Field>
+            <Field label={t('Idioma')}>
+              <SegmentedControl
+                options={[
+                  { value: 'pt-BR', label: '🇧🇷 Português' },
+                  { value: 'en-US', label: '🇺🇸 English' },
+                ]}
+                value={langState}
+                onChange={(v) => {
+                  setLangState(v as Lang);
+                  void changeLang(v as Lang);
+                }}
+                ariaLabel={t('Idioma do app')}
               />
             </Field>
           </div>
@@ -527,37 +548,32 @@ export function SettingsPage() {
         {/* Instalar o app */}
         <Card>
           <CardHeader
-            title="Instalar o app (PWA)"
-            subtitle="Use o RepFit como um aplicativo, direto da tela inicial — funciona offline"
+            title={t('Instalar o app (PWA)')}
+            subtitle={t('Use o RepFit como um aplicativo, direto da tela inicial — funciona offline')}
           />
           <div className="px-5 pb-5">
             {pwa.installed ? (
               <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:bg-amber-400/10 dark:text-amber-300">
                 <CheckCircle2 className="h-5 w-5 shrink-0" />
-                App instalado — você está usando a versão de aplicativo.
+                {t('App instalado — você está usando a versão de aplicativo.')}
               </div>
             ) : (
               <div className="flex flex-col gap-2 sm:flex-row">
-                <InstallAppButton label="Baixar / instalar o app" size="lg" full />
+                <InstallAppButton label={t('Baixar / instalar o app')} size="lg" full />
                 <Button variant="secondary" size="lg" onClick={() => setShareOpen(true)} className="sm:w-auto">
-                  <Smartphone className="h-5 w-5" /> QR code / compartilhar
+                  <Smartphone className="h-5 w-5" /> {t('QR code / compartilhar')}
                 </Button>
               </div>
             )}
             <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               {isIOS()
-                ? 'No iPhone/iPad: toque em Compartilhar → “Adicionar à Tela de Início”.'
-                : 'No computador o app instala como um programa; no celular vira um ícone na tela inicial. Escaneie o QR code para abrir no celular. Tudo continua 100% offline e privado.'}
+                ? t('No iPhone/iPad: toque em Compartilhar → “Adicionar à Tela de Início”.')
+                : t('No computador o app instala como um programa; no celular vira um ícone na tela inicial. Escaneie o QR code para abrir no celular. Tudo continua 100% offline e privado.')}
             </p>
             {isIOS() && (
               <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs leading-relaxed text-sky-800 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-300">
-                <p className="font-bold">Depois de instalar, conecte sua conta 👇</p>
-                <p className="mt-1">
-                  No iPhone o app instalado é um <b>espaço separado</b> do navegador (começa vazio). Para
-                  trazer seus treinos e medidas: no aparelho onde sua conta já está logada, abra{' '}
-                  <b>Configurações → Conectar aplicativo</b>, pegue o código de 6 dígitos e digite-o aqui no
-                  app instalado em <b>“Já tenho uma conta”</b> — ou entre com o Google normalmente.
-                </p>
+                <p className="font-bold">{t('Depois de instalar, conecte sua conta 👇')}</p>
+                <p className="mt-1">{t('No iPhone o app instalado é um <b>espaço separado</b> do navegador (começa vazio). Para trazer seus treinos e medidas: no aparelho onde sua conta já está logada, abra <b>Configurações → Conectar aplicativo</b>, pegue o código de 6 dígitos e digite-o aqui no app instalado em <b>“Já tenho uma conta”</b> — ou entre com o Google normalmente.')}</p>
               </div>
             )}
           </div>
@@ -566,8 +582,8 @@ export function SettingsPage() {
         {/* Catálogo */}
         <Card>
           <CardHeader
-            title="Catálogo de exercícios"
-            subtitle="Usado no autocomplete e nos atalhos rápidos"
+            title={t('Catálogo de exercícios')}
+            subtitle={t('Usado no autocomplete e nos atalhos rápidos')}
             action={
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 {catalog.length}
@@ -576,7 +592,7 @@ export function SettingsPage() {
           />
           <div className="px-5 pb-5">
             <div className="mb-3 flex flex-col gap-2 sm:flex-row">
-              <Select value={newGroup} onChange={(e) => setNewGroup(e.target.value)} aria-label="Grupo muscular" className="sm:w-44">
+              <Select value={newGroup} onChange={(e) => setNewGroup(e.target.value)} aria-label={t('Grupo muscular')} className="sm:w-44">
                 {DEFAULT_MUSCLE_GROUPS.map((g) => (
                   <option key={g} value={g}>
                     {g}
@@ -588,12 +604,12 @@ export function SettingsPage() {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addCatalogItem()}
-                placeholder="Novo exercício…"
-                aria-label="Nome do novo exercício"
+                placeholder={t('Novo exercício…')}
+                aria-label={t('Nome do novo exercício')}
                 className="flex-1"
               />
               <Button onClick={addCatalogItem} disabled={!newName.trim()}>
-                <Plus className="h-4 w-4" /> Adicionar
+                <Plus className="h-4 w-4" /> {t('Adicionar')}
               </Button>
             </div>
 
@@ -603,14 +619,14 @@ export function SettingsPage() {
                 type="search"
                 value={catQuery}
                 onChange={(e) => setCatQuery(e.target.value)}
-                placeholder="Buscar no catálogo…"
+                placeholder={t('Buscar no catálogo…')}
                 className="pl-10"
-                aria-label="Buscar no catálogo"
+                aria-label={t('Buscar no catálogo')}
               />
             </div>
 
             {filteredCatalog.length === 0 ? (
-              <EmptyState icon={<Search className="h-6 w-6" />} title="Nada encontrado" className="py-6" />
+              <EmptyState icon={<Search className="h-6 w-6" />} title={t('Nada encontrado')} className="py-6" />
             ) : (
               <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-white/15">
                 {filteredCatalog.map((c) => (
@@ -618,7 +634,7 @@ export function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => c.id != null && void toggleFavorite(c.id, c.favorite)}
-                      aria-label={c.favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      aria-label={c.favorite ? t('Remover dos favoritos') : t('Adicionar aos favoritos')}
                       className="shrink-0 rounded-lg p-1 text-slate-300 hover:text-amber-400 dark:text-slate-600"
                     >
                       <Star className={cn('h-4 w-4', c.favorite && 'fill-amber-400 text-amber-400')} />
@@ -626,14 +642,14 @@ export function SettingsPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{c.name}</p>
                       <p className="text-xs text-slate-400">
-                        {c.muscleGroup}
-                        {c.timesUsed > 0 && <> · {c.timesUsed}× usado</>}
+                        {t(c.muscleGroup)}
+                        {c.timesUsed > 0 && <> · {c.timesUsed}{t('× usado')}</>}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setDeleteItemId(c.id ?? null)}
-                      aria-label={`Remover ${c.name} do catálogo`}
+                      aria-label={t('Remover {{nome}} do catálogo', { nome: c.name })}
                       className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -647,14 +663,14 @@ export function SettingsPage() {
 
         {/* Dados e backup */}
         <Card>
-          <CardHeader title="Dados e backup" subtitle="Tudo fica salvo apenas neste navegador" />
+          <CardHeader title={t('Dados e backup')} subtitle={t('Tudo fica salvo apenas neste navegador')} />
           <div className="space-y-3 px-5 pb-5">
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Button variant="secondary" onClick={handleExport}>
-                <Download className="h-4 w-4" /> Exportar backup (JSON)
+                <Download className="h-4 w-4" /> {t('Exportar backup (JSON)')}
               </Button>
               <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4" /> Importar backup
+                <Upload className="h-4 w-4" /> {t('Importar backup')}
               </Button>
               <input
                 ref={fileRef}
@@ -675,7 +691,7 @@ export function SettingsPage() {
                       : 'Estimativa de espaço indisponível neste navegador.'}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Seus dados ficam salvos apenas neste dispositivo/navegador. Faça backups regularmente.
+                    {t('Seus dados ficam salvos apenas neste dispositivo/navegador. Faça backups regularmente.')}
                   </p>
                 </div>
               </div>
@@ -684,18 +700,17 @@ export function SettingsPage() {
             {daysSinceBackup != null && daysSinceBackup >= 7 && (
               <div className="flex flex-col gap-2 rounded-xl border border-amber-300/60 bg-amber-50 p-3.5 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 sm:flex-row sm:items-center sm:justify-between">
                 <p>
-                  ⚠️ Seu último backup foi há <b>{daysSinceBackup} dias</b>. Se algo acontecer com este
-                  navegador, você pode perder os dados.
+                  ⚠️ {t('Seu último backup foi há {{dias}} dias. Se algo acontecer com este navegador, você pode perder os dados.', { dias: daysSinceBackup })}
                 </p>
                 <Button variant="primary" size="sm" onClick={handleExport} className="shrink-0">
-                  <Download className="h-4 w-4" /> Fazer backup agora
+                  <Download className="h-4 w-4" /> {t('Fazer backup agora')}
                 </Button>
               </div>
             )}
 
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" size="sm" onClick={() => setSampleOpen(true)}>
-                <Sparkles className="h-4 w-4" /> Criar dados de exemplo
+                <Sparkles className="h-4 w-4" /> {t('Criar dados de exemplo')}
               </Button>
               <Button
                 variant="ghost"
@@ -703,7 +718,7 @@ export function SettingsPage() {
                 className="text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
                 onClick={() => setDeleteAllOpen(true)}
               >
-                <Trash2 className="h-4 w-4" /> Excluir todos os meus dados
+                <Trash2 className="h-4 w-4" /> {t('Excluir todos os meus dados')}
               </Button>
             </div>
 
@@ -711,12 +726,12 @@ export function SettingsPage() {
             <div className="flex items-start gap-2.5 rounded-xl bg-slate-50 p-3.5 text-sm dark:bg-slate-800/60">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-700 dark:text-slate-200">Proteção contra limpeza automática</p>
+                <p className="font-semibold text-slate-700 dark:text-slate-200">{t('Proteção contra limpeza automática')}</p>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  {persist === 'persisted' && 'Ativa ✓ — o navegador não deve mais limpar seus dados automaticamente.'}
-                  {persist === 'denied' && 'Inativa — o navegador pode limpar os dados se o dispositivo ficar sem espaço.'}
-                  {persist === 'unsupported' && 'Este navegador não oferece a proteção de armazenamento persistente.'}
-                  {persist === null && 'Verificando…'}
+                  {persist === 'persisted' && t('Ativa ✓ — o navegador não deve mais limpar seus dados automaticamente.')}
+                  {persist === 'denied' && t('Inativa — o navegador pode limpar os dados se o dispositivo ficar sem espaço.')}
+                  {persist === 'unsupported' && t('Este navegador não oferece a proteção de armazenamento persistente.')}
+                  {persist === null && t('Verificando…')}
                 </p>
                 {persist !== 'persisted' && persist !== 'unsupported' && (
                   <button
@@ -724,7 +739,7 @@ export function SettingsPage() {
                     disabled={persistBusy}
                     className="mt-1.5 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-black transition-colors hover:bg-amber-300 disabled:opacity-60"
                   >
-                    {persistBusy ? 'Ativando…' : 'Ativar proteção dos dados'}
+                    {persistBusy ? t('Ativando…') : t('Ativar proteção dos dados')}
                   </button>
                 )}
               </div>
@@ -735,41 +750,52 @@ export function SettingsPage() {
         {/* Painel administrativo (só donos) */}
         {isOwner && (
           <Card>
-            <CardHeader title="Painel administrativo" subtitle="Simulador de webhooks, acesso manual e auditoria" />
-            <div className="px-5 pb-5">
-              <Button onClick={() => navigate('/admin')}>
-                <ShieldCheck className="h-4 w-4" /> Abrir painel do admin
-              </Button>
+          <CardHeader title={t('Painel administrativo')} subtitle={t('Simulador de webhooks, acesso manual e auditoria')} />
+          <div className="px-5 pb-5">
+            <Button onClick={() => navigate('/admin')}>
+              <ShieldCheck className="h-4 w-4" /> {t('Abrir painel do admin')}
+            </Button>
             </div>
           </Card>
         )}
 
-        {/* Assinatura e planos */}
+        {/* Premium / anúncios */}
         <Card>
-          <CardHeader title="Assinatura e planos" subtitle="Seu plano, renovação e acesso à plataforma" />
+          <CardHeader title={t('Assinatura e planos')} subtitle={t('Seu plano, renovação e acesso à plataforma')} />
           <div className="space-y-3 px-5 pb-5">
             {!auth.user ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Entre com o Google para ver o status da sua assinatura.
+                {t('Entre com o Google para ver o status da sua assinatura.')}
               </p>
             ) : subLoading ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Verificando…</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('Verificando…')}</p>
             ) : (
               <>
                 <div className="rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/60">
                   <p className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">
                     <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-500" />
-                    {isOwner ? 'Acesso vitalício do dono' : (subInfo?.lines[0] ?? 'Sem plano ativo')}
+                    {isOwner
+                      ? t('Acesso vitalício do dono')
+                      : isPremium
+                        ? t('Premium ativo — sem anúncios')
+                        : t('Grátis, com anúncios')}
                   </p>
                   <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                     {isOwner
-                      ? 'Você tem acesso total à plataforma sem assinatura.'
-                      : (subInfo?.lines.slice(1).join(' · ') || 'Assine um plano para desbloquear a plataforma.')}
+                      ? t('Você tem acesso total à plataforma sem assinatura.')
+                      : isPremium
+                        ? (subInfo?.lines.slice(1).join(' · ') || t('Obrigado por apoiar o RepFit!'))
+                        : t('Você está usando o RepFit de graça, com anúncios. Assine o Premium e nunca mais veja uma vinheta entre os treinos.')}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={() => navigate('/planos')}>
-                    <CreditCard className="h-4 w-4" /> Ver planos e assinar
+                  {!isPremium && (
+                    <Button onClick={() => navigate('/planos')}>
+                      <CreditCard className="h-4 w-4" /> {t('Remover anúncios')}
+                    </Button>
+                  )}
+                  <Button variant="secondary" onClick={() => navigate('/planos')}>
+                    <CreditCard className="h-4 w-4" /> {t('Ver planos')}
                   </Button>
                 </div>
               </>
@@ -780,14 +806,14 @@ export function SettingsPage() {
         {/* Conta e sincronização (Supabase) */}
         <Card>
           <CardHeader
-            title="Conta e sincronização"
-            subtitle="Backup automático dos seus treinos na nuvem (Supabase)"
+            title={t('Conta e sincronização')}
+            subtitle={t('Backup automático dos seus treinos na nuvem (Supabase)')}
           />
           <div className="space-y-3 px-5 pb-5">
             {!auth.configured ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
                 <p className="flex items-center gap-1.5 font-bold">
-                  <Cloud className="h-4 w-4 shrink-0" /> Nuvem desativada
+                  <Cloud className="h-4 w-4 shrink-0" /> {t('Nuvem desativada')}
                 </p>
                 <p className="mt-1 text-xs leading-relaxed">
                   Para sincronizar, copie <code>.env.example</code> para <code>.env</code>, preencha{' '}
@@ -796,7 +822,7 @@ export function SettingsPage() {
                 </p>
               </div>
             ) : auth.loading ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Verificando sessão…</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('Verificando sessão…')}</p>
             ) : auth.user ? (
               <>
                 <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/60">
@@ -814,7 +840,7 @@ export function SettingsPage() {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
-                      {auth.user.fullName ?? 'Usuário'}
+                      {auth.user.fullName ?? t('Usuário')}
                     </p>
                     <p className="truncate text-xs text-slate-400">{auth.user.email}</p>
                   </div>
@@ -823,21 +849,21 @@ export function SettingsPage() {
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button onClick={() => void handleSync()} disabled={syncing}>
                     <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
-                    {syncing ? 'Sincronizando…' : 'Sincronizar agora'}
+                    {syncing ? t('Sincronizando…') : t('Sincronizar agora')}
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => void auth.signOut()}
                     disabled={syncing}
                   >
-                    <LogOut className="h-4 w-4" /> Sair
+                    <LogOut className="h-4 w-4" /> {t('Sair')}
                   </Button>
                 </div>
                 <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                   {syncStatusLine()}
                 </p>
                 <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  A sincronização também acontece automaticamente ao entrar e quando a internet volta.
+                  {t('A sincronização também acontece automaticamente ao entrar e quando a internet volta.')}
                 </p>
                 <div className="border-t border-slate-100 pt-3 dark:border-white/10">
                   <DeviceLinkCard />
@@ -846,11 +872,10 @@ export function SettingsPage() {
             ) : (
               <div className="flex flex-col gap-3">
                 <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                  Entre com o Google para fazer backup dos seus treinos, medidas e fotos na nuvem e
-                  acessá-los de qualquer dispositivo. Sem login, o app continua 100% local.
+                  {t('Entre com o Google para fazer backup dos seus treinos, medidas e fotos na nuvem e acessá-los de qualquer dispositivo. Sem login, o app continua 100% local.')}
                 </p>
                 <Button onClick={() => navigate('/login')}>
-                  <LogIn className="h-4 w-4" /> Entrar com Google
+                  <LogIn className="h-4 w-4" /> {t('Entrar com Google')}
                 </Button>
               </div>
             )}
@@ -859,12 +884,11 @@ export function SettingsPage() {
 
         {/* Sobre */}
         <Card>
-          <CardHeader title="Sobre" />
+          <CardHeader title={t('Sobre')} />
           <div className="flex items-start gap-3 px-5 pb-5 text-sm text-slate-600 dark:text-slate-300">
             <Database className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
             <p>
-              <b>RepFit</b> é um app 100% local: sem contas, sem internet e sem envio de dados. As fotos
-              são armazenadas como blobs no seu dispositivo. Para não perder nada, use a exportação de backup.
+              <b>RepFit</b> {t('é um app 100% local: sem contas, sem internet e sem envio de dados. As fotos são armazenadas como blobs no seu dispositivo. Para não perder nada, use a exportação de backup.')}
             </p>
           </div>
         </Card>
@@ -875,9 +899,9 @@ export function SettingsPage() {
         open={deleteItemId != null}
         onClose={() => setDeleteItemId(null)}
         onConfirm={() => deleteItemId != null && void removeCatalogItem(deleteItemId)}
-        title="Remover do catálogo?"
-        message="O exercício será removido das sugestões, mas os treinos já salvos não são afetados."
-        confirmLabel="Remover"
+        title={t('Remover do catálogo?')}
+        message={t('O exercício será removido das sugestões, mas os treinos já salvos não são afetados.')}
+        confirmLabel={t('Remover')}
         danger
       />
 
@@ -885,29 +909,28 @@ export function SettingsPage() {
       <Modal
         open={importOpen}
         onClose={() => setImportOpen(false)}
-        title="Importar backup"
+        title={t('Importar backup')}
         footer={
           <>
             <Button variant="secondary" onClick={() => setImportOpen(false)} disabled={importing}>
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button variant="danger" onClick={() => void confirmImport()} disabled={importing}>
-              {importing ? 'Importando…' : 'Substituir tudo'}
+              {importing ? t('Importando…') : t('Substituir tudo')}
             </Button>
           </>
         }
       >
         <div className="space-y-3 text-sm">
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300">
-            <b>Atenção:</b> a importação <b>substitui todos os dados atuais</b> do app. Exporte um backup antes, se
-            quiser preservar o que existe agora.
+            <b>{t('Atenção:')}</b> {t('a importação')} <b>{t('substitui todos os dados atuais')}</b> {t('do app. Exporte um backup antes, se quiser preservar o que existe agora.')}
           </div>
           {importPreview && (
             <ul className="space-y-1 rounded-xl bg-slate-50 p-3.5 font-medium text-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-              <li>📋 {importPreview.workouts} treinos</li>
-              <li>🖼️ {importPreview.photos} fotos</li>
-              <li>📚 {importPreview.catalog} exercícios no catálogo</li>
-              <li>📏 {importPreview.measurements} medições corporais</li>
+              <li>📋 {importPreview.workouts} {t('treinos')}</li>
+              <li>🖼️ {importPreview.photos} {t('fotos')}</li>
+              <li>📚 {importPreview.catalog} {t('exercícios no catálogo')}</li>
+              <li>📏 {importPreview.measurements} {t('medições corporais')}</li>
             </ul>
           )}
         </div>
@@ -917,29 +940,28 @@ export function SettingsPage() {
       <Modal
         open={deleteAllOpen}
         onClose={() => setDeleteAllOpen(false)}
-        title="Excluir todos os dados"
+        title={t('Excluir todos os dados')}
         size="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setDeleteAllOpen(false)} disabled={deletingAll}>
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button
               variant="danger"
               disabled={deleteText !== 'EXCLUIR' || deletingAll}
               onClick={() => void confirmDeleteAll()}
             >
-              {deletingAll ? 'Excluindo…' : 'Excluir tudo'}
+              {deletingAll ? t('Excluindo…') : t('Excluir tudo')}
             </Button>
           </>
         }
       >
         <div className="space-y-3 text-sm">
           <p className="text-slate-600 dark:text-slate-300">
-            Todos os treinos, fotos, catálogo e configurações serão apagados para sempre. Essa ação não pode ser
-            desfeita.
+            {t('Todos os treinos, fotos, catálogo e configurações serão apagados para sempre. Essa ação não pode ser desfeita.')}
           </p>
-          <Field label='Digite EXCLUIR para confirmar'>
+          <Field label={t('Digite EXCLUIR para confirmar')}>
             <Input value={deleteText} onChange={(e) => setDeleteText(e.target.value)} placeholder="EXCLUIR" />
           </Field>
         </div>
@@ -950,9 +972,9 @@ export function SettingsPage() {
         open={sampleOpen}
         onClose={() => setSampleOpen(false)}
         onConfirm={() => void confirmSample()}
-        title="Criar dados de exemplo?"
-        message="Serão adicionados treinos fictícios nas últimas semanas para você explorar o app."
-        confirmLabel="Criar"
+        title={t('Criar dados de exemplo?')}
+        message={t('Serão adicionados treinos fictícios nas últimas semanas para você explorar o app.')}
+        confirmLabel={t('Criar')}
         loading={creatingSample}
       />
 

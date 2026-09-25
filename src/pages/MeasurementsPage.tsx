@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react';
 import { formatNumber, kgToUnit, parseNum, unitToKg } from '../utils/calc';
 import { formatDate, todayString, weekdayName } from '../utils/date';
-import { measureColor } from '../utils/constants';
+import { measureColor, tr } from '../utils/constants';
 import { useSettings } from '../services/settingsService';
 import {
   addCustomMeasure,
@@ -31,6 +32,7 @@ import { LineChart, Sparkline, type ChartPoint } from '../components/charts/Char
 import { StepperInput } from '../components/ui/StepperInput';
 
 export function MeasurementsPage() {
+  const { t } = useTranslation();
   const settings = useSettings();
   const entries = useMeasurements();
   const { push } = useToast();
@@ -82,7 +84,7 @@ export function MeasurementsPage() {
 
   async function handleSave() {
     if (!formDate) {
-      push('Escolha uma data.', 'error');
+      push(t('Escolha uma data.'), 'error');
       return;
     }
     setSaving(true);
@@ -98,15 +100,15 @@ export function MeasurementsPage() {
       }
       const hasAny = Object.values(parsed).some((v) => v != null);
       if (!hasAny) {
-        push('Preencha pelo menos uma medida.', 'error');
+        push(t('Preencha pelo menos uma medida.'), 'error');
         return;
       }
       if (editing) await deleteMeasurement(editing.id);
       await saveMeasurement(formDate, parsed);
-      push(editing ? 'Medição atualizada.' : 'Medição salva!', 'success');
+      push(editing ? t('Medição atualizada.') : t('Medição salva!'), 'success');
       closeForm();
     } catch {
-      push('Erro ao salvar a medição.', 'error');
+      push(t('Erro ao salvar a medição.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -130,14 +132,14 @@ export function MeasurementsPage() {
     if (deleteId == null) return;
     await deleteMeasurement(deleteId);
     setDeleteId(null);
-    push('Medição excluída.', 'info');
+    push(t('Medição excluída.'), 'info');
   }
 
   async function handleAddCustom() {
     const label = customLabel.trim();
     if (!label) return;
     await addCustomMeasure(settings, label);
-    push(`Medida "${label}" adicionada.`, 'success');
+    push(t('Medida "{{label}}" adicionada.', { label }), 'success');
     setCustomLabel('');
   }
 
@@ -145,15 +147,15 @@ export function MeasurementsPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-extrabold text-slate-900 dark:text-white">Medidas corporais</h1>
+      <h1 className="mb-1 text-xl font-extrabold text-slate-900 dark:text-white">{t('Medidas corporais')}</h1>
       <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-        Registre peso e medidas ao longo do tempo — tudo fica salvo neste dispositivo.
+        {t('Registre peso e medidas ao longo do tempo — tudo fica salvo neste dispositivo.')}
       </p>
 
       {entries.length > 0 && !formOpen && (
         <>
           {/* Campo com as medidas já registradas + gráfico de comparação */}
-          <h2 className="mb-3 text-base font-bold text-slate-900 dark:text-white">Suas medidas</h2>
+          <h2 className="mb-3 text-base font-bold text-slate-900 dark:text-white">{t('Suas medidas')}</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {measures
               .filter((m) => (data.get(m.key)?.latest ?? null) != null)
@@ -165,7 +167,7 @@ export function MeasurementsPage() {
                 return (
                   <Card key={m.key} className="p-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{m.label}</p>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{tr(m.label)}</p>
                       {delta != null && delta !== 0 ? (
                         <span
                           className={`flex items-center gap-0.5 text-xs font-bold ${
@@ -192,7 +194,7 @@ export function MeasurementsPage() {
 
           {/* Botão da cor do projeto: abre o formulário */}
           <Button full size="lg" className="mt-4" onClick={openNewForm}>
-            <Plus className="h-5 w-5" /> Nova medição
+            <Plus className="h-5 w-5" /> {t('Nova medição')}
           </Button>
         </>
       )}
@@ -200,11 +202,11 @@ export function MeasurementsPage() {
       {entries.length === 0 && !formOpen && (
         <EmptyState
           icon={<Ruler className="h-7 w-7" />}
-          title="Nenhuma medição registrada"
-          description="Registre seu peso e medidas para acompanhar a evolução em gráficos."
+          title={t('Nenhuma medição registrada')}
+          description={t('Registre seu peso e medidas para acompanhar a evolução em gráficos.')}
           action={
             <Button onClick={openNewForm}>
-              <Plus className="h-4 w-4" /> Nova medição
+              <Plus className="h-4 w-4" /> {t('Nova medição')}
             </Button>
           }
         />
@@ -215,12 +217,12 @@ export function MeasurementsPage() {
         <Card>
           <CardHeader
             title={editing ? 'Editar medição' : 'Nova medição'}
-            subtitle={editing ? `Editando ${formatDate(editing.date)}` : 'Anote seus números de hoje'}
+            subtitle={editing ? t('Editando {{data}}', { data: formatDate(editing.date) }) : t('Anote seus números de hoje')}
           />
           <div className="space-y-4 px-5 pb-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <Field label="Data" className="sm:w-48">
-                <Input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} aria-label="Data da medição" />
+              <Field label={t('Data')} className="sm:w-48">
+                <Input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} aria-label={t('Data da medição')} />
               </Field>
               <p className="pb-2.5 text-xs font-medium text-slate-400">
                 {formDate ? `${weekdayName(formDate)} · ${formatDate(formDate)}` : ''}
@@ -232,7 +234,7 @@ export function MeasurementsPage() {
                 const u = inputUnit(m.unit);
                 const step = m.unit === 'kg' ? (settings.unit === 'lb' ? 1 : 0.5) : 0.5;
                 return (
-                  <Field key={m.key} label={`${m.label} (${u})`}>
+                  <Field key={m.key} label={`${tr(m.label)} (${u})`}>
                     <StepperInput
                       value={values[m.key] ?? ''}
                       onChange={(v) => setValues((old) => ({ ...old, [m.key]: v }))}
@@ -240,7 +242,7 @@ export function MeasurementsPage() {
                       min={0}
                       max={m.unit === 'kg' ? 500 : 300}
                       suffix={u}
-                      ariaLabel={`${m.label} em ${u}`}
+                      ariaLabel={`${tr(m.label)} ${u}`}
                       inputMode="decimal"
                     />
                   </Field>
@@ -249,27 +251,27 @@ export function MeasurementsPage() {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <Field label="Nova medida personalizada (ex.: Bíceps, Pescoço…)" className="flex-1">
+              <Field label={t('Nova medida personalizada (ex.: Bíceps, Pescoço…)')} className="flex-1">
                 <Input
                   type="text"
                   value={customLabel}
                   onChange={(e) => setCustomLabel(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void handleAddCustom()}
-                  placeholder="Nome da medida…"
-                  aria-label="Nome da nova medida"
+                  placeholder={t('Nome da medida…')}
+                  aria-label={t('Nome da nova medida')}
                 />
               </Field>
               <Button variant="secondary" onClick={() => void handleAddCustom()} disabled={!customLabel.trim()}>
-                <Plus className="h-4 w-4" /> Adicionar
+                <Plus className="h-4 w-4" /> {t('Adicionar')}
               </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 dark:border-white/10">
               <Button onClick={() => void handleSave()} disabled={saving}>
-                {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar medição'}
+                {saving ? t('Salvando…') : editing ? t('Salvar alterações') : t('Salvar medição')}
               </Button>
               <Button variant="ghost" onClick={closeForm}>
-                Cancelar
+                {t('Cancelar')}
               </Button>
             </div>
           </div>
@@ -288,9 +290,9 @@ export function MeasurementsPage() {
                 const u = m.unit === 'kg' ? settings.unit : 'cm';
                 return (
                   <Card key={m.key} className="p-5">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{m.label}</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{tr(m.label)}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {d.points.length} registros · último: {formatNumber(d.points[d.points.length - 1].value)} {u}
+                      {t('{{n}} registros · último: {{valor}} {{u}}', { n: d.points.length, valor: formatNumber(d.points[d.points.length - 1].value), u })}
                     </p>
                     <LineChart data={d.points} unit={u} color={measureColor(m.key)} className="mt-3" />
                   </Card>
@@ -299,7 +301,7 @@ export function MeasurementsPage() {
           </div>
 
           {/* Histórico */}
-          <h2 className="mb-3 mt-6 text-base font-bold text-slate-900 dark:text-white">Histórico</h2>
+          <h2 className="mb-3 mt-6 text-base font-bold text-slate-900 dark:text-white">{t('Histórico')}</h2>
           <div className="space-y-2">
             {entries.map((e) => {
               const filled = measures.filter((m) => e.values[m.key] != null);
@@ -314,7 +316,7 @@ export function MeasurementsPage() {
                       <span className="ml-2 text-xs font-medium text-slate-400">{weekdayName(e.date)}</span>
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {filled.length === 0 && <span className="text-xs text-slate-400">sem medidas preenchidas</span>}
+                      {filled.length === 0 && <span className="text-xs text-slate-400">{t('sem medidas preenchidas')}</span>}
                       {filled.map((m) => {
                         const v = e.values[m.key];
                         const disp = v != null ? displayMeasureValue(m, v, settings.unit) : null;
@@ -323,7 +325,7 @@ export function MeasurementsPage() {
                             key={m.key}
                             className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                           >
-                            {m.label} {disp ? `${formatNumber(disp.value)} ${disp.unit}` : '—'}
+                            {tr(m.label)} {disp ? `${formatNumber(disp.value)} ${disp.unit}` : '—'}
                           </span>
                         );
                       })}
@@ -333,7 +335,7 @@ export function MeasurementsPage() {
                     <button
                       type="button"
                       onClick={() => startEdit(e)}
-                      aria-label={`Editar medição de ${formatDate(e.date)}`}
+                      aria-label={t('Editar medição de {{data}}', { data: formatDate(e.date) })}
                       className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-amber-500 dark:hover:bg-slate-800"
                     >
                       <Pencil className="h-4 w-4" />
@@ -341,7 +343,7 @@ export function MeasurementsPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteId(e.id ?? null)}
-                      aria-label={`Excluir medição de ${formatDate(e.date)}`}
+                      aria-label={t('Excluir medição de {{data}}', { data: formatDate(e.date) })}
                       className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -358,9 +360,9 @@ export function MeasurementsPage() {
         open={deleteId != null}
         onClose={() => setDeleteId(null)}
         onConfirm={() => void handleDelete()}
-        title="Excluir medição?"
-        message="Esta medição será removida do histórico e dos gráficos."
-        confirmLabel="Excluir"
+        title={t('Excluir medição?')}
+        message={t('Esta medição será removida do histórico e dos gráficos.')}
+        confirmLabel={t('Excluir')}
         danger
       />
     </div>

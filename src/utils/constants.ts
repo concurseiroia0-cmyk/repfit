@@ -1,3 +1,26 @@
+// ============================================================================
+// Constantes de domínio do RepFit.
+// ----------------------------------------------------------------------------
+// Os textos são CHAVES DE TRADUÇÃO (o texto original em pt-BR). Use t() da
+// i18n na hora de exibir — assim o catálogo e os treinos salvos continuam
+// funcionando em qualquer idioma (dados antigos em PT são traduzidos na
+// leitura pela própria chave).
+// ============================================================================
+
+import { isEn } from '../i18n';
+import enUS from '../i18n/en-US.json';
+
+const EN_MAP = enUS as Record<string, string>;
+
+/**
+ * Traduz uma chave de domínio (tipo/grupo/texto de catálogo) para o idioma
+ * ativo. Funciona fora do React (serviços, toasts) sem hooks.
+ */
+export function tr(key: string): string {
+  if (!isEn()) return key;
+  return EN_MAP[key] ?? key;
+}
+
 export const WORKOUT_TYPES = [
   'Peito + Tríceps',
   'Costas + Bíceps',

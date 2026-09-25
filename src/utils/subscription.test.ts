@@ -12,10 +12,10 @@ import {
   type SubscriptionLike,
 } from './subscription';
 
-// Hoje = 14/08/2026 (meio-dia UTC, para o cálculo de dias não depender de fuso).
+// "Hoje" fixo (meio-dia UTC, para o cálculo de dias não depender de fuso).
 const NOW = new Date('2026-08-14T12:00:00.000Z');
-// Fim do período pago = 15/09/2026 → 32 dias depois de 14/08.
-const END = '2026-09-15T00:00:00.000Z';
+// Fim do período pago = 32 dias depois de NOW (data fixa, sem time-bomb).
+const END = new Date(NOW.getTime() + 32 * 24 * 60 * 60 * 1000).toISOString();
 const END_MS = new Date(END).getTime();
 
 function sub(overrides: Partial<SubscriptionLike> = {}): SubscriptionLike {
@@ -27,8 +27,13 @@ function sub(overrides: Partial<SubscriptionLike> = {}): SubscriptionLike {
   };
 }
 
+/** Formata ISO em dd/MM/yyyy (mesma regra da UI, timeZone UTC). */
+function fmt(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
 describe('getDaysRemaining (cálculo DINÂMICO de dias restantes)', () => {
-  it('exemplo do requisito: end 2026-09-15 e hoje 2026-08-14 → 32 dias', () => {
+  it('exemplo do requisito: end 32 dias após hoje → 32 dias', () => {
     expect(getDaysRemaining(END, NOW)).toBe(32);
   });
 
@@ -202,11 +207,11 @@ describe('hasActiveAccess — FUNÇÃO ÚNICA centralizada', () => {
   });
 
   it('assinatura válida → acesso', () => {
-    expect(hasActiveAccess({ email: 'x@ex.com', subscription: sub(), grants: [] })).toBe(true);
+    expect(hasActiveAccess({ email: 'x@ex.com', subscription: sub(), grants: [], now: NOW })).toBe(true);
   });
 
   it('acesso gratuito ativo → acesso', () => {
-    expect(hasActiveAccess({ email: 'x@ex.com', subscription: null, grants: [{ access_until: END, status: 'active', revoked_at: null }] })).toBe(true);
+    expect(hasActiveAccess({ email: 'x@ex.com', subscription: null, grants: [{ access_until: END, status: 'active', revoked_at: null }], now: NOW })).toBe(true);
   });
 
   it('nada → sem acesso', () => {
@@ -219,6 +224,7 @@ describe('hasActiveAccess — FUNÇÃO ÚNICA centralizada', () => {
         email: 'x@ex.com',
         subscription: sub({ status: 'refunded' }),
         grants: [{ access_until: END, status: 'active', revoked_at: null }],
+        now: NOW,
       })
     ).toBe(true);
   });
@@ -249,7 +255,7 @@ describe('getSubscriptionAccessInfo — mensagens da UI', () => {
     expect(info.daysRemaining).toBe(32);
     expect(info.lines).toEqual([
       'Plano ativo',
-      'Próxima renovação: 15/09/2026',
+      `Próxima renovação: ${fmt(END)}`,
       'Faltam 32 dias para a renovação.',
     ]);
   });
@@ -261,7 +267,7 @@ describe('getSubscriptionAccessInfo — mensagens da UI', () => {
     expect(info.autoRenews).toBe(false);
     expect(info.lines).toEqual([
       'Assinatura cancelada',
-      'Acesso disponível até 15/09/2026',
+      `Acesso disponível até ${fmt(END)}`,
       'Faltam 32 dias para o encerramento do acesso.',
     ]);
   });

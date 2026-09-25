@@ -1,27 +1,20 @@
 // ============================================================================
 // SubscriptionGate — porta de acesso do app.
 // ----------------------------------------------------------------------------
-// Decide via `decideAccess` (src/utils/access.ts):
-//   * Supabase não configurado / sem login / falha de consulta → liberado;
-//   * dono (owner_emails) → liberado;
-//   * assinatura válida (active/trial/cancelada-válida/lifetime) → liberado;
-//   * logado sem assinatura válida → PAYWALL.
-// Enquanto carrega (sessão/assinatura), renderiza nada para não piscar.
+// MODELO GRATUITO: todo usuário LOGADO usa 100% do app. O plano pago
+// (RepFit Premium) serve apenas para REMOVER OS ANÚNCIOS — nunca bloqueia
+// o uso. Quem não está logado continua sendo redirecionado ao /login
+// (cadastro obrigatório).
 // ============================================================================
 
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSupabaseAuth } from '../services/supabase/useSupabaseAuth';
-import { useSubscription } from '../services/supabase/useSubscription';
-import { OWNER_EMAILS } from '../services/supabase/config';
-import { decideAccess } from '../utils/access';
-import { PaywallPage } from '../pages/PaywallPage';
 
 export function SubscriptionGate({ children }: { children: ReactNode }) {
   const auth = useSupabaseAuth();
-  const { subscription, grants, loading, failed } = useSubscription(auth.user?.id ?? null);
 
-  if (auth.loading || loading) return null;
+  if (auth.loading) return null;
 
   // Sem Supabase configurado → não há como cadastrar; mantém o modo local.
   if (!auth.configured) return <>{children}</>;
@@ -30,18 +23,7 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
   // dispositivo, então isso acontece só na primeira vez).
   if (!auth.user) return <Navigate to="/login" replace />;
 
-  // Logado: dono/assinatura válida/concessão ativa liberam; senão → paywall.
-  const decision = decideAccess({
-    configured: true,
-    user: auth.user,
-    subscription,
-    grants,
-    ownerEmails: OWNER_EMAILS,
-    fetchFailed: failed,
-  });
-
-  if (decision === 'block') {
-    return <PaywallPage subscription={subscription} />;
-  }
+  // Logado → acesso liberado. (A assinatura só define se há anúncios — ver
+  // useIsPremium e a vinheta em NewWorkoutPage.)
   return <>{children}</>;
 }

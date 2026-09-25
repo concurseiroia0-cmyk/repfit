@@ -1,4 +1,5 @@
-import { EFFORT_LEVELS } from '../../utils/constants';
+import { useTranslation } from 'react-i18next';
+import { EFFORT_LEVELS, tr } from '../../utils/constants';
 import { cn } from '../../utils/misc';
 
 /**
@@ -6,9 +7,10 @@ import { cn } from '../../utils/misc';
  * Chips com cor gradual + rótulo + legenda.
  */
 export function EffortSelector({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+  const { t } = useTranslation();
   return (
     <div>
-      <div role="radiogroup" aria-label="Sensação de esforço (1 = mais difícil, 6 = mais fácil)" className="grid grid-cols-3 gap-1.5">
+      <div role="radiogroup" aria-label={t('Sensação de esforço (1 = mais difícil, 6 = mais fácil)')} className="grid grid-cols-3 gap-1.5">
         {EFFORT_LEVELS.map((lvl) => {
           const selected = value === lvl.value;
           return (
@@ -17,7 +19,7 @@ export function EffortSelector({ value, onChange }: { value: number | null; onCh
               type="button"
               role="radio"
               aria-checked={selected}
-              aria-label={`${lvl.value} — ${lvl.label} (${lvl.desc})`}
+              aria-label={`${lvl.value} — ${tr(lvl.label)} (${tr(lvl.desc)})`}
               onClick={() => onChange(selected ? null : lvl.value)}
               className={cn(
                 'flex flex-col items-start gap-0.5 rounded-xl border px-2.5 py-2 text-left transition-all',
@@ -41,14 +43,14 @@ export function EffortSelector({ value, onChange }: { value: number | null; onCh
                   selected ? lvl.textClass : 'text-slate-600 dark:text-slate-300'
                 )}
               >
-                {lvl.label}
+                {tr(lvl.label)}
               </span>
             </button>
           );
         })}
       </div>
       <p className="mt-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-        1 = mais difícil · 6 = mais fácil
+        {t('1 = mais difícil · 6 = mais fácil')}
       </p>
     </div>
   );

@@ -12,6 +12,7 @@ import { EvolutionPage } from './pages/EvolutionPage';
 import { MeasurementsPage } from './pages/MeasurementsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { WelcomePage } from './pages/WelcomePage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { ProfileSetupPage } from './pages/ProfileSetupPage';
 import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
@@ -38,8 +39,8 @@ function WelcomeGate({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   if (workoutCount === null) return null; // evita flash enquanto carrega
-  if (!settings.welcomeSeen && workoutCount === 0) {
-    return <Navigate to="/boas-vindas" replace />;
+  if (!settings.onboardingDone && !settings.profileDone) {
+    return <Navigate to="/onboarding" replace />;
   }
   // Logo após as boas-vindas, quem ainda não preencheu o perfil é
   // convidado a informar sexo/idade/altura/peso (pode pular).
@@ -57,6 +58,7 @@ export default function App() {
         <SyncManager />
         <Routes>
           <Route path="/boas-vindas" element={<WelcomePage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/perfil" element={<ProfileSetupPage />} />
           <Route path="/login" element={<LoginPage />} />
           {/* Retorno do Google OAuth (troca o código/token pela sessão) */}

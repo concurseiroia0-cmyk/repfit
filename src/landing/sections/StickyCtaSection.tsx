@@ -1,4 +1,4 @@
-import { PRICE_ORIGINAL, PRICE_PROMO } from '../data';
+import { PRICE_PROMO } from '../data';
 
 /**
  * CTA fixo no rodapé (somente mobile) — mantém o checkout sempre à mão
@@ -9,9 +9,7 @@ export function StickyCtaSection({ onCheckout }: { onCheckout: () => void }) {
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(15,23,42,0.12)] backdrop-blur sm:hidden">
       <div className="mx-auto flex max-w-md items-center gap-3">
         <div className="shrink-0">
-          <p className="text-[11px] font-bold text-slate-400">
-            <span className="line-through">{PRICE_ORIGINAL}</span>
-          </p>
+          <p className="text-[11px] font-bold text-slate-400">Premium · sem anúncios</p>
           <p className="text-lg font-black leading-none text-slate-900">{PRICE_PROMO}</p>
         </div>
         <button

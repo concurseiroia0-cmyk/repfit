@@ -1,6 +1,12 @@
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { enUS, ptBR } from 'date-fns/locale';
 import { addDays, differenceInCalendarDays, startOfWeek } from 'date-fns';
+import { isEn } from '../i18n';
+
+/** Locale do date-fns no idioma ativo do app. */
+function locale() {
+  return isEn() ? enUS : ptBR;
+}
 
 /** Converte Date em string YYYY-MM-DD usando a hora LOCAL (evita bug de fuso). */
 export function toDateString(d: Date): string {
@@ -25,29 +31,31 @@ export function currentWeekStart(): string {
   return toDateString(startOfWeek(new Date(), { weekStartsOn: 1 }));
 }
 
-/** '2026-08-09' -> '09/08/2026' */
-export function formatDate(s: string, pattern = 'dd/MM/yyyy'): string {
-  return format(parseLocalDate(s), pattern, { locale: ptBR });
+/** '2026-08-09' -> '09/08/2026' (pt) | '08/09/2026' (en) */
+export function formatDate(s: string, pattern?: string): string {
+  const p = pattern ?? (isEn() ? 'MM/dd/yyyy' : 'dd/MM/yyyy');
+  return format(parseLocalDate(s), p, { locale: locale() });
 }
 
-/** '2026-08-09' -> '09 AGO' */
+/** '2026-08-09' -> '09 AGO' (pt) | 'AUG 09' (en) */
 export function formatDayShort(s: string): string {
-  return format(parseLocalDate(s), 'dd MMM', { locale: ptBR }).toUpperCase();
+  const f = format(parseLocalDate(s), isEn() ? 'MMM dd' : 'dd MMM', { locale: locale() });
+  return f.toUpperCase();
 }
 
-/** '2026-08-09' -> 'sábado' */
+/** '2026-08-09' -> 'sábado' | 'Saturday' */
 export function weekdayName(s: string): string {
-  return format(parseLocalDate(s), 'EEEE', { locale: ptBR });
+  return format(parseLocalDate(s), 'EEEE', { locale: locale() });
 }
 
-/** '2026-08-09' -> 'AGOSTO 2026' */
+/** '2026-08-09' -> 'AGOSTO 2026' | 'AUGUST 2026' */
 export function formatMonthYear(s: string): string {
-  return format(parseLocalDate(s), 'MMMM yyyy', { locale: ptBR }).toUpperCase();
+  return format(parseLocalDate(s), 'MMMM yyyy', { locale: locale() }).toUpperCase();
 }
 
-/** '2026-08-09' -> 'agosto de 2026' */
+/** '2026-08-09' -> 'agosto de 2026' | 'August 2026' */
 export function formatMonthYearCap(s: string): string {
-  return format(parseLocalDate(s), 'MMMM yyyy', { locale: ptBR });
+  return format(parseLocalDate(s), 'MMMM yyyy', { locale: locale() });
 }
 
 /** Sequência atual de dias com treino (conta a partir de hoje ou ontem). */

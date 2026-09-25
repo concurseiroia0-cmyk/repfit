@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Download, Share } from 'lucide-react';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { useToast } from './ui/Toast';
@@ -20,17 +21,18 @@ export function InstallAppButton({
 }) {
   const { canInstall, installed, promptInstall } = usePwaInstall();
   const { push } = useToast();
+  const { t } = useTranslation();
 
   if (installed) return null;
 
   async function handleClick() {
     if (canInstall) {
       const ok = await promptInstall();
-      if (ok) push('App instalado! ⚡ Ele agora abre como um aplicativo.', 'success');
+      if (ok) push(t('App instalado! ⚡ Ele agora abre como um aplicativo.'), 'success');
     } else if (isIOSHint()) {
-      push('No iPhone/iPad: toque em Compartilhar → “Adicionar à Tela de Início”.', 'info');
+      push(t('No iPhone/iPad: toque em Compartilhar → “Adicionar à Tela de Início”.'), 'info');
     } else {
-      push('Use o ícone de instalar na barra de endereço do navegador.', 'info');
+      push(t('Use o ícone de instalar na barra de endereço do navegador.'), 'info');
     }
   }
 

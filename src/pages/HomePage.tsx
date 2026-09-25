@@ -16,6 +16,7 @@ import {
   Trophy,
   TrendingUp,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { workoutsLive } from '../services/workoutService';
 import { computeRecords } from '../services/recordsService';
 import { useSettings } from '../services/settingsService';
@@ -27,7 +28,6 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState, SkeletonCard } from '../components/ui/Feedback';
 import { useToast } from '../components/ui/Toast';
-import { TrialBanner } from '../components/TrialBanner';
 import { ConfirmDialog } from '../components/ui/Modal';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { InstallAppButton } from '../components/PwaInstall';
@@ -35,6 +35,7 @@ import { ShareAppModal } from '../components/ShareApp';
 import { HomeCalendar } from '../components/HomeCalendar';
 
 export function HomePage() {
+  const { t } = useTranslation();
   const workouts = useLiveQuery(() => workoutsLive(), []);
   const settings = useSettings();
   const { push } = useToast();
@@ -105,9 +106,9 @@ export function HomePage() {
     setCreatingSample(true);
     try {
       const n = await createSampleData();
-      push(`${n} treinos de exemplo criados. Apague quando quiser em Configurações.`, 'success');
+      push(t('{{n}} treinos de exemplo criados. Apague quando quiser em Configurações.', { n }), 'success');
     } catch {
-      push('Erro ao criar dados de exemplo.', 'error');
+      push(t('Erro ao criar dados de exemplo.'), 'error');
     } finally {
       setCreatingSample(false);
       setSampleOpen(false);
@@ -132,24 +133,23 @@ export function HomePage() {
   return (
     <div className="pt-4">
       {!pwa.installed && <InstallBanner canInstall={pwa.canInstall} onShare={() => setShareOpen(true)} />}
-        <TrialBanner />
         <h1 className="mb-1 text-xl font-extrabold text-slate-900 dark:text-white">
-          Olá{settings.username ? `, ${settings.username}` : ''} 👋
+          {t('Olá')}{settings.username ? `, ${settings.username}` : ''} 👋
         </h1>
-        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Bora começar a registrar seus treinos?</p>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">{goalLine(settings.onboardingGoal, t)}</p>
         <EmptyState
           icon={<Dumbbell className="h-7 w-7" />}
-          title="Nenhum treino ainda"
-          description="Registre seu primeiro treino ou crie dados de exemplo para explorar o app. Tudo fica salvo apenas neste dispositivo."
+          title={t('Nenhum treino ainda')}
+          description={t('Registre seu primeiro treino ou crie dados de exemplo para explorar o app. Tudo fica salvo apenas neste dispositivo.')}
           action={
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link to="/novo">
                 <Button size="lg">
-                  <Plus className="h-5 w-5" /> Novo treino
+                  <Plus className="h-5 w-5" /> {t('Novo treino')}
                 </Button>
               </Link>
               <Button variant="secondary" size="lg" onClick={() => setSampleOpen(true)}>
-                <Sparkles className="h-5 w-5" /> Criar dados de exemplo
+                <Sparkles className="h-5 w-5" /> {t('Criar dados de exemplo')}
               </Button>
             </div>
           }
@@ -158,9 +158,9 @@ export function HomePage() {
           open={sampleOpen}
           onClose={() => setSampleOpen(false)}
           onConfirm={handleSample}
-          title="Criar dados de exemplo?"
-          message="Serão criados alguns treinos fictícios nas últimas semanas para você explorar o app. Você pode apagar tudo depois em Configurações."
-          confirmLabel="Criar"
+          title={t('Criar dados de exemplo?')}
+          message={t('Serão criados alguns treinos fictícios nas últimas semanas para você explorar o app. Você pode apagar tudo depois em Configurações.')}
+          confirmLabel={t('Criar')}
           loading={creatingSample}
         />
         <ShareAppModal open={shareOpen} onClose={() => setShareOpen(false)} />
@@ -171,15 +171,14 @@ export function HomePage() {
   return (
     <div>
       {!pwa.installed && <InstallBanner canInstall={pwa.canInstall} onShare={() => setShareOpen(true)} />}
-        <TrialBanner />
       {daysSinceBackup != null && daysSinceBackup >= 14 && (
         <div className="mb-4 flex flex-col gap-2 rounded-3xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            ⚠️ Seu último backup foi há <b>{daysSinceBackup} dias</b> ({formatDayShort(toDateString(new Date(settings.lastBackupAt ?? Date.now())))}).
+            ⚠️ {t('Seu último backup foi há {{dias}} dias ({{data}}).', { dias: daysSinceBackup, data: formatDayShort(toDateString(new Date(settings.lastBackupAt ?? Date.now()))) })}
           </p>
           <Link to="/configuracoes" className="shrink-0">
             <Button variant="primary" size="sm">
-              Fazer backup agora
+              {t('Fazer backup agora')}
             </Button>
           </Link>
         </div>
@@ -187,13 +186,15 @@ export function HomePage() {
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">
-            Olá{settings.username ? `, ${settings.username}` : ''} 👋
+            {t('Olá')}{settings.username ? `, ${settings.username}` : ''} 👋
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Continue firme nos treinos!</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {goalLine(settings.onboardingGoal, t)}
+          </p>
         </div>
         <Link to="/novo">
           <Button size="lg">
-            <Plus className="h-5 w-5" /> Novo treino
+            <Plus className="h-5 w-5" /> {t('Novo treino')}
           </Button>
         </Link>
       </div>
@@ -203,14 +204,14 @@ export function HomePage() {
         <Card className="group relative overflow-hidden p-5 transition-colors hover:border-amber-300 dark:hover:border-amber-400/50">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">Último treino</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">{t('Último treino')}</p>
               <h2 className="mt-1 text-lg font-extrabold text-slate-900 dark:text-white">{lastWorkout.name}</h2>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 {formatDayShort(lastWorkout.date)} · {weekdayName(lastWorkout.date)}
               </p>
             </div>
             <div className="flex items-center gap-1 text-sm font-semibold text-amber-600 dark:text-amber-400">
-              Ver detalhes <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              {t('Ver detalhes')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </div>
           </div>
         </Card>
@@ -218,10 +219,10 @@ export function HomePage() {
 
       {/* Estatísticas */}
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={<Calendar className="h-5 w-5" />} label={`Treinos em ${monthLabel}`} value={String(monthCount)} />
-        <StatCard icon={<Flame className="h-5 w-5" />} label="Sequência atual" value={streak > 0 ? `🔥 ${streak} dias` : '0 dias'} />
-        <StatCard icon={<Dumbbell className="h-5 w-5" />} label="Treinos na semana" value={String(weekCount)} />
-        <StatCard icon={<Activity className="h-5 w-5" />} label="Esforço médio recente" value={avgEffort != null ? `${formatNumber(avgEffort)}/6` : '—'} />
+        <StatCard icon={<Calendar className="h-5 w-5" />} label={t('Treinos em {{mês}}', { mês: monthLabel })} value={String(monthCount)} />
+        <StatCard icon={<Flame className="h-5 w-5" />} label={t('Sequência atual')} value={streak > 0 ? `🔥 ${streak} ${t('dias')}` : `0 ${t('dias')}`} />
+        <StatCard icon={<Dumbbell className="h-5 w-5" />} label={t('Treinos na semana')} value={String(weekCount)} />
+        <StatCard icon={<Activity className="h-5 w-5" />} label={t('Esforço médio recente')} value={avgEffort != null ? `${formatNumber(avgEffort)}/6` : '—'} />
       </div>
 
       {/* Meta da semana */}
@@ -237,16 +238,16 @@ export function HomePage() {
         <Card>
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-              <TrendingUp className="h-5 w-5 text-amber-400" /> Maior evolução
+              <TrendingUp className="h-5 w-5 text-amber-400" /> {t('Maior evolução')}
             </h2>
             <Link to="/evolucao" className="flex items-center gap-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-              Ver tudo <ChevronRight className="h-3.5 w-3.5" />
+              {t('Ver tudo')} <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="space-y-2 px-5 pb-5">
             {improvements.length === 0 ? (
               <p className="py-4 text-sm text-slate-500 dark:text-slate-400">
-                Registre alguns treinos para ver aqui os exercícios que mais evoluíram.
+                {t('Registre alguns treinos para ver aqui os exercícios que mais evoluíram.')}
               </p>
             ) : (
               improvements.map((im) => (
@@ -265,16 +266,16 @@ export function HomePage() {
         <Card>
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-              <Trophy className="h-5 w-5 text-amber-400" /> Recordes
+              <Trophy className="h-5 w-5 text-amber-400" /> {t('Recordes')}
             </h2>
             <Link to="/evolucao" className="flex items-center gap-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-              Ver todos <ChevronRight className="h-3.5 w-3.5" />
+              {t('Ver todos')} <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="space-y-2 px-5 pb-5">
             {records.length === 0 ? (
               <p className="py-4 text-sm text-slate-500 dark:text-slate-400">
-                Bata seus próprios recordes — eles aparecem aqui automaticamente.
+                {t('Bata seus próprios recordes — eles aparecem aqui automaticamente.')}
               </p>
             ) : (
               records.map((r) => (
@@ -287,7 +288,7 @@ export function HomePage() {
                     {r.date && <p className="text-xs text-slate-400">{formatDayShort(r.date)}</p>}
                   </div>
                   <span className="text-sm font-extrabold text-amber-600 dark:text-amber-400">
-                    {r.unit === 'kg' ? formatWeight(r.value, settings.unit) : `${formatNumber(r.value)} ${r.unit === 'dias' ? 'dias' : 'reps'}`}
+                    {r.unit === 'kg' ? formatWeight(r.value, settings.unit) : `${formatNumber(r.value)} ${r.unit === 'dias' ? t('dias') : t('reps')}`}
                   </span>
                 </div>
               ))
@@ -300,9 +301,9 @@ export function HomePage() {
         open={sampleOpen}
         onClose={() => setSampleOpen(false)}
         onConfirm={handleSample}
-        title="Criar dados de exemplo?"
-        message="Serão adicionados treinos fictícios nas últimas semanas. Você pode apagar tudo depois em Configurações."
-        confirmLabel="Criar"
+        title={t('Criar dados de exemplo?')}
+        message={t('Serão adicionados treinos fictícios nas últimas semanas. Você pode apagar tudo depois em Configurações.')}
+        confirmLabel={t('Criar')}
         loading={creatingSample}
       />
 
@@ -312,18 +313,19 @@ export function HomePage() {
 }
 
 function InstallBanner({ canInstall, onShare }: { canInstall: boolean; onShare: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-4 flex flex-col gap-2 rounded-3xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300 sm:flex-row sm:items-center sm:justify-between">
       <p className="flex items-center gap-2 font-semibold">
         <Smartphone className="h-4 w-4 shrink-0" />
         {canInstall
-          ? '⚡ Instale o app: abre como aplicativo e funciona 100% offline.'
-          : 'Leve o RepFit para o celular: escaneie o QR code ou compartilhe o link.'}
+          ? t('⚡ Instale o app: abre como aplicativo e funciona 100% offline.')
+          : t('Leve o RepFit para o celular: escaneie o QR code ou compartilhe o link.')}
       </p>
       <div className="flex shrink-0 flex-wrap gap-2">
-        {canInstall && <InstallAppButton size="sm" label="Instalar app" />}
+        {canInstall && <InstallAppButton size="sm" label={t('Instalar app')} />}
         <Button variant="secondary" size="sm" onClick={onShare}>
-          <Share2 className="h-4 w-4" /> Compartilhar / QR code
+          <Share2 className="h-4 w-4" /> {t('Compartilhar / QR code')}
         </Button>
       </div>
     </div>
@@ -331,8 +333,9 @@ function InstallBanner({ canInstall, onShare }: { canInstall: boolean; onShare: 
 }
 
 function WeeklyGoalCard({ progress, unit }: { progress: WeeklyGoalProgress; unit: string }) {
+  const { t } = useTranslation();
   const label =
-    progress.type === 'frequency' ? 'Treinos' : progress.type === 'volume' ? `Volume (${unit})` : 'Duração (min)';
+    progress.type === 'frequency' ? t('Treinos') : progress.type === 'volume' ? `${t('Volume')} (${unit})` : `${t('Duração')} (min)`;
   const valueText =
     progress.type === 'volume' ? formatNumber(progress.value) : formatNumber(progress.value);
   const targetText = progress.type === 'volume' ? formatNumber(progress.target) : String(progress.target);
@@ -341,7 +344,7 @@ function WeeklyGoalCard({ progress, unit }: { progress: WeeklyGoalProgress; unit
     <Card className="mb-4 p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-          <Target className="h-4 w-4 text-amber-400" /> Meta da semana
+          <Target className="h-4 w-4 text-amber-400" /> {t('Meta da semana')}
         </h2>
         <span
           className={
@@ -350,11 +353,11 @@ function WeeklyGoalCard({ progress, unit }: { progress: WeeklyGoalProgress; unit
               : 'text-xs font-bold text-slate-500 dark:text-slate-400'
           }
         >
-          {progress.done ? 'Meta batida! 🎉' : `${progress.percent}%`}
+          {progress.done ? t('Meta batida! 🎉') : `${progress.percent}%`}
         </span>
       </div>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        {label}: <b className="text-slate-700 dark:text-slate-200">{valueText}</b> de {targetText}
+        {label}: <b className="text-slate-700 dark:text-slate-200">{valueText}</b> {t('de')} {targetText}
       </p>
       <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
         <div
@@ -376,4 +379,21 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
       <div className="mt-0.5 text-xs font-medium leading-snug text-slate-500 dark:text-slate-400">{label}</div>
     </Card>
   );
+}
+
+/** Linha motivacional personalizada pelo objetivo do onboarding. */
+function goalLine(
+  goal: 'massa' | 'perder' | 'forca' | 'registrar' | undefined,
+  t: (k: string) => string
+): string {
+  switch (goal) {
+    case 'massa':
+      return t('Bora crescer! 💪 Cada treino conta.');
+    case 'perder':
+      return t('Bora queimar! 🔥 Constância vence.');
+    case 'forca':
+      return t('Bora evoluir as cargas! 🏋️');
+    default:
+      return t('Continue firme nos treinos!');
+  }
 }

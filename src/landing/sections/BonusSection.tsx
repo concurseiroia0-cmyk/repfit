@@ -27,7 +27,7 @@ export function BonusSection({ onCheckout }: { onCheckout: () => void }) {
         </ul>
         <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-400/10 p-4 text-center">
           <p className="text-sm font-extrabold text-slate-800">
-            Tudo isso por apenas <span className="text-amber-600">{PRICE_PROMO}</span>
+            Premium sem anúncios por apenas <span className="text-amber-600">{PRICE_PROMO}</span>
           </p>
         </div>
         <CtaButton className="mt-4" onClick={onCheckout} />

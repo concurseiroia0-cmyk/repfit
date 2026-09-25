@@ -6,6 +6,7 @@ import { seedCatalogIfEmpty } from './db/seed';
 import { useSettings } from './services/settingsService';
 import { useTheme } from './hooks/useTheme';
 import { ensurePersistentStorage } from './utils/storage';
+import './i18n';
 import './index.css';
 
 // Garante o catálogo inicial de sugestões.

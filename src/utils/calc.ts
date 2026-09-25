@@ -1,4 +1,10 @@
 import type { Unit, Workout, WorkoutExercise } from '../types';
+import { isEn } from '../i18n';
+
+/** Tag de locale do Intl no idioma ativo do app (para toLocaleString etc.). */
+export function localeTag(): string {
+  return isEn() ? 'en-US' : 'pt-BR';
+}
 
 /** Soma do volume (séries × reps × carga) de todos os exercícios. */
 export function computeVolume(exercises: WorkoutExercise[]): number {
@@ -29,9 +35,9 @@ export function unitToKg(v: number, unit: Unit): number {
   return unit === 'lb' ? v / 2.2046226218 : v;
 }
 
-/** Formata número no padrão pt-BR (22.5 -> "22,5"). */
+/** Formata número no idioma ativo (22.5 -> "22,5" em pt / "22.5" em en). */
 export function formatNumber(n: number): string {
-  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(n);
+  return new Intl.NumberFormat(localeTag(), { maximumFractionDigits: 1 }).format(n);
 }
 
 /** Formata peso em kg para exibição na unidade escolhida. */

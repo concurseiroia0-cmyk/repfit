@@ -3,7 +3,9 @@ import { decideAccess, type AccessArgs } from './access';
 import type { SubscriptionLike } from './subscription';
 
 const OWNER = ['juliocesa219853@gmail.com'];
-const END = '2026-09-15T00:00:00.000Z';
+// Data futura dinâmica: evita 'time-bomb' quando a data fixa fica no passado.
+const END = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+const PAST = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
 function args(overrides: Partial<AccessArgs> = {}): AccessArgs {
   return {
@@ -59,7 +61,7 @@ describe('decideAccess — gating por assinatura', () => {
   });
 
   it('cancelada com período vencido → bloqueado', () => {
-    const expired = sub({ status: 'canceled', current_period_end: '2026-08-01T00:00:00.000Z' });
+    const expired = sub({ status: 'canceled', current_period_end: PAST });
     expect(decideAccess(args({ subscription: expired }))).toBe('block');
   });
 
@@ -80,11 +82,11 @@ describe('decideAccess — gating por assinatura', () => {
   });
 
   it('acesso gratuito expirado → bloqueado (sem assinatura)', () => {
-    expect(decideAccess(args({ grants: [grant({ access_until: '2026-08-01T00:00:00.000Z' })] }))).toBe('block');
+    expect(decideAccess(args({ grants: [grant({ access_until: PAST })] }))).toBe('block');
   });
 
   it('acesso gratuito revogado → bloqueado', () => {
-    expect(decideAccess(args({ grants: [grant({ revoked_at: '2026-08-10T00:00:00.000Z' })] }))).toBe('block');
+    expect(decideAccess(args({ grants: [grant({ revoked_at: new Date().toISOString() })] }))).toBe('block');
   });
 
   it('usuário com assinatura paga + acesso gratuito → liberado (preserva a paga)', () => {

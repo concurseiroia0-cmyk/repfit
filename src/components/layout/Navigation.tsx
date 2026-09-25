@@ -8,6 +8,7 @@ import {
   Settings,
   TrendingUp,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ACTIVE_PILL, cn } from '../../utils/misc';
 import { usePwaInstall } from '../../hooks/usePwaInstall';
 import { useKeyboardOpen } from '../../hooks/useKeyboardOpen';
@@ -15,34 +16,36 @@ import { Logo } from '../Logo';
 import { InstallAppButton } from '../PwaInstall';
 
 export const NAV_ITEMS = [
-  { to: '/', label: 'Início', icon: Home, end: true },
-  { to: '/novo', label: 'Novo treino', icon: PlusCircle },
-  { to: '/historico', label: 'Histórico', icon: History },
-  { to: '/medidas', label: 'Medidas', icon: Ruler },
-  { to: '/evolucao', label: 'Evolução', icon: TrendingUp },
-  { to: '/configuracoes', label: 'Configurações', icon: Settings },
+  { to: '/', labelKey: 'Início', icon: Home, end: true },
+  { to: '/novo', labelKey: 'Novo treino', icon: PlusCircle },
+  { to: '/historico', labelKey: 'Histórico', icon: History },
+  { to: '/medidas', labelKey: 'Medidas', icon: Ruler },
+  { to: '/evolucao', labelKey: 'Evolução', icon: TrendingUp },
+  { to: '/configuracoes', labelKey: 'Configurações', icon: Settings },
 ];
 
 function Brand() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2.5">
       <Logo className="h-10 w-10 rounded-xl shadow-[0_0_16px_rgba(251,191,36,0.35)]" />
       <div className="leading-tight">
         <div className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white">RepFit</div>
-        <div className="text-[11px] text-slate-500 dark:text-slate-400">seus dados, só seus</div>
+        <div className="text-[11px] text-slate-500 dark:text-slate-400">{t('seus dados, só seus')}</div>
       </div>
     </div>
   );
 }
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const pwa = usePwaInstall();
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-slate-200 bg-white px-4 py-6 dark:border-white/10 dark:bg-[#161616] sidebar-desktop-only">
       <div className="px-2">
         <Brand />
       </div>
-      <nav className="mt-8 flex flex-1 flex-col gap-1" aria-label="Navegação principal">
+      <nav className="mt-8 flex flex-1 flex-col gap-1" aria-label={t('Navegação principal')}>
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
@@ -58,14 +61,14 @@ export function Sidebar() {
             }
           >
             <item.icon className="h-5 w-5" />
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>
       <div className="space-y-3">
         {pwa.canInstall && <InstallAppButton size="sm" full />}
         <p className="px-3 text-[11px] leading-relaxed text-slate-400 dark:text-slate-500">
-          Funciona 100% offline. Seus dados ficam salvos apenas neste navegador.
+          {t('Funciona 100% offline. Seus dados ficam salvos apenas neste navegador.')}
         </p>
       </div>
     </aside>
@@ -92,6 +95,7 @@ interface PillStyle {
 }
 
 function AnimatedBottomNav() {
+  const { t } = useTranslation();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
@@ -146,7 +150,7 @@ function AnimatedBottomNav() {
 
   return (
     <nav
-      aria-label="Navegação principal"
+      aria-label={t('Navegação principal')}
       className="safe-bottom fixed inset-x-3 bottom-3 z-40 nav-touch-only"
     >
       <div
@@ -195,7 +199,7 @@ function AnimatedBottomNav() {
                 )}
                 strokeWidth={isActive ? 2.5 : 2}
               />
-              <span className="leading-none">{item.label}</span>
+              <span className="leading-none">{t(item.labelKey)}</span>
             </NavLink>
           );
         })}

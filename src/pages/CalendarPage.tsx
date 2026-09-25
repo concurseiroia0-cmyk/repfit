@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { workoutsLive } from '../services/workoutService';
+import { dateLocale } from '../i18n/useLang';
 import { longestStreakInMonth, parseLocalDate, toDateString, todayString, weekdayName } from '../utils/date';
 import { pluralize } from '../utils/calc';
 import { Dot, TypeBadge } from '../components/ui/Badge';
@@ -17,6 +18,7 @@ import type { Workout } from '../types';
 const WEEKDAYS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 
 export function CalendarPage() {
+  const { t } = useTranslation();
   const workouts = useLiveQuery(() => workoutsLive(), []);
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selected, setSelected] = useState<string>(todayString());
@@ -55,7 +57,7 @@ export function CalendarPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-extrabold text-slate-900 dark:text-white">Calendário</h1>
+      <h1 className="mb-4 text-xl font-extrabold text-slate-900 dark:text-white">{t('Calendário')}</h1>
 
       <Card className="mb-4 p-5">
         {/* Navegação de mês */}
@@ -63,18 +65,18 @@ export function CalendarPage() {
           <button
             type="button"
             onClick={() => setMonth((m) => addMonths(m, -1))}
-            aria-label="Mês anterior"
+            aria-label={t('Mês anterior')}
             className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h2 className="text-base font-extrabold capitalize text-slate-900 dark:text-white">
-            {format(month, 'MMMM yyyy', { locale: ptBR })}
+            {format(month, 'MMMM yyyy', { locale: dateLocale() })}
           </h2>
           <button
             type="button"
             onClick={() => setMonth((m) => addMonths(m, 1))}
-            aria-label="Próximo mês"
+            aria-label={t('Próximo mês')}
             className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <ChevronRight className="h-5 w-5" />
@@ -127,11 +129,11 @@ export function CalendarPage() {
         <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 dark:border-white/10">
           <div className="rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/60">
             <div className="text-xl font-extrabold text-slate-900 dark:text-white">{daysTrained}</div>
-            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">dias treinados no mês</div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('dias treinados no mês')}</div>
           </div>
           <div className="rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/60">
             <div className="text-xl font-extrabold text-slate-900 dark:text-white">{longestInMonth}</div>
-            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">maior sequência do mês</div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('maior sequência do mês')}</div>
           </div>
         </div>
       </Card>
@@ -139,11 +141,11 @@ export function CalendarPage() {
       {/* Dia selecionado */}
       <Card className="p-5">
         <h2 className="text-sm font-bold capitalize text-slate-900 dark:text-white">
-          {weekdayName(selected)}, {format(parseLocalDate(selected), 'd MMMM yyyy', { locale: ptBR })}
+          {weekdayName(selected)},          {format(parseLocalDate(selected), 'd MMMM yyyy', { locale: dateLocale() })}
         </h2>
         <div className="mt-3 space-y-2">
           {selectedWorkouts.length === 0 ? (
-            <p className="py-2 text-sm text-slate-500 dark:text-slate-400">Nenhum treino neste dia.</p>
+            <p className="py-2 text-sm text-slate-500 dark:text-slate-400">{t('Nenhum treino neste dia.')}</p>
           ) : (
             selectedWorkouts.map((w) => (
               <Link
@@ -154,7 +156,7 @@ export function CalendarPage() {
                 <div>
                   <span className="font-bold text-slate-900 dark:text-white">{w.name}</span>
                   <span className="ml-2 text-xs text-slate-400">
-                    {pluralize(w.exercises.length, 'exercício', 'exercícios')}
+                    {t('{{n}} exercício(s)', { n: w.exercises.length })}
                   </span>
                 </div>
                 {w.type && <TypeBadge type={w.type} />}
@@ -164,7 +166,7 @@ export function CalendarPage() {
         </div>
         <Link to={`/novo?data=${selected}`} className="mt-3 block">
           <Button variant="secondary" full>
-            <Plus className="h-4 w-4" /> Novo treino neste dia
+            <Plus className="h-4 w-4" /> {t('Novo treino neste dia')}
           </Button>
         </Link>
       </Card>
@@ -173,11 +175,11 @@ export function CalendarPage() {
         <div className="mt-4">
           <EmptyState
             icon={<Calendar className="h-7 w-7" />}
-            title="Sem treinos ainda"
-            description="Os dias treinados aparecem destacados aqui."
+            title={t('Sem treinos ainda')}
+            description={t('Os dias treinados aparecem destacados aqui.')}
             action={
               <Link to="/novo">
-                <Button>Novo treino</Button>
+                <Button>{t('Novo treino')}</Button>
               </Link>
             }
           />

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { addDays, startOfToday } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight, History, Search, X } from 'lucide-react';
 import { workoutsLive } from '../services/workoutService';
 import { usePhotoUrl } from '../hooks/usePhotoUrl';
@@ -14,15 +15,16 @@ import { useSettings } from '../services/settingsService';
 import { formatDayShort, formatMonthYear, toDateString } from '../utils/date';
 import { pluralize } from '../utils/calc';
 
-const PERIODS = [
-  { value: 'all', label: 'Todo o período' },
-  { value: '30', label: 'Últimos 30 dias' },
-  { value: '90', label: 'Últimos 3 meses' },
-  { value: '180', label: 'Últimos 6 meses' },
-  { value: '365', label: 'Último ano' },
+const PERIOD_KEYS = [
+  { value: 'all', labelKey: 'Todo o período' },
+  { value: '30', labelKey: 'Últimos 30 dias' },
+  { value: '90', labelKey: 'Últimos 3 meses' },
+  { value: '180', labelKey: 'Últimos 6 meses' },
+  { value: '365', labelKey: 'Último ano' },
 ];
 
 export function HistoryPage() {
+  const { t } = useTranslation();
   const workouts = useLiveQuery(() => workoutsLive(), []);
   const settings = useSettings();
   const [query, setQuery] = useState('');
@@ -76,11 +78,11 @@ export function HistoryPage() {
     return (
       <EmptyState
         icon={<History className="h-7 w-7" />}
-        title="Nenhum treino registrado"
-        description="Seu histórico aparece aqui assim que você salvar seu primeiro treino."
+        title={t('Nenhum treino registrado')}
+        description={t('Seu histórico aparece aqui assim que você salvar seu primeiro treino.')}
         action={
           <Link to="/novo">
-            <Button>Começar agora</Button>
+            <Button>{t('Começar agora')}</Button>
           </Link>
         }
       />
@@ -92,9 +94,9 @@ export function HistoryPage() {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Histórico</h1>
+        <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">{t('Histórico')}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {pluralize(filtered?.length ?? 0, 'treino', 'treinos')} encontrados
+          {t('{{n}} treino(s) encontrado(s)', { n: filtered?.length ?? 0 })}
         </p>
       </div>
 
@@ -106,24 +108,24 @@ export function HistoryPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por treino ou exercício…"
+            placeholder={t('Buscar por treino ou exercício…')}
             className="pl-10"
-            aria-label="Buscar treinos"
+            aria-label={t('Buscar treinos')}
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filtrar por período">
-            {PERIODS.map((p) => (
+          <Select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label={t('Filtrar por período')}>
+            {PERIOD_KEYS.map((p) => (
               <option key={p.value} value={p.value}>
-                {p.label}
+                {t(p.labelKey)}
               </option>
             ))}
           </Select>
-          <Select value={type} onChange={(e) => setType(e.target.value)} aria-label="Filtrar por tipo de treino">
-            <option value="all">Todos os tipos</option>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {t}
+          <Select value={type} onChange={(e) => setType(e.target.value)} aria-label={t('Filtrar por tipo de treino')}>
+            <option value="all">{t('Todos os tipos')}</option>
+            {types.map((tp) => (
+              <option key={tp} value={tp}>
+                {t(tp)}
               </option>
             ))}
           </Select>
@@ -133,12 +135,12 @@ export function HistoryPage() {
       {filtered && filtered.length === 0 ? (
         <EmptyState
           icon={<Search className="h-7 w-7" />}
-          title="Nada encontrado"
-          description="Tente mudar a busca ou limpar os filtros."
+          title={t('Nada encontrado')}
+          description={t('Tente mudar a busca ou limpar os filtros.')}
           action={
             hasFilters ? (
               <Button variant="secondary" onClick={() => { setQuery(''); setPeriod('all'); setType('all'); }}>
-                <X className="h-4 w-4" /> Limpar filtros
+                <X className="h-4 w-4" /> {t('Limpar filtros')}
               </Button>
             ) : undefined
           }
@@ -150,7 +152,7 @@ export function HistoryPage() {
               <h2 className="mb-2 flex items-baseline gap-2 text-xs font-extrabold tracking-widest text-slate-400 dark:text-slate-500">
                 {formatMonthYear(`${month}-01`)}
                 <span className="font-semibold normal-case tracking-normal">
-                  {pluralize(list.length, 'treino', 'treinos')}
+                  {t('{{n}} treino(s)', { n: list.length })}
                 </span>
               </h2>
               <div className="space-y-2">
@@ -183,6 +185,7 @@ function WorkoutRow({
   effort: number | null;
   photoId: string | null;
 }) {
+  const { t } = useTranslation();
   const photoUrl = usePhotoUrl(photoId);
   return (
     <Link
@@ -199,8 +202,8 @@ function WorkoutRow({
           {type && <TypeBadge type={type} className="hidden sm:inline-flex" />}
         </div>
         <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-          {pluralize(exerciseCount, 'exercício', 'exercícios')}
-          {effort != null && <> · Esforço {effort}/6</>}
+          {t('{{n}} exercício(s)', { n: exerciseCount })}
+          {effort != null && <> · {t('Esforço')} {effort}/6</>}
         </p>
       </div>
       {photoUrl && <img src={photoUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}

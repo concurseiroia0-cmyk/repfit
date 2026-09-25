@@ -101,6 +101,12 @@ export interface Settings {
   avatarDataUrl?: string;
   /** Meta semanal opcional (ex.: 3 treinos/semana, 12.000 kg, 180 min). */
   weeklyGoal?: { type: 'frequency' | 'volume' | 'duration'; target: number };
+  /** Objetivo escolhido no onboarding (personaliza a home). */
+  onboardingGoal?: 'massa' | 'perder' | 'forca' | 'registrar';
+  /** Modalidade preferida escolhida no onboarding (padrão do form de treino). */
+  onboardingMode?: 'academia' | 'calistenia' | 'cardio';
+  /** Onboarding completo (wizard) já visto. */
+  onboardingDone?: boolean;
 }
 
 /** Definição de um tipo de medida corporal (Peso, Braço, Cintura…). */
