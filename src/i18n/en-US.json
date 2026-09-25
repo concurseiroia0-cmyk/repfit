@@ -76,7 +76,6 @@
   "volume total": "total volume",
   "{{n}} treino(s) com este exercício no período selecionado.": "{{n}} workout(s) with this exercise in the selected period.",
   "Configurações": "Settings",
-  "seus dados, só seus": "your data, yours only",
   "Funciona 100% offline. Seus dados ficam salvos apenas neste navegador.": "Works 100% offline. Your data is saved only in this browser.",
   "Offline — seus dados continuam salvos neste dispositivo": "Offline — your data remains saved on this device",
   "Navegação principal": "Main navigation",
@@ -661,16 +660,15 @@
   "Qual seu peso atual?": "What's your current weight?",
   "E sua altura?": "And your height?",
   "Prefiro não informar": "I'd rather not say",
-  "olá meu nome é tuff": "hi, my name is Tuff",
-  "e você?": "and you?",
-  "Qual seu nome?": "What's your name?",
   "Segure para finalizar": "Hold to finish",
-  "tudo pronto, agora só falta pressionar no tuff": "all set — just hold Tuff",
   "(segure o círculo)": "(hold the circle)",
   "Tudo pronto! 🎉": "All set! 🎉",
   "Pular": "Skip",
   "Grátis, com anúncios. Assine o Premium para removê-los.": "Free, with ads. Get Premium to remove them.",
   "Bora crescer! 💪 Cada treino conta.": "Let's grow! 💪 Every workout counts.",
   "Bora queimar! 🔥 Constância vence.": "Let's burn! 🔥 Consistency wins.",
-  "Bora evoluir as cargas! 🏋️": "Let's push those loads! 🏋️"
+  "Bora evoluir as cargas! 🏋️": "Let's push those loads! 🏋️",
+  "segure no círculo": "hold the circle",
+  "Como você gostaria de ser chamado?": "What would you like to be called?",
+  "Carregando…": "Loading…"
 }

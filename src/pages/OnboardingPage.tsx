@@ -10,7 +10,7 @@ import { todayString } from '../utils/date';
 import { unitToKg } from '../utils/calc';
 import { changeLang, currentLang } from '../i18n';
 import { AvatarPicker } from '../components/ui/AvatarPicker';
-import { Mascote } from '../components/Mascote';
+import { Logo } from '../components/Logo';
 import { useTheme } from '../hooks/useTheme';
 
 // ============================================================================
@@ -137,11 +137,12 @@ function RulerPicker({
   );
 }
 
-/** Tela final: segure o mascote — o círculo cresce até preencher a tela. */
+/** Tela final: segure o círculo — ele cresce até preencher a tela. */
 function HoldToFinish({ onComplete }: { onComplete: () => void }) {
   const { t } = useTranslation();
   const [holding, setHolding] = useState(false);
   const [filled, setFilled] = useState(false);
+  const [loading, setLoading] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   function startHold() {
@@ -149,7 +150,9 @@ function HoldToFinish({ onComplete }: { onComplete: () => void }) {
     setHolding(true);
     timerRef.current = window.setTimeout(() => {
       setFilled(true);
-      window.setTimeout(onComplete, 900);
+      setLoading(true);
+      // Loading de 10s com a logo animada antes de seguir para o app.
+      window.setTimeout(onComplete, 10_000);
     }, 1100);
   }
 
@@ -162,6 +165,17 @@ function HoldToFinish({ onComplete }: { onComplete: () => void }) {
   }
 
   useEffect(() => cancelHold, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[70vh] flex-col items-center justify-center">
+        <div className="repfit-logo-pop">
+          <Logo className="h-28 w-28 rounded-3xl" />
+        </div>
+        <p className="mt-6 text-sm font-semibold text-slate-400 dark:text-slate-500">{t('Carregando…')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-[70vh] flex-col items-center justify-center overflow-hidden">
@@ -190,7 +204,6 @@ function HoldToFinish({ onComplete }: { onComplete: () => void }) {
             filled ? 'border-black/30 bg-white/60' : 'border-amber-400/70 bg-amber-400/10'
           )}
         >
-          <Mascote pose="thumbs" className="h-28 w-28" />
         </button>
         <p
           className={cn(
@@ -198,11 +211,8 @@ function HoldToFinish({ onComplete }: { onComplete: () => void }) {
             filled ? 'text-black' : 'text-slate-900 dark:text-white'
           )}
         >
-          {filled ? t('Tudo pronto! 🎉') : t('tudo pronto, agora só falta pressionar no tuff')}
+          {filled ? t('Tudo pronto! 🎉') : t('segure no círculo')}
         </p>
-        {!filled && (
-          <p className="mt-2 text-xs font-semibold text-slate-400 dark:text-slate-500">{t('(segure o círculo)')}</p>
-        )}
       </div>
     </div>
   );
@@ -263,7 +273,7 @@ export function OnboardingPage() {
 
   async function finish() {
     await persist();
-    navigate('/novo', { replace: true });
+    navigate('/', { replace: true });
   }
 
   async function finishWithSample() {
@@ -343,12 +353,11 @@ export function OnboardingPage() {
                 ))}
               </div>
               <div className="repfit-logo-pop">
-                <Mascote className="h-40 w-40" />
+                <Logo className="h-40 w-40 rounded-3xl" />
               </div>
               <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                 Rep<span className="text-amber-500 dark:text-amber-400">Fit</span>
               </h1>
-              <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">{t('seus dados, só seus')}</p>
               <button type="button" onClick={() => go(1)} className={cta}>
                 {t('Começar agora')} <ArrowRight className="h-5 w-5" />
               </button>
@@ -504,15 +513,11 @@ export function OnboardingPage() {
 
           {step === 5 && (
             <div>
-              <div className="flex items-end gap-3">
-                <Mascote pose="wave" className="h-24 w-24 shrink-0" />
-                <h2 className="pb-2 text-2xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
-                  {t('olá meu nome é tuff')} — {t('e você?')}
-                </h2>
-              </div>
+              <h2 className="text-center text-2xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
+                {t('Como você gostaria de ser chamado?')}
+              </h2>
 
               <div className="mt-6">
-                <p className="mb-2 text-center text-sm font-bold text-slate-700 dark:text-slate-300">{t('Qual seu nome?')}</p>
                 <input
                   type="text"
                   value={name}
